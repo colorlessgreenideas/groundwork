@@ -2761,7 +2761,7 @@ const BUCKET_IDS = new Set([
   '818','748','266','404','480','504','516','686','690','710',
   '834','788','894','716','096','116','156','356','360','398',
   '418','458','462','496','524','608','144','764','704','064',
-  '032','068','076','152','170','218','328','600','740','858',
+  '032','068','076','152','170','218','328','604','600','740','858',
   '862','084','320','340','558','591','388','533',
   '242','554','585','882','090','776'
 ]);
@@ -2780,7 +2780,7 @@ const BUCKET_NAMES = {
   '418':'Laos','458':'Malaysia','462':'Maldives','496':'Mongolia','524':'Nepal',
   '608':'Philippines','144':'Sri Lanka','764':'Thailand','704':'Vietnam','064':'Bhutan',
   '032':'Argentina','068':'Bolivia','076':'Brazil','152':'Chile','170':'Colombia',
-  '218':'Ecuador','328':'Guyana','600':'Paraguay','740':'Suriname','858':'Uruguay',
+  '218':'Ecuador','328':'Guyana','604':'Peru','600':'Paraguay','740':'Suriname','858':'Uruguay',
   '862':'Venezuela','084':'Belize','320':'Guatemala','340':'Honduras','558':'Nicaragua',
   '591':'Panama','388':'Jamaica','533':'Aruba',
   '242':'Fiji','554':'New Zealand','585':'Palau','882':'Samoa','090':'Solomon Islands','776':'Tonga'
@@ -2922,6 +2922,11 @@ function drawMap() {
       .attr('class','country').attr('d', path)
       .attr('fill', d => {
         const id = String(d.id).padStart(3,'0');
+        // French Guiana shares code 250 with France — exclude by centroid longitude
+        if(id === '250') {
+          const centroid = d3.geoCentroid(d);
+          if(centroid[0] < -10) return fillDefault; // French Guiana is ~-53° lon
+        }
         if(VISITED_IDS.has(id)) return '#14b8a6';
         if(BUCKET_IDS.has(id)) return '#f59e0b';
         return fillDefault;
@@ -2955,6 +2960,10 @@ function refreshMapColors() {
   const fillDefault = isDark ? '#2a2a35' : '#d1d5db';
   window._mapSvg.select('#map-zoom-group').selectAll('path.country').attr('fill', d => {
     const id = String(d.id).padStart(3,'0');
+    if(id === '250') {
+      const centroid = d3.geoCentroid(d);
+      if(centroid[0] < -10) return fillDefault;
+    }
     if(showVisited && VISITED_IDS.has(id)) return '#14b8a6';
     if(showBucket && BUCKET_IDS.has(id)) return '#f59e0b';
     return fillDefault;
