@@ -1388,34 +1388,47 @@ body {
 
 <!-- World Map Modal -->
 <div class="modal-overlay" id="map-modal" onclick="if(event.target.id==='map-modal')closeMapModal()">
-  <div class="modal" style="width:720px;max-width:95vw">
+  <div class="modal" style="width:760px;max-width:95vw">
     <div class="modal-header">
       <div>
-        <div class="modal-title">🌍 Countries Visited</div>
-        <div class="modal-sub" id="map-sub">Loading map...</div>
+        <div class="modal-title">🌍 Countries</div>
+        <div class="modal-sub" id="map-sub"></div>
       </div>
-      <button class="modal-close" onclick="closeMapModal()">✕</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="next-ep-btn" id="toggle-visited" onclick="toggleLayer('visited')">✓ Visited</button>
+        <button class="next-ep-btn" id="toggle-bucket" onclick="toggleLayer('bucket')">★ Bucket List</button>
+        <button class="modal-close" onclick="closeMapModal()">✕</button>
+      </div>
     </div>
     <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         <div class="review-stat-card">
           <div class="review-stat-label">Visited</div>
-          <div class="review-stat-value" style="color:#14b8a6" id="map-count">26</div>
+          <div class="review-stat-value" style="color:#14b8a6">26</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-label">Bucket list</div>
+          <div class="review-stat-value" style="color:#f59e0b" id="map-bucket-count">—</div>
         </div>
         <div class="review-stat-card">
           <div class="review-stat-label">Total</div>
           <div class="review-stat-value">195</div>
         </div>
         <div class="review-stat-card">
-          <div class="review-stat-label">Percentage</div>
+          <div class="review-stat-label">% Visited</div>
           <div class="review-stat-value" style="color:#14b8a6">13.3%</div>
         </div>
       </div>
-      <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden;background:var(--surface)"></div>
-      <div>
-        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px">Countries visited</div>
-        <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden"></div>
+      <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#14b8a6;display:inline-block"></span>Visited</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Bucket list</span>
       </div>
+      <div style="display:flex;gap:6px">
+        <button class="day-pill active" id="maptab-visited" onclick="showMapList('visited')">Visited (26)</button>
+        <button class="day-pill" id="maptab-bucket" onclick="showMapList('bucket')">Bucket list</button>
+      </div>
+      <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
     </div>
   </div>
 </div>
@@ -2740,100 +2753,176 @@ const MAP_COUNTRY_NAMES = {
   '752':'Sweden','840':'United States'
 };
 
+// Bucket list — ISO 3166-1 numeric codes
+const BUCKET_IDS = new Set([
+  '008','020','040','100','191','196','203','233','246','352',
+  '372','428','440','442','470','492','499','807','616','620',
+  '642','674','688','703','705','724','756','072','132','384',
+  '818','748','266','404','480','504','516','686','690','710',
+  '834','788','894','716','096','116','156','356','360','398',
+  '418','458','462','496','524','608','144','764','704','064',
+  '032','068','076','152','170','218','328','600','740','858',
+  '862','084','320','340','558','591','388','533'
+]);
+
+const BUCKET_NAMES = {
+  '008':'Albania','020':'Andorra','040':'Austria','100':'Bulgaria','191':'Croatia',
+  '196':'Cyprus','203':'Czech Republic','233':'Estonia','246':'Finland','352':'Iceland',
+  '372':'Ireland','428':'Latvia','440':'Lithuania','442':'Luxembourg','470':'Malta',
+  '492':'Monaco','499':'Montenegro','807':'North Macedonia','616':'Poland','620':'Portugal',
+  '642':'Romania','674':'San Marino','688':'Serbia','703':'Slovakia','705':'Slovenia',
+  '724':'Spain','756':'Switzerland','072':'Botswana','132':'Cabo Verde','384':'Côte d'Ivoire',
+  '818':'Egypt','748':'Eswatini','266':'Gabon','404':'Kenya','480':'Mauritius',
+  '504':'Morocco','516':'Namibia','686':'Senegal','690':'Seychelles','710':'South Africa',
+  '834':'Tanzania','788':'Tunisia','894':'Zambia','716':'Zimbabwe','096':'Brunei',
+  '116':'Cambodia','156':'China','356':'India','360':'Indonesia','398':'Kazakhstan',
+  '418':'Laos','458':'Malaysia','462':'Maldives','496':'Mongolia','524':'Nepal',
+  '608':'Philippines','144':'Sri Lanka','764':'Thailand','704':'Vietnam','064':'Bhutan',
+  '032':'Argentina','068':'Bolivia','076':'Brazil','152':'Chile','170':'Colombia',
+  '218':'Ecuador','328':'Guyana','600':'Paraguay','740':'Suriname','858':'Uruguay',
+  '862':'Venezuela','084':'Belize','320':'Guatemala','340':'Honduras','558':'Nicaragua',
+  '591':'Panama','388':'Jamaica','533':'Aruba',
+  '242':'Fiji','554':'New Zealand','585':'Palau','882':'Samoa','090':'Solomon Islands','776':'Tonga'
+};
+
+// US States / regions as bucket list destinations (not on world map)
+const BUCKET_US = ['Connecticut','Rhode Island','Vermont','Delaware','Maryland','Virginia','Tennessee','Mississippi','North Dakota','Alaska','Montreal'];
+
 let mapLoaded = false;
+let showVisited = true;
+let showBucket = true;
+let mapListMode = 'visited';
 
 function openMapModal() {
   document.getElementById('map-modal').classList.add('open');
-  document.getElementById('map-sub').textContent = `${VISITED_IDS.size} of 195 countries · ${((VISITED_IDS.size/195)*100).toFixed(1)}%`;
-
-  // Render country tags
-  const list = document.getElementById('map-country-list');
-  if(list.children.length === 0) {
-    Object.entries(MAP_COUNTRY_NAMES).sort((a,b) => a[1].localeCompare(b[1])).forEach(([id, name]) => {
-      const tag = document.createElement('span');
-      tag.style.cssText = 'background:rgba(20,184,166,0.15);color:#0f6e56;border:0.5px solid rgba(20,184,166,0.3);border-radius:4px;padding:2px 7px;font-size:11px;font-family:"DM Mono",monospace';
-      tag.textContent = name;
-      list.appendChild(tag);
-    });
-  }
-
-  if(!mapLoaded) {
-    mapLoaded = true;
-    loadWorldMap();
-  }
+  updateMapSub();
+  document.getElementById('map-bucket-count').textContent = Object.keys(BUCKET_NAMES).length + BUCKET_US.length;
+  showMapList('visited');
+  if(!mapLoaded) { mapLoaded = true; loadWorldMap(); }
 }
 
 function closeMapModal() {
   document.getElementById('map-modal').classList.remove('open');
 }
 
-function loadWorldMap() {
-  if(typeof d3 === 'undefined' || typeof topojson === 'undefined') {
-    const d3s = document.createElement('script');
-    d3s.src = 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js';
-    d3s.onload = () => {
-      const ts = document.createElement('script');
-      ts.src = 'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js';
-      ts.onload = () => drawMap();
-      document.head.appendChild(ts);
-    };
-    document.head.appendChild(d3s);
+function updateMapSub() {
+  document.getElementById('map-sub').textContent =
+    `Visited: 26 · Bucket list: ${Object.keys(BUCKET_NAMES).length + BUCKET_US.length} · 13.3% of world`;
+}
+
+function toggleLayer(type) {
+  if(type === 'visited') {
+    showVisited = !showVisited;
+    document.getElementById('toggle-visited').style.opacity = showVisited ? '1' : '0.4';
   } else {
-    drawMap();
+    showBucket = !showBucket;
+    document.getElementById('toggle-bucket').style.opacity = showBucket ? '1' : '0.4';
   }
+  refreshMapColors();
+}
+
+function refreshMapColors() {
+  if(!window._mapSvg) return;
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const fillDefault = isDark ? '#2a2a35' : '#d1d5db';
+  window._mapSvg.selectAll('path.country').attr('fill', d => {
+    const id = String(d.id).padStart(3,'0');
+    if(showVisited && VISITED_IDS.has(id)) return '#14b8a6';
+    if(showBucket && BUCKET_IDS.has(id)) return '#f59e0b';
+    return fillDefault;
+  });
+}
+
+function showMapList(mode) {
+  mapListMode = mode;
+  document.getElementById('maptab-visited').classList.toggle('active', mode === 'visited');
+  document.getElementById('maptab-bucket').classList.toggle('active', mode === 'bucket');
+  const list = document.getElementById('map-country-list');
+  list.innerHTML = '';
+  if(mode === 'visited') {
+    Object.entries(MAP_COUNTRY_NAMES).sort((a,b) => a[1].localeCompare(b[1])).forEach(([id, name]) => {
+      const tag = document.createElement('span');
+      tag.style.cssText = 'background:rgba(20,184,166,0.15);color:#0f6e56;border:0.5px solid rgba(20,184,166,0.3);border-radius:4px;padding:2px 7px;font-size:11px;font-family:"DM Mono",monospace';
+      tag.textContent = name;
+      list.appendChild(tag);
+    });
+  } else {
+    const allBucket = [...Object.values(BUCKET_NAMES), ...BUCKET_US].sort();
+    allBucket.forEach(name => {
+      const tag = document.createElement('span');
+      tag.style.cssText = 'background:rgba(245,158,11,0.15);color:#92400e;border:0.5px solid rgba(245,158,11,0.3);border-radius:4px;padding:2px 7px;font-size:11px;font-family:"DM Mono",monospace';
+      tag.textContent = name;
+      list.appendChild(tag);
+    });
+  }
+}
+
+function loadWorldMap() {
+  const loadD3 = () => new Promise(res => {
+    if(typeof d3 !== 'undefined') { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js';
+    s.onload = res; document.head.appendChild(s);
+  });
+  const loadTopo = () => new Promise(res => {
+    if(typeof topojson !== 'undefined') { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js';
+    s.onload = res; document.head.appendChild(s);
+  });
+  loadD3().then(loadTopo).then(drawMap);
 }
 
 function drawMap() {
   const container = document.getElementById('map-container');
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  const fillVisited = '#14b8a6';
   const fillDefault = isDark ? '#2a2a35' : '#d1d5db';
   const fillOcean = isDark ? '#1a1a2e' : '#dbeafe';
   const strokeCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)';
 
-  const width = container.offsetWidth || 680;
+  const width = container.offsetWidth || 700;
   const height = Math.round(width * 0.5);
 
   const svg = d3.select('#map-container').append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('width', '100%')
-    .style('display','block');
+    .attr('width', '100%').style('display','block');
+  window._mapSvg = svg;
 
   svg.append('rect').attr('width', width).attr('height', height).attr('fill', fillOcean);
 
-  const projection = d3.geoNaturalEarth1().scale(width / 6.5).translate([width/2, height/2]);
+  const projection = d3.geoNaturalEarth1().scale(width/6.5).translate([width/2, height/2]);
   const path = d3.geoPath(projection);
 
-  const tooltip = document.getElementById('cd-list') ? null : null; // reuse nothing, inline tooltip
   const tip = document.createElement('div');
   tip.style.cssText = 'display:none;position:fixed;background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);pointer-events:none;z-index:9999';
   document.body.appendChild(tip);
 
   d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(world => {
     const features = topojson.feature(world, world.objects.countries).features;
-
-    svg.selectAll('path.country')
-      .data(features)
-      .join('path')
-      .attr('class','country')
-      .attr('d', path)
-      .attr('fill', d => VISITED_IDS.has(String(d.id).padStart(3,'0')) ? fillVisited : fillDefault)
-      .attr('stroke', strokeCol)
-      .attr('stroke-width', 0.4)
+    svg.selectAll('path.country').data(features).join('path')
+      .attr('class','country').attr('d', path)
+      .attr('fill', d => {
+        const id = String(d.id).padStart(3,'0');
+        if(VISITED_IDS.has(id)) return '#14b8a6';
+        if(BUCKET_IDS.has(id)) return '#f59e0b';
+        return fillDefault;
+      })
+      .attr('stroke', strokeCol).attr('stroke-width', 0.4)
       .on('mousemove', function(event, d) {
         const id = String(d.id).padStart(3,'0');
-        const name = MAP_COUNTRY_NAMES[id];
+        const name = MAP_COUNTRY_NAMES[id] || BUCKET_NAMES[id];
         if(name) {
           tip.style.display = 'block';
-          tip.style.left = (event.clientX + 12) + 'px';
-          tip.style.top = (event.clientY - 32) + 'px';
-          tip.textContent = name;
-        } else { tip.style.display = 'none'; }
+          tip.style.left = (event.clientX+12)+'px';
+          tip.style.top = (event.clientY-32)+'px';
+          const isVisited = VISITED_IDS.has(id);
+          const isBucket = BUCKET_IDS.has(id);
+          tip.textContent = name + (isVisited ? ' ✓' : isBucket ? ' ★' : '');
+        } else tip.style.display = 'none';
       })
       .on('mouseleave', () => tip.style.display = 'none');
   });
 }
-
 // ── Countdowns ──
 let countdowns = [];
 
