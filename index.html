@@ -1285,6 +1285,15 @@ body {
       <div id="task-list"></div>
     </div>
 
+    <!-- Notes -->
+    <div style="width:220px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Notes</div>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="notes-saved"></span>
+      </div>
+      <textarea id="notes-area" placeholder="Type anything..." style="flex:1;background:transparent;border:none;outline:none;padding:12px 16px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:300px"></textarea>
+    </div>
+
     <!-- Food log -->
     <div class="food-panel">
       <div class="food-header">
@@ -3085,6 +3094,25 @@ document.getElementById('cd-title-input')?.addEventListener('keydown', (e) => {
   if(e.key === 'Enter') addCountdown();
 });
 
+// ── Notes ──
+function notesKey() { return 'gw-notes'; }
+
+function loadNotes() {
+  try {
+    const n = localStorage.getItem(notesKey());
+    if(n !== null) document.getElementById('notes-area').value = n;
+  } catch(e) {}
+}
+
+function saveNotes() {
+  try {
+    localStorage.setItem(notesKey(), document.getElementById('notes-area').value);
+    const el = document.getElementById('notes-saved');
+    el.textContent = 'saved';
+    setTimeout(() => el.textContent = '', 1500);
+  } catch(e) {}
+}
+
 // ── Password ──
 const PW_HASH = btoa('vector2030');
 const PW_SESSION_KEY = 'gw-auth';
@@ -3115,11 +3143,17 @@ document.getElementById('pw-input').addEventListener('keydown', (e) => {
 function initApp() {
   loadState();
   loadTasks();
+  // Migration: force-hide removed tasks
+  if(!hiddenTaskIds.has('t-stfarm')) {
+    hiddenTaskIds.add('t-stfarm');
+    saveHiddenTasks();
+  }
   loadEpisodes();
   loadAiLessons();
   loadFoodSections();
   loadAdhoc();
   loadCountdowns();
+  loadNotes();
   setDateLabel();
   buildGutter();
   renderCalendar();
@@ -3133,6 +3167,12 @@ if(checkAuth()) {
   document.getElementById('pw-screen').style.display = 'none';
   initApp();
 }
+
+// Wire notes autosave
+document.getElementById('notes-area').addEventListener('input', () => {
+  clearTimeout(window._notesSaveTimer);
+  window._notesSaveTimer = setTimeout(saveNotes, 800);
+});
 
 // ── Wisdom Quotes ──
 const QUOTES = [
