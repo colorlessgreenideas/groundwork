@@ -2910,7 +2910,7 @@ function drawMap() {
       .attr('stroke', strokeCol).attr('stroke-width', 0.4)
       .on('mousemove', function(event, d) {
         const id = String(d.id).padStart(3,'0');
-        const name = MAP_COUNTRY_NAMES[id] || BUCKET_NAMES[id];
+        const name = MAP_COUNTRY_NAMES[id] || BUCKET_NAMES[id] || d.properties.name;
         if(name) {
           tip.style.display = 'block';
           tip.style.left = (event.clientX+12)+'px';
