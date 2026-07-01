@@ -1400,7 +1400,7 @@ body {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         <div class="review-stat-card">
           <div class="review-stat-label">Visited</div>
-          <div class="review-stat-value" style="color:#14b8a6" id="map-count">29</div>
+          <div class="review-stat-value" style="color:#14b8a6" id="map-count">26</div>
         </div>
         <div class="review-stat-card">
           <div class="review-stat-label">Total</div>
@@ -1408,7 +1408,7 @@ body {
         </div>
         <div class="review-stat-card">
           <div class="review-stat-label">Percentage</div>
-          <div class="review-stat-value" style="color:#14b8a6">14.9%</div>
+          <div class="review-stat-value" style="color:#14b8a6">13.3%</div>
         </div>
       </div>
       <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden;background:var(--surface)"></div>
@@ -2728,7 +2728,7 @@ function renderFood() {
 const VISITED_IDS = new Set([
   '250','056','124','392','410','408','484','643','826','682',
   '702','528','188','036','214','276','380','300','792','044',
-  '796','630','850','534','212','052','208','578','752'
+  '212','052','208','578','752','840'
 ]);
 
 const MAP_COUNTRY_NAMES = {
@@ -2736,15 +2736,15 @@ const MAP_COUNTRY_NAMES = {
   '408':'North Korea','484':'Mexico','643':'Russia','826':'United Kingdom','682':'Saudi Arabia',
   '702':'Singapore','528':'Netherlands','188':'Costa Rica','036':'Australia',
   '214':'Dominican Republic','276':'Germany','380':'Italy','300':'Greece','792':'Turkey',
-  '044':'Bahamas','796':'Turks & Caicos','630':'Puerto Rico','850':'US Virgin Islands',
-  '534':'St. Maarten','212':'Dominica','052':'Barbados','208':'Denmark','578':'Norway','752':'Sweden'
+  '044':'Bahamas','212':'Dominica','052':'Barbados','208':'Denmark','578':'Norway',
+  '752':'Sweden','840':'United States'
 };
 
 let mapLoaded = false;
 
 function openMapModal() {
   document.getElementById('map-modal').classList.add('open');
-  document.getElementById('map-sub').textContent = `${VISITED_IDS.size} of 195 countries · 14.9%`;
+  document.getElementById('map-sub').textContent = `${VISITED_IDS.size} of 195 countries · ${((VISITED_IDS.size/195)*100).toFixed(1)}%`;
 
   // Render country tags
   const list = document.getElementById('map-country-list');
