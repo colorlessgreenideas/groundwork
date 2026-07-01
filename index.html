@@ -1252,21 +1252,6 @@ body {
 
     <!-- Calendar -->
     <div class="cal-panel">
-      <div class="cal-header">
-        <div class="cal-title">Schedule</div>
-        <div class="day-pills" id="day-pills"></div>
-      </div>
-      <div class="cal-legend">
-        <span class="leg"><span class="leg-dot" style="background:var(--work)"></span>Work</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--hw)"></span>HW</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--hist)"></span>History</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--exer)"></span>Exercise</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--yard)"></span>Yard</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--food1)"></span>Morning</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--food2)"></span>Midday</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--food3)"></span>Dinner</span>
-        <span class="leg"><span class="leg-dot" style="background:var(--ai)"></span>AI Learn</span>
-      </div>
       <div class="week-grid">
         <div class="week-gutter" id="gutter"></div>
         <div class="week-cols view-week" id="week-cols"></div>
@@ -2844,7 +2829,6 @@ function initApp() {
   loadCountdowns();
   setDateLabel();
   buildGutter();
-  buildDayPills();
   renderCalendar();
   renderFood();
   renderTasks();
