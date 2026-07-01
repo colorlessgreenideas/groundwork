@@ -2883,15 +2883,33 @@ function drawMap() {
   const width = container.offsetWidth || 700;
   const height = Math.round(width * 0.5);
 
+  const controls = document.createElement('div');
+  controls.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px';
+  controls.innerHTML = `<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">Scroll to zoom · drag to pan</span><button onclick="resetMapZoom()" style="font-size:10px;font-family:'DM Mono',monospace;background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;color:var(--text2);padding:2px 8px;cursor:pointer">Reset</button>`;
+  container.parentNode.insertBefore(controls, container);
+
   const svg = d3.select('#map-container').append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('width', '100%').style('display','block');
+    .attr('width', '100%').style('display','block').style('cursor','grab');
   window._mapSvg = svg;
 
   svg.append('rect').attr('width', width).attr('height', height).attr('fill', fillOcean);
 
+  const g = svg.append('g').attr('id','map-zoom-group');
+
   const projection = d3.geoNaturalEarth1().scale(width/6.5).translate([width/2, height/2]);
   const path = d3.geoPath(projection);
+
+  const zoom = d3.zoom()
+    .scaleExtent([1, 12])
+    .translateExtent([[0,0],[width,height]])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+      svg.style('cursor', event.transform.k > 1 ? 'grabbing' : 'grab');
+    });
+  svg.call(zoom);
+  window._mapZoom = zoom;
+  window._mapZoomSvg = svg;
 
   const tip = document.createElement('div');
   tip.style.cssText = 'display:none;position:fixed;background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);pointer-events:none;z-index:9999';
@@ -2899,7 +2917,7 @@ function drawMap() {
 
   d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(world => {
     const features = topojson.feature(world, world.objects.countries).features;
-    svg.selectAll('path.country').data(features).join('path')
+    g.selectAll('path.country').data(features).join('path')
       .attr('class','country').attr('d', path)
       .attr('fill', d => {
         const id = String(d.id).padStart(3,'0');
@@ -2921,6 +2939,24 @@ function drawMap() {
         } else tip.style.display = 'none';
       })
       .on('mouseleave', () => tip.style.display = 'none');
+  });
+}
+
+function resetMapZoom() {
+  if(window._mapZoomSvg && window._mapZoom) {
+    window._mapZoomSvg.transition().duration(400).call(window._mapZoom.transform, d3.zoomIdentity);
+  }
+}
+
+function refreshMapColors() {
+  if(!window._mapSvg) return;
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const fillDefault = isDark ? '#2a2a35' : '#d1d5db';
+  window._mapSvg.select('#map-zoom-group').selectAll('path.country').attr('fill', d => {
+    const id = String(d.id).padStart(3,'0');
+    if(showVisited && VISITED_IDS.has(id)) return '#14b8a6';
+    if(showBucket && BUCKET_IDS.has(id)) return '#f59e0b';
+    return fillDefault;
   });
 }
 // ── Countdowns ──
