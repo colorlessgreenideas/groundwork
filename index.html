@@ -2333,6 +2333,9 @@ function taskStorageKey() {
   return `jg-tasks-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 function customTaskKey() { return 'jg-custom-tasks'; }
+function hiddenTaskKey() { return 'jg-hidden-tasks'; }
+
+let hiddenTaskIds = new Set();
 
 function loadTasks() {
   try {
@@ -2340,6 +2343,8 @@ function loadTasks() {
     if(t) taskDone = JSON.parse(t);
     const ct = localStorage.getItem(customTaskKey());
     if(ct) customTasks = JSON.parse(ct);
+    const ht = localStorage.getItem(hiddenTaskKey());
+    if(ht) hiddenTaskIds = new Set(JSON.parse(ht));
   } catch(e) {}
 }
 function saveTasks() {
@@ -2347,6 +2352,17 @@ function saveTasks() {
 }
 function saveCustomTasks() {
   try { localStorage.setItem(customTaskKey(), JSON.stringify(customTasks)); } catch(e) {}
+}
+function saveHiddenTasks() {
+  try { localStorage.setItem(hiddenTaskKey(), JSON.stringify([...hiddenTaskIds])); } catch(e) {}
+}
+
+function hideDefaultTask(id) {
+  if(!confirm('Remove this task? You can restore it by clearing hidden tasks.')) return;
+  hiddenTaskIds.add(id);
+  saveHiddenTasks();
+  renderTasks();
+  updateProgress();
 }
 
 function toggleTask(id) {
@@ -2385,14 +2401,14 @@ function renderTasks() {
   list.innerHTML = '';
   let total = 0, done = 0;
 
-  // Get tasks for the current day
   const todayCalIdx = jsToCalIdx(new Date().getDay());
   const dayTasks = getTasksForDay(todayCalIdx);
   const dayTaskIds = new Set(dayTasks.map(t => t.id));
 
-  // Render by section, only show sections that have tasks today
   TASK_SECTION_MAP.forEach(sec => {
-    const secTasks = sec.ids.map(id => ALL_TASK_DEFS.find(t => t.id === id)).filter(t => t && dayTaskIds.has(t.id));
+    const secTasks = sec.ids
+      .map(id => ALL_TASK_DEFS.find(t => t.id === id))
+      .filter(t => t && dayTaskIds.has(t.id) && !hiddenTaskIds.has(t.id));
     if(secTasks.length === 0) return;
 
     const label = document.createElement('div');
@@ -2412,9 +2428,10 @@ function renderTasks() {
           <div class="task-name">${item.name}</div>
           <div class="task-sub">${item.sub}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;align-items:center;gap:4px">
           <div class="task-dot" style="background:${TASK_COLORS[item.color]}"></div>
           <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipTask('${item.id}',event)">S</button>
+          <button class="task-delete-btn" title="Remove task" onclick="event.stopPropagation();hideDefaultTask('${item.id}')">✕</button>
         </div>
       `;
       row.onclick = () => { if(!skipped['task-'+item.id]) toggleTask(item.id); };
@@ -2440,7 +2457,7 @@ function renderTasks() {
           <div class="task-name">${item.name}</div>
           <div class="task-sub">custom</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;align-items:center;gap:4px">
           <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipTask('${item.id}',event)">S</button>
           <button class="task-delete-btn" title="Delete task" onclick="event.stopPropagation();deleteTask('${item.id}')">✕</button>
         </div>
@@ -2450,7 +2467,16 @@ function renderTasks() {
     });
   }
 
-  // Show day name in header
+  // Restore hidden tasks button
+  if(hiddenTaskIds.size > 0) {
+    const restoreBtn = document.createElement('button');
+    restoreBtn.className = 'reset-btn';
+    restoreBtn.style.cssText = 'margin:8px 16px;font-size:10px;color:var(--text3)';
+    restoreBtn.textContent = `Restore ${hiddenTaskIds.size} hidden task${hiddenTaskIds.size>1?'s':''}`;
+    restoreBtn.onclick = () => { hiddenTaskIds.clear(); saveHiddenTasks(); renderTasks(); updateProgress(); };
+    list.appendChild(restoreBtn);
+  }
+
   const todayName = DAY_NAMES[new Date().getDay()];
   const titleEl = document.querySelector('.tasks-title');
   if(titleEl) titleEl.textContent = `Tasks · ${todayName}`;
