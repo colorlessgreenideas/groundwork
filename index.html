@@ -700,6 +700,20 @@ body {
 }
 .counter-val.done { color: #22c55e; }
 
+.map-btn {
+  background: rgba(56,189,248,0.15);
+  border: 1px solid rgba(56,189,248,0.3);
+  color: #38bdf8;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.map-btn:hover { background: rgba(56,189,248,0.25); }
+
 .countdown-btn {
   background: rgba(20,184,166,0.15);
   border: 1px solid rgba(20,184,166,0.3);
@@ -1183,6 +1197,7 @@ body {
   <div style="display:flex;gap:8px;align-items:center">
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
     <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
+    <button class="map-btn" onclick="openMapModal()">🌍 World Map</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <div class="view-toggle">
       <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
@@ -1367,6 +1382,40 @@ body {
     <div class="modal-footer">
       <span id="ai-footer-txt"></span>
       <button class="next-ep-btn" onclick="markTodayAiDone()">Mark today's ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- World Map Modal -->
+<div class="modal-overlay" id="map-modal" onclick="if(event.target.id==='map-modal')closeMapModal()">
+  <div class="modal" style="width:720px;max-width:95vw">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🌍 Countries Visited</div>
+        <div class="modal-sub" id="map-sub">Loading map...</div>
+      </div>
+      <button class="modal-close" onclick="closeMapModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="review-stat-card">
+          <div class="review-stat-label">Visited</div>
+          <div class="review-stat-value" style="color:#14b8a6" id="map-count">29</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-label">Total</div>
+          <div class="review-stat-value">195</div>
+        </div>
+        <div class="review-stat-card">
+          <div class="review-stat-label">Percentage</div>
+          <div class="review-stat-value" style="color:#14b8a6">14.9%</div>
+        </div>
+      </div>
+      <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden;background:var(--surface)"></div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px">Countries visited</div>
+        <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2672,6 +2721,116 @@ function renderFood() {
         list.appendChild(row);
       }
     });
+  });
+}
+
+// ── World Map ──
+const VISITED_IDS = new Set([
+  '250','056','124','392','410','408','484','643','826','682',
+  '702','528','188','036','214','276','380','300','792','044',
+  '796','630','850','534','212','052','208','578','752'
+]);
+
+const MAP_COUNTRY_NAMES = {
+  '250':'France','056':'Belgium','124':'Canada','392':'Japan','410':'South Korea',
+  '408':'North Korea','484':'Mexico','643':'Russia','826':'United Kingdom','682':'Saudi Arabia',
+  '702':'Singapore','528':'Netherlands','188':'Costa Rica','036':'Australia',
+  '214':'Dominican Republic','276':'Germany','380':'Italy','300':'Greece','792':'Turkey',
+  '044':'Bahamas','796':'Turks & Caicos','630':'Puerto Rico','850':'US Virgin Islands',
+  '534':'St. Maarten','212':'Dominica','052':'Barbados','208':'Denmark','578':'Norway','752':'Sweden'
+};
+
+let mapLoaded = false;
+
+function openMapModal() {
+  document.getElementById('map-modal').classList.add('open');
+  document.getElementById('map-sub').textContent = `${VISITED_IDS.size} of 195 countries · 14.9%`;
+
+  // Render country tags
+  const list = document.getElementById('map-country-list');
+  if(list.children.length === 0) {
+    Object.entries(MAP_COUNTRY_NAMES).sort((a,b) => a[1].localeCompare(b[1])).forEach(([id, name]) => {
+      const tag = document.createElement('span');
+      tag.style.cssText = 'background:rgba(20,184,166,0.15);color:#0f6e56;border:0.5px solid rgba(20,184,166,0.3);border-radius:4px;padding:2px 7px;font-size:11px;font-family:"DM Mono",monospace';
+      tag.textContent = name;
+      list.appendChild(tag);
+    });
+  }
+
+  if(!mapLoaded) {
+    mapLoaded = true;
+    loadWorldMap();
+  }
+}
+
+function closeMapModal() {
+  document.getElementById('map-modal').classList.remove('open');
+}
+
+function loadWorldMap() {
+  if(typeof d3 === 'undefined' || typeof topojson === 'undefined') {
+    const d3s = document.createElement('script');
+    d3s.src = 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js';
+    d3s.onload = () => {
+      const ts = document.createElement('script');
+      ts.src = 'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js';
+      ts.onload = () => drawMap();
+      document.head.appendChild(ts);
+    };
+    document.head.appendChild(d3s);
+  } else {
+    drawMap();
+  }
+}
+
+function drawMap() {
+  const container = document.getElementById('map-container');
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const fillVisited = '#14b8a6';
+  const fillDefault = isDark ? '#2a2a35' : '#d1d5db';
+  const fillOcean = isDark ? '#1a1a2e' : '#dbeafe';
+  const strokeCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)';
+
+  const width = container.offsetWidth || 680;
+  const height = Math.round(width * 0.5);
+
+  const svg = d3.select('#map-container').append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('width', '100%')
+    .style('display','block');
+
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', fillOcean);
+
+  const projection = d3.geoNaturalEarth1().scale(width / 6.5).translate([width/2, height/2]);
+  const path = d3.geoPath(projection);
+
+  const tooltip = document.getElementById('cd-list') ? null : null; // reuse nothing, inline tooltip
+  const tip = document.createElement('div');
+  tip.style.cssText = 'display:none;position:fixed;background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);pointer-events:none;z-index:9999';
+  document.body.appendChild(tip);
+
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(world => {
+    const features = topojson.feature(world, world.objects.countries).features;
+
+    svg.selectAll('path.country')
+      .data(features)
+      .join('path')
+      .attr('class','country')
+      .attr('d', path)
+      .attr('fill', d => VISITED_IDS.has(String(d.id).padStart(3,'0')) ? fillVisited : fillDefault)
+      .attr('stroke', strokeCol)
+      .attr('stroke-width', 0.4)
+      .on('mousemove', function(event, d) {
+        const id = String(d.id).padStart(3,'0');
+        const name = MAP_COUNTRY_NAMES[id];
+        if(name) {
+          tip.style.display = 'block';
+          tip.style.left = (event.clientX + 12) + 'px';
+          tip.style.top = (event.clientY - 32) + 'px';
+          tip.textContent = name;
+        } else { tip.style.display = 'none'; }
+      })
+      .on('mouseleave', () => tip.style.display = 'none');
   });
 }
 
