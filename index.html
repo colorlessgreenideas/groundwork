@@ -700,6 +700,79 @@ body {
 }
 .counter-val.done { color: #22c55e; }
 
+.countdown-btn {
+  background: rgba(20,184,166,0.15);
+  border: 1px solid rgba(20,184,166,0.3);
+  color: #14b8a6;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.countdown-btn:hover { background: rgba(20,184,166,0.25); }
+
+.cd-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 18px;
+  border-bottom: none;
+}
+.cd-card:first-of-type { margin-top: 12px; border-radius: var(--radius) var(--radius) 0 0; }
+.cd-card:last-of-type { border-bottom: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); margin-bottom: 12px; }
+.cd-card:only-of-type { border-radius: var(--radius); border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.cd-info { flex: 1; }
+.cd-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.cd-date { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.cd-time {
+  text-align: right;
+  flex-shrink: 0;
+}
+.cd-days { font-size: 28px; font-weight: 700; font-family: 'DM Mono', monospace; color: #14b8a6; line-height: 1; }
+.cd-days.soon { color: #f59e0b; }
+.cd-days.past { color: var(--text3); }
+.cd-unit { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.cd-hms { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.cd-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.cd-delete-btn:hover { color: #ef4444; }
+.cd-empty {
+  padding: 24px 18px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+}
+.cd-add-section {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cd-inputs {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 8px;
+}
+
 .quote-btn {
   background: rgba(251,146,60,0.15);
   border: 1px solid rgba(251,146,60,0.3);
@@ -1109,6 +1182,7 @@ body {
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
+    <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <div class="view-toggle">
       <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
@@ -1308,6 +1382,28 @@ body {
     <div class="modal-footer">
       <span id="ai-footer-txt"></span>
       <button class="next-ep-btn" onclick="markTodayAiDone()">Mark today's ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Countdown Modal -->
+<div class="modal-overlay" id="countdown-modal" onclick="if(event.target.id==='countdown-modal')closeCountdown()">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⏳ Countdowns</div>
+        <div class="modal-sub" id="cd-sub">Track upcoming dates</div>
+      </div>
+      <button class="modal-close" onclick="closeCountdown()">✕</button>
+    </div>
+    <div class="modal-body" id="cd-list" style="padding:0"></div>
+    <div class="cd-add-section">
+      <div class="review-label">Add countdown</div>
+      <div class="cd-inputs">
+        <input class="review-input" style="width:100%" id="cd-title-input" placeholder="Title (e.g. San Diego trip)" maxlength="40" />
+        <input class="review-input" style="width:100%" id="cd-date-input" type="date" />
+      </div>
+      <button class="next-ep-btn" style="align-self:flex-end" onclick="addCountdown()">+ Add</button>
     </div>
   </div>
 </div>
@@ -2594,6 +2690,123 @@ function renderFood() {
   });
 }
 
+// ── Countdowns ──
+let countdowns = [];
+
+function cdKey() { return 'gw-countdowns'; }
+function loadCountdowns() {
+  try { const c = localStorage.getItem(cdKey()); if(c) countdowns = JSON.parse(c); } catch(e) {}
+}
+function saveCountdowns() {
+  try { localStorage.setItem(cdKey(), JSON.stringify(countdowns)); } catch(e) {}
+}
+
+function openCountdown() {
+  document.getElementById('countdown-modal').classList.add('open');
+  // Set default date to today
+  const d = new Date();
+  document.getElementById('cd-date-input').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  renderCountdowns();
+}
+function closeCountdown() {
+  document.getElementById('countdown-modal').classList.remove('open');
+}
+
+function addCountdown() {
+  const title = document.getElementById('cd-title-input').value.trim();
+  const date = document.getElementById('cd-date-input').value;
+  if(!title || !date) return;
+  countdowns.push({ id: Date.now(), title, date });
+  countdowns.sort((a,b) => new Date(a.date) - new Date(b.date));
+  saveCountdowns();
+  document.getElementById('cd-title-input').value = '';
+  renderCountdowns();
+}
+
+function deleteCountdown(id) {
+  countdowns = countdowns.filter(c => c.id !== id);
+  saveCountdowns();
+  renderCountdowns();
+}
+
+function getCountdownData(dateStr) {
+  const now = new Date();
+  const target = new Date(dateStr + 'T00:00:00');
+  const diff = target - now;
+  const isPast = diff < 0;
+  const absDiff = Math.abs(diff);
+  const totalDays = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs = Math.floor((absDiff % (1000 * 60)) / 1000);
+  return { totalDays, hours, mins, secs, isPast, isToday: totalDays === 0 && !isPast };
+}
+
+function renderCountdowns() {
+  const list = document.getElementById('cd-list');
+  list.innerHTML = '';
+
+  if(countdowns.length === 0) {
+    list.innerHTML = '<div class="cd-empty">No countdowns yet.<br>Add one below.</div>';
+    document.getElementById('cd-sub').textContent = 'Track upcoming dates';
+    return;
+  }
+
+  document.getElementById('cd-sub').textContent = `${countdowns.length} countdown${countdowns.length>1?'s':''}`;
+
+  countdowns.forEach((cd, idx) => {
+    const { totalDays, hours, mins, secs, isPast, isToday } = getCountdownData(cd.date);
+    const d = new Date(cd.date + 'T00:00:00');
+    const dateLabel = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+    const daysClass = isPast ? 'past' : totalDays <= 7 ? 'soon' : '';
+    const daysLabel = isPast ? `${totalDays}d ago` : isToday ? 'TODAY' : `${totalDays}`;
+    const unitLabel = isPast || isToday ? '' : 'days away';
+    const hmsLabel = isPast || isToday ? '' : `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+    const isFirst = idx === 0;
+    const isLast = idx === countdowns.length - 1;
+    const isOnly = countdowns.length === 1;
+
+    const card = document.createElement('div');
+    card.className = 'cd-card';
+    if(isOnly) card.style.cssText = 'margin:12px 18px;border:1px solid var(--border);border-radius:var(--border-radius-md)';
+    else if(isFirst) card.style.cssText = 'margin:12px 18px 0;border:1px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none';
+    else if(isLast) card.style.cssText = 'margin:0 18px 12px;border:1px solid var(--border);border-radius:0 0 8px 8px';
+    else card.style.cssText = 'margin:0 18px;border:1px solid var(--border);border-radius:0;border-bottom:none';
+
+    card.innerHTML = `
+      <div class="cd-info">
+        <div class="cd-title">${cd.title}</div>
+        <div class="cd-date">${dateLabel}</div>
+      </div>
+      <div class="cd-time">
+        <div class="cd-days ${daysClass}">${daysLabel}</div>
+        ${unitLabel ? `<div class="cd-unit">${unitLabel}</div>` : ''}
+        ${hmsLabel ? `<div class="cd-hms">${hmsLabel}</div>` : ''}
+      </div>
+      <button class="cd-delete-btn" onclick="deleteCountdown(${cd.id})">✕</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// Live tick for countdowns
+let cdInterval = null;
+document.getElementById('countdown-modal').addEventListener('shown', () => {
+  cdInterval = setInterval(renderCountdowns, 1000);
+});
+// Use MutationObserver to detect modal open/close
+new MutationObserver(() => {
+  const isOpen = document.getElementById('countdown-modal').classList.contains('open');
+  if(isOpen && !cdInterval) cdInterval = setInterval(renderCountdowns, 1000);
+  else if(!isOpen && cdInterval) { clearInterval(cdInterval); cdInterval = null; }
+}).observe(document.getElementById('countdown-modal'), { attributes: true, attributeFilter: ['class'] });
+
+document.getElementById('cd-title-input')?.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') addCountdown();
+});
+
 // ── Password ──
 const PW_HASH = btoa('vector2030');
 const PW_SESSION_KEY = 'gw-auth';
@@ -2628,6 +2841,7 @@ function initApp() {
   loadAiLessons();
   loadFoodSections();
   loadAdhoc();
+  loadCountdowns();
   setDateLabel();
   buildGutter();
   buildDayPills();
