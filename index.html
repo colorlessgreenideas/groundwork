@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JG Daily Tracker</title>
+<title>Groundwork</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -951,6 +951,84 @@ body {
   line-height: 1.5;
 }
 
+/* ── Password screen ── */
+#pw-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+}
+.pw-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.pw-logo h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.pw-logo p {
+  font-size: 12px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.pw-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 280px;
+}
+.pw-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  text-align: center;
+  letter-spacing: 3px;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.pw-input:focus { border-color: #4ade80; }
+.pw-input.error { border-color: #ef4444; animation: shake 0.3s ease; }
+.pw-btn {
+  background: #4ade80;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a1a0a;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+.pw-btn:hover { opacity: 0.9; }
+.pw-error {
+  font-size: 11px;
+  color: #ef4444;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  min-height: 16px;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -988,10 +1066,45 @@ body {
 </head>
 <body>
 
+<!-- Password screen -->
+<div id="pw-screen">
+  <div class="pw-logo">
+    <svg width="56" height="56" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#1a1a2e"/>
+      <rect x="4" y="22" width="24" height="3" rx="1.5" fill="#14b8a6"/>
+      <rect x="4" y="18" width="18" height="3" rx="1.5" fill="#3b82f6"/>
+      <rect x="4" y="14" width="12" height="3" rx="1.5" fill="#a78bfa"/>
+      <path d="M22 12 L26 7 L30 12" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <line x1="26" y1="7" x2="26" y2="17" stroke="#4ade80" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <h1>Groundwork</h1>
+    <p>Your daily command center</p>
+  </div>
+  <div class="pw-box">
+    <input class="pw-input" id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <button class="pw-btn" onclick="checkPassword()">Enter</button>
+    <div class="pw-error" id="pw-error"></div>
+  </div>
+</div>
+
 <div class="header">
   <div class="header-left">
-    <h1>JG Tracker</h1>
-    <div class="sub" id="date-label"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#1a1a2e"/>
+        <!-- Ground layers -->
+        <rect x="4" y="22" width="24" height="3" rx="1.5" fill="#14b8a6"/>
+        <rect x="4" y="18" width="18" height="3" rx="1.5" fill="#3b82f6"/>
+        <rect x="4" y="14" width="12" height="3" rx="1.5" fill="#a78bfa"/>
+        <!-- Upward arrow / growth -->
+        <path d="M22 12 L26 7 L30 12" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <line x1="26" y1="7" x2="26" y2="17" stroke="#4ade80" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1>Groundwork</h1>
+        <div class="sub" id="date-label"></div>
+      </div>
+    </div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
@@ -2442,21 +2555,54 @@ function renderFood() {
   });
 }
 
+// ── Password ──
+const PW_HASH = btoa('vector2030');
+const PW_SESSION_KEY = 'gw-auth';
+
+function checkAuth() {
+  return sessionStorage.getItem(PW_SESSION_KEY) === PW_HASH;
+}
+
+function checkPassword() {
+  const input = document.getElementById('pw-input');
+  if(btoa(input.value) === PW_HASH) {
+    sessionStorage.setItem(PW_SESSION_KEY, PW_HASH);
+    document.getElementById('pw-screen').style.display = 'none';
+    initApp();
+  } else {
+    input.classList.add('error');
+    document.getElementById('pw-error').textContent = 'Incorrect password';
+    input.value = '';
+    setTimeout(() => { input.classList.remove('error'); document.getElementById('pw-error').textContent = ''; }, 1000);
+  }
+}
+
+document.getElementById('pw-input').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') checkPassword();
+});
+
 // ── Init ──
-loadState();
-loadTasks();
-loadEpisodes();
-loadAiLessons();
-loadFoodSections();
-loadAdhoc();
-setDateLabel();
-buildGutter();
-buildDayPills();
-renderCalendar();
-renderFood();
-renderTasks();
-renderAdhocTags();
-updateProgress();
+function initApp() {
+  loadState();
+  loadTasks();
+  loadEpisodes();
+  loadAiLessons();
+  loadFoodSections();
+  loadAdhoc();
+  setDateLabel();
+  buildGutter();
+  buildDayPills();
+  renderCalendar();
+  renderFood();
+  renderTasks();
+  renderAdhocTags();
+  updateProgress();
+}
+
+if(checkAuth()) {
+  document.getElementById('pw-screen').style.display = 'none';
+  initApp();
+}
 
 // ── Wisdom Quotes ──
 const QUOTES = [
