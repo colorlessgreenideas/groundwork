@@ -1,0 +1,2948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JG Daily Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f11;
+  --surface: #18181c;
+  --surface2: #222228;
+  --border: #2e2e38;
+  --text: #f0f0f4;
+  --text2: #9090a0;
+  --text3: #5a5a6a;
+  --work: #3b82f6;
+  --work-bg: rgba(59,130,246,0.18);
+  --hw: #22c55e;
+  --hw-bg: rgba(34,197,94,0.18);
+  --hist: #f59e0b;
+  --hist-bg: rgba(245,158,11,0.18);
+  --exer: #ec4899;
+  --exer-bg: rgba(236,72,153,0.18);
+  --yard: #14b8a6;
+  --yard-bg: rgba(20,184,166,0.18);
+  --food1: #a78bfa;
+  --food1-bg: rgba(167,139,250,0.18);
+  --food2: #fb923c;
+  --food2-bg: rgba(251,146,60,0.18);
+  --food3: #4ade80;
+  --food3-bg: rgba(74,222,128,0.18);
+  --ai: #38bdf8;
+  --ai-bg: rgba(56,189,248,0.18);
+  --cal-color: #f59e0b;
+  --pro-color: #3b82f6;
+  --radius: 8px;
+  --slot: 36px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+.header-left h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.header-left .sub {
+  font-size: 12px;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+  margin-top: 2px;
+}
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.view-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.view-btn.active {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* ── Layout ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Progress bar row ── */
+.progress-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.grade-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.grade-letter {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  line-height: 1;
+  transition: color 0.3s;
+}
+.grade-pct {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.grade-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 4px;
+}
+.prog-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.prog-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.prog-label {
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'DM Mono', monospace;
+}
+.prog-value {
+  font-size: 22px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+}
+.prog-goal { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.prog-bar-bg {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.prog-bar {
+  height: 3px;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.cal-val { color: var(--cal-color); }
+.pro-val { color: var(--pro-color); }
+.cal-fill { background: var(--cal-color); }
+.pro-fill { background: var(--pro-color); }
+
+/* ── Content area ── */
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── Calendar panel ── */
+.cal-panel {
+  flex: 1;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.cal-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.day-pills {
+  display: flex;
+  gap: 4px;
+}
+.day-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.day-pill.active {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: #444;
+}
+.day-pill.today {
+  border-color: var(--pro-color);
+  color: var(--pro-color);
+}
+.day-pill.today.active {
+  background: rgba(59,130,246,0.15);
+}
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.leg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text2); font-family: 'DM Mono', monospace; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── Week grid ── */
+.week-grid {
+  display: flex;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 20px;
+}
+.week-gutter {
+  width: 44px;
+  flex-shrink: 0;
+  padding-top: 32px;
+}
+.week-hour-label {
+  height: var(--slot);
+  font-size: 10px;
+  color: var(--text3);
+  text-align: right;
+  padding-right: 8px;
+  line-height: 0;
+  position: relative;
+  top: -1px;
+  font-family: 'DM Mono', monospace;
+}
+.week-cols {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  padding-right: 16px;
+}
+.week-cols.view-week { grid-template-columns: repeat(7, minmax(0,1fr)); }
+.week-cols.view-day  { grid-template-columns: 1fr; }
+
+.col-wrap { position: relative; }
+.col-head {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 5;
+  border-bottom: 1px solid var(--border);
+}
+.col-head.today-head { color: var(--pro-color); }
+.col-body {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.col-hour-line {
+  height: var(--slot);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Events ── */
+.cal-event {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s, transform 0.1s;
+  z-index: 2;
+}
+.cal-event:active { cursor: grabbing; transform: scale(1.02); box-shadow: 0 4px 20px rgba(0,0,0,0.4); z-index: 10; }
+.cal-event.dragging { opacity: 0.5; transform: scale(1.03); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+.ev-name { font-size: 9px; font-weight: 600; text-align: center; letter-spacing: 0.2px; }
+.ev-time { font-size: 8px; opacity: 0.75; font-family: 'DM Mono', monospace; margin-top: 1px; }
+
+/* ── Tasks panel ── */
+.tasks-panel {
+  width: 240px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.tasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.tasks-title { font-size: 13px; font-weight: 600; }
+.tasks-progress {
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+}
+.task-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'DM Mono', monospace;
+  padding: 10px 16px 4px;
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.task-item:hover { background: var(--surface); }
+.task-item.done { opacity: 0.4; }
+.task-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  color: transparent;
+  transition: all 0.15s;
+}
+.task-item.done .task-check {
+  background: var(--yard);
+  border-color: var(--yard);
+  color: white;
+}
+.task-info { flex: 1; }
+.task-name { font-size: 12px; font-weight: 500; }
+.task-sub { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: 'DM Mono', monospace; }
+.task-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.task-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.task-delete-btn:hover { color: #ef4444; }
+
+.task-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+}
+.task-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+}
+.task-input::placeholder { color: var(--text3); }
+.task-input:focus { border-color: #444; }
+.task-add-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.task-add-btn:hover { color: var(--text); }
+
+/* ── Food log panel ── */
+.food-panel {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.food-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.food-title { font-size: 13px; font-weight: 600; }
+.reset-btn {
+  font-size: 11px;
+  color: var(--text3);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: color 0.15s;
+}
+.reset-btn:hover { color: var(--text2); }
+
+.food-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'DM Mono', monospace;
+  padding: 10px 16px 4px;
+}
+
+.food-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.food-item:hover { background: var(--surface); }
+.food-item.logged { opacity: 0.4; }
+.food-left { display: flex; align-items: center; gap: 10px; }
+.food-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  color: transparent;
+  transition: all 0.15s;
+}
+.food-item.logged .food-check {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+.food-name { font-size: 12px; font-weight: 500; }
+.food-sub { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: 'DM Mono', monospace; }
+.food-right { text-align: right; flex-shrink: 0; }
+.food-protein { font-size: 12px; font-weight: 600; color: var(--pro-color); font-family: 'DM Mono', monospace; }
+.food-cal { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+/* ── Episode modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 420px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 14px; font-weight: 600; }
+.modal-sub { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { overflow-y: auto; padding: 8px 0 12px; flex: 1; }
+.ep-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.ep-item:hover { background: var(--surface2); }
+.ep-item.watched { opacity: 0.4; }
+.ep-item.today-ep { background: rgba(245,158,11,0.08); }
+.ep-num {
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+  min-width: 24px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.ep-info { flex: 1; }
+.ep-title { font-size: 12px; font-weight: 500; color: var(--text); }
+.ep-badge {
+  font-size: 9px;
+  background: rgba(245,158,11,0.2);
+  color: var(--hist);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-top: 3px;
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+}
+.ep-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  flex-shrink: 0;
+  color: transparent;
+  margin-top: 2px;
+  transition: all 0.15s;
+}
+.ep-item.watched .ep-check {
+  background: var(--hist);
+  border-color: var(--hist);
+  color: white;
+}
+.modal-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.next-ep-btn {
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: var(--hist);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.next-ep-btn:hover { background: rgba(245,158,11,0.25); }
+
+.counter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.counter-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  font-family: 'DM Sans', sans-serif;
+}
+.counter-btn:hover { border-color: var(--pro-color); color: var(--pro-color); }
+.counter-val {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+  min-width: 28px;
+  text-align: center;
+}
+.counter-val.done { color: #22c55e; }
+
+.quote-btn {
+  background: rgba(251,146,60,0.15);
+  border: 1px solid rgba(251,146,60,0.3);
+  color: #fb923c;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.quote-btn:hover { background: rgba(251,146,60,0.25); }
+.quote-display {
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  text-align: center;
+}
+.quote-text {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1.6;
+  letter-spacing: -0.2px;
+  font-style: italic;
+}
+.quote-author {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.quote-work {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  margin-top: -14px;
+}
+.quote-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Daily Review ── */
+.review-btn {
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.3);
+  color: #a78bfa;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.review-stat-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.review-stat-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-family: 'DM Mono', monospace;
+}
+.review-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  line-height: 1;
+}
+
+.skip-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text3);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 5px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.skip-btn:hover { border-color: #fb923c; color: #fb923c; }
+.skip-btn.skipped { border-color: #fb923c; color: #fb923c; background: rgba(251,146,60,0.1); }
+.food-item.skipped { opacity: 0.35; }
+.task-item.skipped { opacity: 0.35; }
+
+.adhoc-btn {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  font-family: 'DM Sans', sans-serif;
+  padding: 0;
+}
+.adhoc-btn:hover { border-color: var(--cal-color); color: var(--cal-color); }
+.adhoc-tag {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text2);
+}
+.adhoc-tag-remove {
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 10px; padding: 0; line-height: 1;
+  transition: color 0.15s;
+}
+.adhoc-tag-remove:hover { color: #ef4444; }
+.adhoc-preset {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.adhoc-preset:hover { border-color: #555; color: var(--text); }
+
+.review-btn:hover { background: rgba(167,139,250,0.25); }
+.review-section { display: flex; flex-direction: column; gap: 6px; }
+.review-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'DM Mono', monospace;
+}
+.review-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  width: 120px;
+  transition: border-color 0.15s;
+}
+.review-input:focus { border-color: #555; }
+.review-textarea {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.review-textarea:focus { border-color: #555; }
+.review-textarea::placeholder { color: var(--text3); }
+.review-input::placeholder { color: var(--text3); }
+.mood-row {
+  display: flex;
+  gap: 8px;
+}
+.mood-btn {
+  font-size: 22px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  width: 46px;
+  height: 46px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mood-btn:hover { border-color: #555; transform: scale(1.1); }
+.mood-btn.selected { border-color: #a78bfa; background: rgba(167,139,250,0.15); transform: scale(1.1); }
+.mood-labels {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.mood-labels span { width: 46px; text-align: center; }
+.past-review-card {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.past-review-card:last-child { border-bottom: none; }
+.past-review-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.past-review-mood { font-size: 16px; }
+.past-review-weight {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.past-field { margin-top: 6px; }
+.past-field-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'DM Mono', monospace;
+}
+.past-field-val {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Drag overlay ── */
+.drag-over-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--pro-color);
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 1px;
+}
+
+/* ── Current time indicator ── */
+.now-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: #ef4444;
+  z-index: 15;
+  pointer-events: none;
+}
+.now-dot {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>JG Tracker</h1>
+    <div class="sub" id="date-label"></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
+    <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
+      <button class="view-btn" id="btn-day" onclick="setView('day')">Day</button>
+    </div>
+  </div>
+</div>
+
+<div class="progress-row">
+  <div class="prog-card">
+    <div class="prog-top">
+      <div class="prog-label">Calories</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div><span class="prog-value cal-val" id="cal-val">0</span> <span class="prog-goal">/ 1835</span></div>
+        <button class="adhoc-btn" onclick="openAdhoc('cal')" title="Add extra calories">+</button>
+      </div>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar cal-fill" id="cal-bar" style="width:0%"></div></div>
+    <div id="cal-adhoc-list" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+  <div class="prog-card">
+    <div class="prog-top">
+      <div class="prog-label">Protein</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div><span class="prog-value pro-val" id="pro-val">0g</span> <span class="prog-goal">/ 170g</span></div>
+        <button class="adhoc-btn" onclick="openAdhoc('pro')" title="Add extra protein">+</button>
+      </div>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar pro-fill" id="pro-bar" style="width:0%"></div></div>
+    <div id="pro-adhoc-list" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+  <div class="grade-card">
+    <div class="grade-label">Today</div>
+    <div class="grade-letter" id="grade-letter">—</div>
+    <div class="grade-pct" id="grade-pct">0%</div>
+  </div>
+</div>
+
+<!-- Ad-hoc entry modal -->
+<div class="modal-overlay" id="adhoc-modal" onclick="if(event.target.id==='adhoc-modal')closeAdhoc()">
+  <div class="modal" style="width:340px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="adhoc-title">Add extra calories</div>
+        <div class="modal-sub">Won't appear in food log</div>
+      </div>
+      <button class="modal-close" onclick="closeAdhoc()">✕</button>
+    </div>
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:12px">
+      <div class="review-label" id="adhoc-label">Amount</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="review-input" style="width:120px;font-size:18px" id="adhoc-amount" type="number" min="0" placeholder="0" />
+        <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace" id="adhoc-unit"></span>
+      </div>
+      <input class="review-input" style="width:100%" id="adhoc-note" placeholder="Note (e.g. piece of cake)" maxlength="40" />
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="adhoc-presets"></div>
+    </div>
+    <div class="modal-footer">
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Press Enter to add</span>
+      <button class="next-ep-btn" onclick="confirmAdhoc()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="content">
+
+    <!-- Calendar -->
+    <div class="cal-panel">
+      <div class="cal-header">
+        <div class="cal-title">Schedule</div>
+        <div class="day-pills" id="day-pills"></div>
+      </div>
+      <div class="cal-legend">
+        <span class="leg"><span class="leg-dot" style="background:var(--work)"></span>Work</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--hw)"></span>HW</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--hist)"></span>History</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--exer)"></span>Exercise</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--yard)"></span>Yard</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--food1)"></span>Morning</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--food2)"></span>Midday</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--food3)"></span>Dinner</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--ai)"></span>AI Learn</span>
+      </div>
+      <div class="week-grid">
+        <div class="week-gutter" id="gutter"></div>
+        <div class="week-cols view-week" id="week-cols"></div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="tasks-panel">
+      <div class="tasks-header">
+        <div class="tasks-title">Tasks</div>
+        <div class="tasks-progress" id="tasks-progress">0 / 0</div>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- Food log -->
+    <div class="food-panel">
+      <div class="food-header">
+        <div class="food-title">Food Log</div>
+        <div style="display:flex;gap:6px">
+          <button class="reset-btn" onclick="openFoodEditor()">Edit</button>
+          <button class="reset-btn" onclick="resetDay()">Reset</button>
+        </div>
+      </div>
+      <div id="food-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Food Editor Modal -->
+<div class="modal-overlay" id="food-editor-modal" onclick="if(event.target.id==='food-editor-modal')closeFoodEditor()">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🥗 Edit Food Log</div>
+        <div class="modal-sub">Add or remove items</div>
+      </div>
+      <button class="modal-close" onclick="closeFoodEditor()">✕</button>
+    </div>
+    <div class="modal-body" id="food-editor-list" style="padding:0"></div>
+    <div class="modal-footer" style="flex-direction:column;gap:10px;align-items:stretch">
+      <div class="review-label" style="padding:0">Add new item</div>
+      <div style="display:grid;grid-template-columns:1fr 80px 70px 80px;gap:6px;align-items:center">
+        <input class="review-input" style="width:100%" id="fe-name" placeholder="Item name" />
+        <input class="review-input" style="width:100%" id="fe-protein" placeholder="Protein g" type="number" min="0" />
+        <input class="review-input" style="width:100%" id="fe-cal" placeholder="Cal" type="number" min="0" />
+        <select class="review-input" style="width:100%;padding:7px 8px" id="fe-section">
+          <option value="Morning Stack">Morning</option>
+          <option value="Midday Stack">Midday</option>
+          <option value="Dinner Stack">Dinner</option>
+          <option value="Anytime">Anytime</option>
+        </select>
+      </div>
+      <button class="next-ep-btn" style="align-self:flex-end" onclick="addFoodItem()">+ Add item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Episode Modal -->
+<div class="modal-overlay" id="ep-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="ep-modal-title">📺 The Great Tours: England, Scotland & Wales</div>
+        <div class="modal-sub" id="modal-sub">Today's episodes</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('ep-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="ep-list"></div>
+    <div class="modal-footer">
+      <span id="ep-footer-txt">Click an episode to mark watched</span>
+      <button class="next-ep-btn" onclick="markTodayWatched()">Mark today's ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Learning Modal -->
+<div class="modal-overlay" id="ai-modal" onclick="closeAiModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🤖 AI Learning Plan</div>
+        <div class="modal-sub" id="ai-modal-sub">Today's lesson</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('ai-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="ai-list"></div>
+    <div class="modal-footer">
+      <span id="ai-footer-txt"></span>
+      <button class="next-ep-btn" onclick="markTodayAiDone()">Mark today's ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wisdom Quote Modal -->
+<div class="modal-overlay" id="quote-modal" onclick="if(event.target.id==='quote-modal')document.getElementById('quote-modal').classList.remove('open')">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">💡 Wisdom</div>
+        <div class="modal-sub" id="quote-tradition"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="next-ep-btn" onclick="newQuote()">New quote</button>
+        <button class="modal-close" onclick="document.getElementById('quote-modal').classList.remove('open')">✕</button>
+      </div>
+    </div>
+    <div class="quote-display">
+      <div class="quote-divider"></div>
+      <div class="quote-text" id="quote-text"></div>
+      <div class="quote-divider"></div>
+      <div class="quote-author" id="quote-author"></div>
+      <div class="quote-work" id="quote-work"></div>
+    </div>
+    <div class="modal-footer">
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="quote-counter"></span>
+      <span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Review Modal -->
+<div class="modal-overlay" id="review-modal" onclick="closeReviewModal(event)">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📝 Daily Review</div>
+        <div class="modal-sub" id="review-date-sub"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="next-ep-btn" onclick="saveReview()">Save</button>
+        <button class="modal-close" onclick="document.getElementById('review-modal').classList.remove('open')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:16px">
+
+      <!-- Stats -->
+      <div id="review-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+
+      <!-- Mood -->
+      <div class="review-section">
+        <div class="review-label">How did you feel today?</div>
+        <div class="mood-row" id="mood-row">
+          <button class="mood-btn" data-mood="1">😞</button>
+          <button class="mood-btn" data-mood="2">😕</button>
+          <button class="mood-btn" data-mood="3">😐</button>
+          <button class="mood-btn" data-mood="4">😊</button>
+          <button class="mood-btn" data-mood="5">🔥</button>
+        </div>
+        <div class="mood-labels">
+          <span>Rough</span><span>Meh</span><span>OK</span><span>Good</span><span>Crushed it</span>
+        </div>
+      </div>
+
+      <!-- Weight -->
+      <div class="review-section">
+        <div class="review-label">Weight today (lbs)</div>
+        <input class="review-input" type="number" id="review-weight" placeholder="e.g. 198.4" step="0.1" min="100" max="400" />
+      </div>
+
+      <!-- Wins -->
+      <div class="review-section">
+        <div class="review-label">Wins of the day</div>
+        <textarea class="review-textarea" id="review-wins" placeholder="What went well today?"></textarea>
+      </div>
+
+      <!-- Learned -->
+      <div class="review-section">
+        <div class="review-label">What I learned (AI + History)</div>
+        <textarea class="review-textarea" id="review-learned" placeholder="Key takeaways from today's learning..."></textarea>
+      </div>
+
+      <!-- Do differently -->
+      <div class="review-section">
+        <div class="review-label">What I'd do differently</div>
+        <textarea class="review-textarea" id="review-different" placeholder="What would you change?"></textarea>
+      </div>
+
+      <!-- Notes -->
+      <div class="review-section">
+        <div class="review-label">Notes</div>
+        <textarea class="review-textarea" id="review-notes" placeholder="Anything else on your mind..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <span id="review-saved-txt" style="color:#22c55e;font-size:11px"></span>
+      <button class="next-ep-btn" onclick="viewPastReviews()">Past reviews →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Past Reviews Modal -->
+<div class="modal-overlay" id="past-modal" onclick="if(event.target.id==='past-modal')document.getElementById('past-modal').classList.remove('open')">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Past Reviews</div>
+        <div class="modal-sub">All saved daily reviews</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('past-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="past-list"></div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──
+const START_H = 6, END_H = 23, SLOT = 36;
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Episode data ──
+const COURSE_TITLE = "Notorious London: A City Tour";
+const EPISODES = [
+  "Oscar Wilde's Decadent London",
+  "St. Paul's Cathedral in Faith, Fire, and Sin",
+  "Getting Blitzed at London's Café de Paris",
+  "On Carnaby Street during the Swinging '60s",
+  "A History of Infamy in the Tower of London",
+  "Underground Catholics of Protestant London",
+  "Wicked Fun at the Vauxhall Pleasure Gardens",
+  "Taking the Dead Man's Path to Tyburn Tree",
+  "The Great Stink of 1858",
+  "In the Footsteps of Jack the Ripper",
+  "Fading Empire and the 1897 Diamond Jubilee",
+  "The Prying Eyes of London CCTV",
+];
+
+// Starting episode — all 12 unwatched
+const EP_START = 1;
+const EPS_PER_DAY = 4;
+
+let epWatched = {}; // episodeNumber (1-indexed) -> bool
+
+function epKey() { return 'jg-episodes-v2'; }
+function loadEpisodes() {
+  try {
+    const e = localStorage.getItem(epKey());
+    if(e) epWatched = JSON.parse(e);
+  } catch(e) {}
+}
+function saveEpisodes() {
+  try { localStorage.setItem(epKey(), JSON.stringify(epWatched)); } catch(e) {}
+}
+
+function getTodaysEpisodes() {
+  // Find first unwatched block of EPS_PER_DAY
+  const firstUnwatched = Object.keys(epWatched).filter(k => !epWatched[k]).map(Number).sort((a,b) => a-b)[0]
+    || Object.keys(epWatched).length + 1;
+  // Return next 4 starting from first unwatched
+  let start = EP_START;
+  // Count how many full days have been watched since EP_START
+  let cursor = EP_START;
+  while(cursor <= EPISODES.length) {
+    const allWatched = [cursor, cursor+1, cursor+2, cursor+3].every(n => epWatched[n]);
+    if(!allWatched) break;
+    cursor += EPS_PER_DAY;
+  }
+  return [cursor, cursor+1, cursor+2, cursor+3].filter(n => n <= EPISODES.length);
+}
+
+function openEpisodeModal() {
+  const modal = document.getElementById('ep-modal');
+  modal.classList.add('open');
+  renderEpisodeList();
+}
+
+function closeModal(e) {
+  if(e.target.id === 'ep-modal') document.getElementById('ep-modal').classList.remove('open');
+}
+
+function renderEpisodeList() {
+  const list = document.getElementById('ep-list');
+  const todayEps = getTodaysEpisodes();
+  list.innerHTML = '';
+
+  const watchedCount = Object.values(epWatched).filter(Boolean).length;
+  const remaining = EPISODES.length - watchedCount;
+  const hoursLeft = (remaining * 30) / 60;
+  const hrsDisplay = hoursLeft % 1 === 0 ? hoursLeft + 'h' : hoursLeft.toFixed(1) + 'h';
+
+  document.getElementById('ep-modal-title').textContent = '📺 ' + COURSE_TITLE;
+  document.getElementById('modal-sub').textContent =
+    `Today: Ep ${todayEps[0]}–${todayEps[todayEps.length-1]} · ${watchedCount}/${EPISODES.length} watched`;
+  document.getElementById('ep-footer-txt').textContent =
+    `${remaining} episodes · ${hrsDisplay} remaining`;
+
+  EPISODES.forEach((title, idx) => {
+    const num = idx + 1;
+    const isToday = todayEps.includes(num);
+    const watched = epWatched[num];
+
+    const row = document.createElement('div');
+    row.className = 'ep-item' + (watched ? ' watched' : '') + (isToday ? ' today-ep' : '');
+    row.innerHTML = `
+      <div class="ep-num">${num}</div>
+      <div class="ep-info">
+        <div class="ep-title">${title}</div>
+        ${isToday ? '<span class="ep-badge">Today</span>' : ''}
+      </div>
+      <div class="ep-check">${watched ? '✓' : ''}</div>
+    `;
+    row.onclick = () => toggleEpisode(num);
+    list.appendChild(row);
+
+    // Scroll today's first ep into view
+    if(isToday && num === todayEps[0]) {
+      setTimeout(() => row.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+    }
+  });
+}
+
+function toggleEpisode(num) {
+  epWatched[num] = !epWatched[num];
+  saveEpisodes();
+  renderEpisodeList();
+}
+
+function markTodayWatched() {
+  const todayEps = getTodaysEpisodes();
+  todayEps.forEach(n => { epWatched[n] = true; });
+  saveEpisodes();
+  renderEpisodeList();
+}
+
+// ── AI Learning data ──
+const AI_LESSONS = [
+  { date:'2026-06-09', title:'Microsoft: Introduction to AI (full path)' },
+  { date:'2026-06-10', title:'Azure AI Fundamentals – Part 1' },
+  { date:'2026-06-11', title:'Azure AI Fundamentals – Part 2' },
+  { date:'2026-06-12', title:'Azure AI Fundamentals – Part 3' },
+  { date:'2026-06-13', title:'Elements of AI – Day 1' },
+  { date:'2026-06-14', title:'Elements of AI – Day 2' },
+  { date:'2026-06-15', title:'Elements of AI – Day 3' },
+  { date:'2026-06-16', title:'Elements of AI – Day 4' },
+  { date:'2026-06-17', title:'Elements of AI – Day 5' },
+  { date:'2026-06-18', title:'Elements of AI – Day 6' },
+  { date:'2026-06-19', title:'Elements of AI – Day 7' },
+  { date:'2026-06-20', title:'Elements of AI – Day 8' },
+  { date:'2026-06-21', title:'Elements of AI – Day 9' },
+  { date:'2026-06-22', title:'Elements of AI – Day 10' },
+  { date:'2026-06-23', title:'IBM: AI Foundations for Everyone – Part 1' },
+  { date:'2026-06-24', title:'IBM: AI Foundations for Everyone – Part 2' },
+  { date:'2026-06-25', title:'Artificial Intelligence (AI) – Full Program – Day 1' },
+  { date:'2026-06-26', title:'Artificial Intelligence (AI) – Full Program – Day 2' },
+  { date:'2026-06-27', title:'Artificial Intelligence (AI) – Full Program – Day 3' },
+  { date:'2026-06-28', title:'Artificial Intelligence (AI) – Full Program – Day 4' },
+  { date:'2026-06-29', title:'Artificial Intelligence (AI) – Full Program – Day 5' },
+  { date:'2026-06-30', title:'Artificial Intelligence (AI) – Full Program – Day 6' },
+  { date:'2026-07-01', title:'Understanding AI Landscape (1.5h) + Intro to LLMs (1h)' },
+  { date:'2026-07-02', title:'Google: Introduction to Generative AI + Google: Introduction to LLMs' },
+  { date:'2026-07-03', title:'Intro to Generative AI (DeepLearning.AI)' },
+  { date:'2026-07-04', title:'Google Generative AI Fundamentals Badge – Day 1' },
+  { date:'2026-07-05', title:'Google Generative AI Fundamentals Badge – Day 2' },
+  { date:'2026-07-06', title:'Google Generative AI Fundamentals Badge – Day 3' },
+  { date:'2026-07-07', title:'Azure OpenAI: Build GPT Solutions – Day 1' },
+  { date:'2026-07-08', title:'Azure OpenAI: Build GPT Solutions – Day 2' },
+  { date:'2026-07-09', title:'Azure OpenAI: Build GPT Solutions – Day 3' },
+  { date:'2026-07-10', title:'Google Cloud: Applied Generative AI Engineering – Day 1' },
+  { date:'2026-07-11', title:'Google Cloud: Applied Generative AI Engineering – Day 2' },
+  { date:'2026-07-12', title:'Google Cloud: Applied Generative AI Engineering – Day 3' },
+  { date:'2026-07-13', title:'AI Interactive — Day 1 (2h)' },
+  { date:'2026-07-14', title:'AI Interactive — Day 2 (2h)' },
+  { date:'2026-07-15', title:'AI Interactive — Day 3 (1h) + First Looks at Emerging Technology (1h)' },
+  { date:'2026-07-16', title:'Foundations of Generative AI — Day 1 (2h)' },
+  { date:'2026-07-17', title:'GenAI for Information Workers — Day 1 (2h)' },
+  { date:'2026-07-18', title:'GenAI for Information Workers — Day 2 (2h)' },
+  { date:'2026-07-19', title:'GenAI for Information Workers — Day 3 (1h)' },
+  { date:'2026-07-20', title:'GenAI for Technologists & Developers — Day 1 (2h)' },
+  { date:'2026-07-21', title:'GenAI for Technologists & Developers — Day 2 (2h)' },
+  { date:'2026-07-22', title:'GenAI for Technologists & Developers — Day 3 (2h)' },
+  { date:'2026-07-23', title:'GenAI for Technologists & Developers — Day 4 (2h)' },
+  { date:'2026-07-24', title:'GenAI Intro & Overview – Day 1 (2h)' },
+  { date:'2026-07-25', title:'GenAI Intro & Overview – Day 2 (2h)' },
+  { date:'2026-07-26', title:'GenAI Intro & Overview – Day 3 (2h)' },
+  { date:'2026-07-27', title:'GenAI Intro & Overview – Day 4 (2h)' },
+  { date:'2026-07-28', title:'GenAI Intro & Overview – Day 5 (2h)' },
+  { date:'2026-07-29', title:'GenAI Intro & Overview – Day 6 (2h)' },
+  { date:'2026-07-30', title:'GenAI Intro & Overview – Day 7 (1h) + Generative AI Pitfalls (1h)' },
+  { date:'2026-07-31', title:'Introduction to ChatGPT – Day 1' },
+  { date:'2026-08-01', title:'Introduction to ChatGPT – Day 2' },
+  { date:'2026-08-02', title:'Introduction to ChatGPT – Day 3' },
+  { date:'2026-08-03', title:'Introduction to ChatGPT – Day 4' },
+  { date:'2026-08-04', title:'Introduction to ChatGPT – Day 5' },
+  { date:'2026-08-05', title:'IT Automation – Day 1 (2h)' },
+  { date:'2026-08-06', title:'IT Automation – Day 2 (2h)' },
+  { date:'2026-08-07', title:'IT Automation – Day 3 (2h)' },
+  { date:'2026-08-08', title:'IT Automation – Day 4 (2h)' },
+  { date:'2026-08-09', title:'IT Automation – Day 5 (1h) + Midjourney for Marketing – Day 1 (1h)' },
+  { date:'2026-08-10', title:'Midjourney for Marketing – Day 2 (2h)' },
+  { date:'2026-08-11', title:'Prompt Engineering for Developers (DeepLearning.AI)' },
+  { date:'2026-08-12', title:'Microsoft: Prompt Engineering Fundamentals' },
+  { date:'2026-08-13', title:'DeepLearning.AI LLM Concepts Bundle – Day 1' },
+  { date:'2026-08-14', title:'DeepLearning.AI LLM Concepts Bundle – Day 2 (Vector Databases: LangChain + Chroma)' },
+  { date:'2026-08-15', title:'LangChain for LLM App Development – Day 1' },
+  { date:'2026-08-16', title:'LangChain for LLM App Development – Day 2' },
+  { date:'2026-08-17', title:'LangChain for LLM App Development – Day 3' },
+  { date:'2026-08-18', title:'LangChain for LLM App Development – Day 4' },
+  { date:'2026-08-19', title:'LangChain – Day 1 (2h)' },
+  { date:'2026-08-20', title:'LangChain – Day 2 (2h)' },
+  { date:'2026-08-21', title:'LangChain – Day 3 (2h)' },
+  { date:'2026-08-22', title:'LangChain – Day 4 (1h) + LLMs in the Cloud – Day 1 (1h)' },
+  { date:'2026-08-23', title:'LLMs in the Cloud – Day 2 (2h)' },
+  { date:'2026-08-24', title:'LLMs in the Cloud – Day 3 (2h)' },
+  { date:'2026-08-25', title:'LLMs in the Cloud – Day 4 (2h)' },
+  { date:'2026-08-26', title:'LLMs in the Cloud – Day 5 (2h)' },
+  { date:'2026-08-27', title:'LLMs in the Cloud – Day 6 (2h)' },
+  { date:'2026-08-28', title:'LLMs in the Cloud – Day 7 (2h)' },
+  { date:'2026-08-29', title:'LLMs in the Cloud – Day 8 (2h)' },
+  { date:'2026-08-30', title:'LLMs in the Cloud – Day 9 (2h)' },
+  { date:'2026-08-31', title:'LLMs in the Cloud – Day 10 (2h)' },
+  { date:'2026-09-01', title:'Building Agentic AI (DeepLearning.AI) – Day 1' },
+  { date:'2026-09-02', title:'Building Agentic AI (DeepLearning.AI) – Day 2' },
+  { date:'2026-09-03', title:'Building Agentic AI (DeepLearning.AI) – Day 3' },
+  { date:'2026-09-04', title:'Agentic AI Mastery – Day 1' },
+  { date:'2026-09-05', title:'Agentic AI Mastery – Day 2' },
+  { date:'2026-09-06', title:'Agentic AI Mastery – Day 3' },
+  { date:'2026-09-07', title:'Google: Introduction to Machine Learning' },
+  { date:'2026-09-08', title:'Microsoft ML Crash Course – Day 1' },
+  { date:'2026-09-09', title:'Microsoft ML Crash Course – Day 2' },
+  { date:'2026-09-10', title:'Microsoft ML Crash Course – Day 3' },
+  { date:'2026-09-11', title:'Microsoft ML Crash Course – Day 4' },
+  { date:'2026-09-12', title:'Kaggle: Intro to Machine Learning – Day 1' },
+  { date:'2026-09-13', title:'Kaggle: Intro to Machine Learning – Day 2' },
+  { date:'2026-09-14', title:'Kaggle: Intro to Machine Learning – Day 3' },
+  { date:'2026-09-15', title:'Kaggle: Intro to Deep Learning – Day 1' },
+  { date:'2026-09-16', title:'Kaggle: Intro to Deep Learning – Day 2' },
+  { date:'2026-09-17', title:'Kaggle: Intermediate ML – Day 1' },
+  { date:'2026-09-18', title:'Kaggle: Intermediate ML – Day 2' },
+  { date:'2026-09-19', title:'Kaggle: Intermediate ML – Day 3' },
+  { date:'2026-09-20', title:'Google ML Crash Course – Day 1' },
+  { date:'2026-09-21', title:'Google ML Crash Course – Day 2' },
+  { date:'2026-09-22', title:'Google ML Crash Course – Day 3' },
+  { date:'2026-09-23', title:'Google ML Crash Course – Day 4' },
+  { date:'2026-09-24', title:'Google ML Crash Course – Day 5' },
+  { date:'2026-09-25', title:'Azure ML – Build ML Solutions – Day 1' },
+  { date:'2026-09-26', title:'Azure ML – Build ML Solutions – Day 2' },
+  { date:'2026-09-27', title:'Azure ML – Build ML Solutions – Day 3' },
+  { date:'2026-09-28', title:'Azure ML – Build ML Solutions – Day 4' },
+  { date:'2026-09-29', title:'NVIDIA: Fundamentals of Accelerated Computing – Day 1' },
+  { date:'2026-09-30', title:'NVIDIA: Fundamentals of Accelerated Computing – Day 2' },
+  { date:'2026-10-01', title:'NVIDIA: Fundamentals of Deep Learning – Day 1' },
+  { date:'2026-10-02', title:'NVIDIA: Fundamentals of Deep Learning – Day 2' },
+  { date:'2026-10-03', title:'NVIDIA: Fundamentals of Deep Learning – Day 3' },
+  { date:'2026-10-04', title:'Fast.ai: Practical Deep Learning for Coders – Day 1' },
+  { date:'2026-10-05', title:'Fast.ai: Practical Deep Learning for Coders – Day 2' },
+  { date:'2026-10-06', title:'Fast.ai: Practical Deep Learning for Coders – Day 3' },
+  { date:'2026-10-07', title:'Fast.ai: Practical Deep Learning for Coders – Day 4' },
+  { date:'2026-10-08', title:'IBM: Deep Learning with PyTorch – Day 1' },
+  { date:'2026-10-09', title:'IBM: Deep Learning with PyTorch – Day 2' },
+  { date:'2026-10-10', title:'IBM: Deep Learning with PyTorch – Day 3' },
+  { date:'2026-10-11', title:'Kaggle: Computer Vision + Kaggle: NLP – Day 1' },
+  { date:'2026-10-12', title:'Kaggle: Computer Vision + Kaggle: NLP – Day 2' },
+  { date:'2026-10-13', title:'Kaggle: Computer Vision + Kaggle: NLP – Day 3' },
+  { date:'2026-10-14', title:'No/Low Code ML – Day 1 (2h)' },
+  { date:'2026-10-15', title:'No/Low Code ML – Day 2 (2h)' },
+  { date:'2026-10-16', title:'No/Low Code ML – Day 3 (2h)' },
+  { date:'2026-10-17', title:'No/Low Code ML – Day 4 (2h)' },
+  { date:'2026-10-18', title:'No/Low Code ML – Day 5 (2h)' },
+  { date:'2026-10-19', title:'No/Low Code ML – Day 6 (2h)' },
+  { date:'2026-10-20', title:'No/Low Code ML – Day 7 (2h)' },
+  { date:'2026-10-21', title:'No/Low Code ML – Day 8 (2h)' },
+  { date:'2026-10-22', title:'No/Low Code ML – Day 9 (2h)' },
+  { date:'2026-10-23', title:'No/Low Code ML – Day 10 (2h)' },
+];
+
+let aiDone = {};
+function aiKey() { return 'jg-ai-lessons'; }
+function loadAiLessons() {
+  try { const a = localStorage.getItem(aiKey()); if(a) aiDone = JSON.parse(a); } catch(e) {}
+}
+function saveAiLessons() {
+  try { localStorage.setItem(aiKey(), JSON.stringify(aiDone)); } catch(e) {}
+}
+function todayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getTodayAiLesson() {
+  return AI_LESSONS.find(l => l.date === todayDateStr()) || null;
+}
+function openAiModal() {
+  document.getElementById('ai-modal').classList.add('open');
+  renderAiList();
+}
+function closeAiModal(e) {
+  if(e.target.id === 'ai-modal') document.getElementById('ai-modal').classList.remove('open');
+}
+function toggleAiLesson(date) {
+  aiDone[date] = !aiDone[date];
+  saveAiLessons();
+  renderAiList();
+}
+function markTodayAiDone() {
+  aiDone[todayDateStr()] = true;
+  saveAiLessons();
+  renderAiList();
+}
+function renderAiList() {
+  const list = document.getElementById('ai-list');
+  list.innerHTML = '';
+  const today = todayDateStr();
+  const doneCount = Object.values(aiDone).filter(Boolean).length;
+  const remaining = AI_LESSONS.length - doneCount;
+  const todayLesson = getTodayAiLesson();
+  document.getElementById('ai-modal-sub').textContent =
+    todayLesson ? `Today: ${todayLesson.title.substring(0,45)}${todayLesson.title.length>45?'…':''}` : 'No lesson scheduled today';
+  document.getElementById('ai-footer-txt').textContent =
+    `${remaining} lessons · ${remaining}h remaining`;
+  let lastMonth = '';
+  AI_LESSONS.forEach(lesson => {
+    const d = new Date(lesson.date + 'T12:00:00');
+    const monthLabel = d.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    const isToday = lesson.date === today;
+    const done = !!aiDone[lesson.date];
+    const isPast = lesson.date < today && !done;
+    if(monthLabel !== lastMonth) {
+      lastMonth = monthLabel;
+      const sep = document.createElement('div');
+      sep.className = 'task-section-label';
+      sep.textContent = monthLabel;
+      list.appendChild(sep);
+    }
+    const dayName = d.toLocaleDateString('en-US', { weekday:'short' });
+    const dayNum = d.getDate();
+    const row = document.createElement('div');
+    row.className = 'ep-item' + (done ? ' watched' : '') + (isToday ? ' today-ep' : '');
+    if(isPast) row.style.opacity = '0.45';
+    row.innerHTML = `
+      <div class="ep-num" style="min-width:36px;font-size:10px;line-height:1.3">${dayName}<br>${dayNum}</div>
+      <div class="ep-info">
+        <div class="ep-title">${lesson.title}</div>
+        ${isToday ? '<span class="ep-badge">Today</span>' : ''}
+      </div>
+      <div class="ep-check">${done ? '✓' : ''}</div>
+    `;
+    row.onclick = () => toggleAiLesson(lesson.date);
+    list.appendChild(row);
+    if(isToday) setTimeout(() => row.scrollIntoView({ block:'center', behavior:'smooth' }), 100);
+  });
+}
+
+const ALL_DAYS = [
+  { name:'Mon', blocks:[
+    {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
+    {id:'work',s:7,e:15,t:'work',l:'Work'},
+    {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Tue', blocks:[
+    {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
+    {id:'work',s:7,e:15,t:'work',l:'Work'},
+    {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
+    {id:'exer',s:16,e:18,t:'exer',l:'Exercise'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Wed', blocks:[
+    {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
+    {id:'work',s:7,e:15,t:'work',l:'Work'},
+    {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Thu', blocks:[
+    {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
+    {id:'work',s:7,e:15,t:'work',l:'Work'},
+    {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
+    {id:'exer',s:16,e:18,t:'exer',l:'Exercise'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Fri', blocks:[
+    {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
+    {id:'work',s:7,e:15,t:'work',l:'Work'},
+    {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
+    {id:'exer',s:16,e:18,t:'exer',l:'Exercise'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'hw',s:19,e:21,t:'hw',l:'HW'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Sat', blocks:[
+    {id:'food1',s:8,e:9,t:'food1',l:'Morning'},
+    {id:'hw',s:8,e:10,t:'hw',l:'HW'},
+    {id:'yard',s:10,e:14,t:'yard',l:'Yard'},
+    {id:'food2',s:13,e:14,t:'food2',l:'Midday'},
+    {id:'exer',s:15,e:18,t:'exer',l:'Exercise'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+  { name:'Sun', blocks:[
+    {id:'food1',s:8,e:9,t:'food1',l:'Morning'},
+    {id:'hw',s:8,e:10,t:'hw',l:'HW'},
+    {id:'yard',s:10,e:14,t:'yard',l:'Yard'},
+    {id:'food2',s:13,e:14,t:'food2',l:'Midday'},
+    {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
+    {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
+    {id:'hist',s:21,e:23,t:'hist',l:'History'},
+  ]},
+];
+
+// Mutable schedule state (deep copy)
+let schedule = JSON.parse(JSON.stringify(ALL_DAYS));
+
+// ── Task ID → calendar block ID mapping ──
+// When a task is marked done, matching block IDs are hidden on that day's calendar
+const TASK_BLOCK_MAP = {
+  't-work':    ['work'],
+  't-hw':      ['hw'],
+  't-hist':    ['hist'],
+  't-exer':    ['exer'],
+  't-yard':    ['yard'],
+};
+
+// ── Food items ──
+let FOOD_SECTIONS = [
+  { label: 'Morning Stack', items: [
+    {id:'coffee',    name:'Coffee',                     protein:0,  cal:5  },
+    {id:'premier1',  name:'Premier Protein + Creatine', protein:30, cal:160},
+    {id:'eggs',      name:'Hard Boiled Eggs (2)',        protein:12, cal:140},
+    {id:'banana',    name:'Banana',                     protein:1,  cal:105},
+    {id:'carrots',   name:'Carrots',                    protein:1,  cal:35 },
+  ]},
+  { label: 'Midday Stack', items: [
+    {id:'tuna',      name:'Tuna (2 cans)',               protein:50, cal:150},
+    {id:'bar',       name:"That's It Bar",               protein:0,  cal:100},
+    {id:'peanuts',   name:'Planters Peanuts',            protein:7,  cal:160},
+    {id:'meatstick', name:'Meat Sticks (2)',             protein:8,  cal:110},
+  ]},
+  { label: 'Dinner Stack', items: [
+    {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400},
+    {id:'cottage',   name:'Cottage Cheese (1 cup)',      protein:17, cal:120},
+    {id:'premier2',  name:'Premier Protein #2',          protein:30, cal:160},
+    {id:'centrum',   name:'Centrum Men',                 protein:0,  cal:0  },
+    {id:'arofum',    name:'Arofum Fish Oil + D3/K2 (4)',  protein:0,  cal:0  },
+  ]},
+  { label: 'Anytime', items: [
+  ]},
+];
+
+// ── State ──
+let logged = {};
+let skipped = {};
+let currentView = 'week';
+let selectedDay = new Date().getDay();
+let dragState = null;
+
+function jsToCalIdx(jsDay) { return jsDay === 0 ? 6 : jsDay - 1; }
+function calToJsDay(calIdx) { return calIdx === 6 ? 0 : calIdx + 1; }
+
+// ── Storage ──
+function storageKey() {
+  const d = new Date();
+  return `jg-tracker-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function skipStorageKey() {
+  const d = new Date();
+  return `jg-skip-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function schedKey() { return 'jg-schedule-v3'; }
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(storageKey());
+    if(s) logged = JSON.parse(s);
+    const sk = localStorage.getItem(skipStorageKey());
+    if(sk) skipped = JSON.parse(sk);
+    const sc = localStorage.getItem(schedKey());
+    if(sc) schedule = JSON.parse(sc);
+  } catch(e) {}
+}
+function saveLogged() {
+  try { localStorage.setItem(storageKey(), JSON.stringify(logged)); } catch(e) {}
+}
+function saveSkipped() {
+  try { localStorage.setItem(skipStorageKey(), JSON.stringify(skipped)); } catch(e) {}
+}
+function saveSchedule() {
+  try { localStorage.setItem(schedKey(), JSON.stringify(schedule)); } catch(e) {}
+}
+
+function toggleSkipFood(id, e) {
+  e.stopPropagation();
+  if(skipped[id]) {
+    delete skipped[id];
+  } else {
+    skipped[id] = true;
+    delete logged[id]; // can't be both done and skipped
+  }
+  saveSkipped();
+  saveLogged();
+  renderFood();
+  updateProgress();
+}
+
+function toggleSkipTask(id, e) {
+  e.stopPropagation();
+  if(skipped['task-' + id]) {
+    delete skipped['task-' + id];
+  } else {
+    skipped['task-' + id] = true;
+    delete taskDone[id];
+  }
+  saveSkipped();
+  saveTasks();
+  renderTasks();
+  updateProgress();
+}
+
+function resetDay() {
+  logged = {};
+  skipped = {};
+  saveLogged();
+  saveSkipped();
+  renderFood();
+  updateProgress();
+}
+
+// ── Progress ──
+function getGrade(pct) {
+  if(pct >= 97) return { letter:'A+', color:'#4ade80' };
+  if(pct >= 93) return { letter:'A',  color:'#4ade80' };
+  if(pct >= 90) return { letter:'A-', color:'#86efac' };
+  if(pct >= 87) return { letter:'B+', color:'#60a5fa' };
+  if(pct >= 83) return { letter:'B',  color:'#60a5fa' };
+  if(pct >= 80) return { letter:'B-', color:'#93c5fd' };
+  if(pct >= 77) return { letter:'C+', color:'#fbbf24' };
+  if(pct >= 73) return { letter:'C',  color:'#fbbf24' };
+  if(pct >= 70) return { letter:'C-', color:'#fcd34d' };
+  if(pct >= 60) return { letter:'D',  color:'#fb923c' };
+  return { letter:'F', color:'#ef4444' };
+}
+
+// Items that use a counter instead of checkbox
+const COUNTER_ITEMS = { arofum: 4 };
+
+// Ad-hoc entries state
+let adhocEntries = { cal: [], pro: [] };
+
+function updateProgress() {
+  // ── Food: cal & protein tracking (unchanged) ──
+  let cal = 0, pro = 0;
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
+    if(isCounter) {
+      const count = logged[item.id] || 0;
+      cal += (item.cal / max) * count;
+      pro += (item.protein / max) * count;
+    } else {
+      if(logged[item.id]) { cal += item.cal; pro += item.protein; }
+    }
+  }));
+  // Add ad-hoc entries
+  adhocEntries.cal.forEach(e => { cal += e.amount; });
+  adhocEntries.pro.forEach(e => { pro += e.amount; });
+
+  document.getElementById('cal-val').textContent = Math.round(cal);
+  document.getElementById('pro-val').textContent = Math.round(pro) + 'g';
+  document.getElementById('cal-bar').style.width = Math.min(100, (cal/1835)*100) + '%';
+  document.getElementById('pro-bar').style.width = Math.min(100, (pro/170)*100) + '%';
+
+  // ── Weighted grade ──
+  // Points reflect time commitment and difficulty
+  // Tasks
+  const TASK_WEIGHTS = {
+    't-work':  20,
+    't-exer':  12,
+    't-yard':  10,
+    't-hw':    10,
+    't-hist':   6,
+    't-psu':    8,
+    't-ally':4,'t-stfarm':4,'t-heloc':4,
+    't-bathroom':5,'t-tub':5,'t-paint':5,'t-clean':3,'t-yardh':4,'t-car':3,
+  };
+  const CUSTOM_TASK_WEIGHT = 4;
+
+  // Food weights — nutritional importance
+  const FOOD_WEIGHTS = {
+    premier1:  6,   // primary protein + creatine
+    tuna:      6,   // main protein hit
+    chicken:   6,   // dinner protein
+    premier2:  5,   // secondary protein
+    eggs:      4,
+    cottage:   4,
+    meatstick: 3,
+    peanuts:   2,
+    arofum:    4,   // health supplement (4 pills = 4 pts)
+    huel:      3,
+    banana:    2,
+    carrots:   2,
+    bar:       2,
+    centrum:   2,
+    splenda:   2,
+    coffee:    1,
+  };
+
+  let earnedPts = 0, totalPts = 0;
+
+  // Score tasks — skip excluded from denominator
+  const todayCalIdx = jsToCalIdx(new Date().getDay());
+  const dayTasks = getTasksForDay(todayCalIdx);
+  dayTasks.forEach(t => {
+    if(skipped['task-' + t.id]) return; // excluded
+    const w = TASK_WEIGHTS[t.id] || CUSTOM_TASK_WEIGHT;
+    totalPts += w;
+    if(taskDone[t.id]) earnedPts += w;
+  });
+  customTasks.forEach(t => {
+    if(skipped['task-' + t.id]) return;
+    totalPts += CUSTOM_TASK_WEIGHT;
+    if(taskDone[t.id]) earnedPts += CUSTOM_TASK_WEIGHT;
+  });
+
+  // Score food — skip excluded from denominator
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    if(skipped[item.id]) return; // excluded
+    const w = FOOD_WEIGHTS[item.id] || 1;
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
+    totalPts += w;
+    if(isCounter) {
+      const count = Math.min(logged[item.id] || 0, max);
+      earnedPts += (count / max) * w;
+    } else {
+      if(logged[item.id]) earnedPts += w;
+    }
+  }));
+
+  const pct = totalPts === 0 ? 0 : Math.round((earnedPts / totalPts) * 100);
+  const { letter, color } = getGrade(pct);
+
+  document.getElementById('grade-letter').textContent = totalPts === 0 ? '—' : letter;
+  document.getElementById('grade-letter').style.color = totalPts === 0 ? 'var(--text3)' : color;
+  document.getElementById('grade-pct').textContent = `${Math.round(earnedPts)}/${totalPts}pts · ${pct}%`;
+}
+
+// ── Date label ──
+function setDateLabel() {
+  const d = new Date();
+  document.getElementById('date-label').textContent =
+    `${DAY_NAMES[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// ── View toggle ──
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-week').classList.toggle('active', v==='week');
+  document.getElementById('btn-day').classList.toggle('active', v==='day');
+  renderCalendar();
+}
+
+// ── Day pills ──
+function buildDayPills() {
+  const today = new Date().getDay();
+  const pills = document.getElementById('day-pills');
+  pills.innerHTML = '';
+  DAY_NAMES.forEach((name, jd) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-pill' +
+      (jd === today ? ' today' : '') +
+      (jd === selectedDay ? ' active' : '');
+    btn.textContent = name;
+    btn.onclick = () => {
+      selectedDay = jd;
+      document.querySelectorAll('.day-pill').forEach((p,i) => {
+        p.classList.toggle('active', i === jd);
+      });
+      if(currentView === 'day') renderCalendar();
+    };
+    pills.appendChild(btn);
+  });
+}
+
+// ── Gutter ──
+function buildGutter() {
+  const g = document.getElementById('gutter');
+  g.innerHTML = '';
+  for(let h = START_H; h <= END_H; h++) {
+    const label = h === 12 ? '12p' : h > 12 ? (h-12)+'p' : h+'a';
+    const d = document.createElement('div');
+    d.className = 'week-hour-label';
+    d.textContent = label;
+    g.appendChild(d);
+  }
+}
+
+// ── Color map ──
+const typeColors = {
+  work:  {bg:'var(--work-bg)',  border:'var(--work)',  text:'var(--work)'},
+  hw:    {bg:'var(--hw-bg)',    border:'var(--hw)',    text:'var(--hw)'},
+  hist:  {bg:'var(--hist-bg)', border:'var(--hist)',  text:'var(--hist)'},
+  exer:  {bg:'var(--exer-bg)', border:'var(--exer)',  text:'var(--exer)'},
+  yard:  {bg:'var(--yard-bg)', border:'var(--yard)',  text:'var(--yard)'},
+  food1: {bg:'var(--food1-bg)',border:'var(--food1)', text:'var(--food1)'},
+  food2: {bg:'var(--food2-bg)',border:'var(--food2)', text:'var(--food2)'},
+  food3: {bg:'var(--food3-bg)',border:'var(--food3)', text:'var(--food3)'},
+  ai:    {bg:'var(--ai-bg)',   border:'var(--ai)',    text:'var(--ai)'},
+};
+
+// ── Build calendar ──
+function renderCalendar() {
+  const cols = document.getElementById('week-cols');
+  cols.className = `week-cols ${currentView === 'week' ? 'view-week' : 'view-day'}`;
+  cols.innerHTML = '';
+
+  const today = new Date().getDay();
+  const totalSlots = END_H - START_H + 1;
+  const bodyH = totalSlots * SLOT;
+
+  const daysToShow = currentView === 'week'
+    ? schedule.map((d,i) => ({ ...d, calIdx: i }))
+    : [{ ...schedule[jsToCalIdx(selectedDay)], calIdx: jsToCalIdx(selectedDay) }];
+
+  daysToShow.forEach(dayData => {
+    const jsDay = calToJsDay(dayData.calIdx);
+    const isToday = jsDay === today;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'col-wrap';
+
+    const head = document.createElement('div');
+    head.className = 'col-head' + (isToday ? ' today-head' : '');
+    head.textContent = dayData.name + (isToday ? ' ·' : '');
+    wrap.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'col-body';
+    body.style.height = bodyH + 'px';
+    body.dataset.calIdx = dayData.calIdx;
+
+    // Hour lines
+    for(let i = 0; i < totalSlots; i++) {
+      const line = document.createElement('div');
+      line.className = 'col-hour-line';
+      body.appendChild(line);
+    }
+
+    // Now line
+    if(isToday) {
+      const now = new Date();
+      const mins = (now.getHours() - START_H) * 60 + now.getMinutes();
+      const pct = mins / ((END_H - START_H) * 60);
+      const top = pct * bodyH;
+      if(top >= 0 && top <= bodyH) {
+        const nl = document.createElement('div');
+        nl.className = 'now-line';
+        nl.style.top = top + 'px';
+        const dot = document.createElement('div');
+        dot.className = 'now-dot';
+        nl.appendChild(dot);
+        body.appendChild(nl);
+      }
+    }
+
+    // Build set of block IDs to hide (completed tasks, today only)
+    const hiddenBlockIds = new Set();
+    if(isToday) {
+      Object.entries(TASK_BLOCK_MAP).forEach(([taskId, blockIds]) => {
+        if(taskDone[taskId]) blockIds.forEach(bid => hiddenBlockIds.add(bid));
+      });
+    }
+
+    // Events
+    dayData.blocks.forEach(block => {
+      if(hiddenBlockIds.has(block.id)) return; // skip completed blocks
+      const top = (block.s - START_H) * SLOT;
+      const height = (block.e - block.s) * SLOT;
+      const c = typeColors[block.t] || typeColors.work;
+
+      const ev = document.createElement('div');
+      ev.className = 'cal-event';
+      ev.style.top = (top + 2) + 'px';
+      ev.style.height = (height - 4) + 'px';
+      ev.style.background = c.bg;
+      ev.style.border = `1px solid ${c.border}`;
+      ev.dataset.blockId = block.id;
+      ev.dataset.calIdx = dayData.calIdx;
+      ev.draggable = true;
+
+      const sl = block.s > 12 ? (block.s-12)+'p' : block.s+'a';
+      const el = block.e > 12 ? (block.e-12)+'p' : block.e === 12 ? '12p' : block.e+'a';
+      ev.innerHTML = `
+        <div class="ev-name" style="color:${c.text}">${block.l}</div>
+        <div class="ev-time" style="color:${c.text}">${sl}–${el}</div>
+      `;
+
+      // History and AI blocks: draggable + dblclick opens modal
+      if(block.t === 'hist') {
+        ev.title = 'Double-click to see today\'s episodes';
+        ev.style.cursor = 'grab';
+        ev.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          openEpisodeModal();
+        });
+      } else if(block.t === 'ai') {
+        ev.title = 'Double-click to see today\'s AI lesson';
+        ev.style.cursor = 'grab';
+        ev.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          openAiModal();
+        });
+      }
+
+      // All blocks are draggable
+      ev.addEventListener('dragstart', (e) => {
+        dragState = {
+          blockId: block.id,
+          calIdx: dayData.calIdx,
+          duration: block.e - block.s,
+        };
+        ev.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      ev.addEventListener('dragend', () => {
+        ev.classList.remove('dragging');
+        document.querySelectorAll('.drag-over-line').forEach(el => el.remove());
+      });
+
+      body.appendChild(ev);
+    });
+
+    // Drop target
+    body.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = body.getBoundingClientRect();
+      const relY = e.clientY - rect.top;
+      const hour = START_H + Math.round(relY / SLOT);
+      document.querySelectorAll('.drag-over-line').forEach(el => el.remove());
+      const line = document.createElement('div');
+      line.className = 'drag-over-line';
+      line.style.top = ((hour - START_H) * SLOT) + 'px';
+      body.appendChild(line);
+    });
+
+    body.addEventListener('dragleave', () => {
+      document.querySelectorAll('.drag-over-line').forEach(el => el.remove());
+    });
+
+    body.addEventListener('drop', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.drag-over-line').forEach(el => el.remove());
+      if(!dragState) return;
+
+      const rect = body.getBoundingClientRect();
+      const relY = e.clientY - rect.top;
+      let newStart = START_H + Math.round(relY / SLOT);
+      newStart = Math.max(START_H, Math.min(END_H - dragState.duration, newStart));
+      const newEnd = newStart + dragState.duration;
+
+      // Update schedule
+      const calIdx = parseInt(body.dataset.calIdx);
+      const srcDay = schedule[dragState.calIdx];
+      const block = srcDay.blocks.find(b => b.id === dragState.blockId);
+      if(block) {
+        // Remove from source if different day
+        if(dragState.calIdx !== calIdx) {
+          srcDay.blocks = srcDay.blocks.filter(b => b.id !== dragState.blockId);
+          schedule[calIdx].blocks.push({ ...block, s: newStart, e: newEnd });
+        } else {
+          block.s = newStart;
+          block.e = newEnd;
+        }
+        saveSchedule();
+        renderCalendar();
+      }
+      dragState = null;
+    });
+
+    wrap.appendChild(body);
+    cols.appendChild(wrap);
+  });
+}
+
+// ── Tasks ──
+const TASK_COLORS = {
+  work:  '#3b82f6',
+  hw:    '#22c55e',
+  hist:  '#f59e0b',
+  exer:  '#ec4899',
+  yard:  '#14b8a6',
+  supp:  '#a78bfa',
+  other: '#9090a0',
+};
+
+// ── Per-day task definitions ──
+// blockId matches calendar block ids; shown only when that block exists on the day
+const ALL_TASK_DEFS = [
+  { id:'t-work', name:'Work (8 hrs)',       sub:'7a – 3:30p',           color:'work',  blockId:'work' },
+  { id:'t-hw',   name:'JHU Homework',       sub:'2 hrs',                color:'hw',    blockId:null   },
+  { id:'t-psu',  name:'PSU D.Eng',          sub:'research / coursework',color:'hw',    blockId:null   },
+  { id:'t-hist', name:'History',            sub:'9 – 11p',              color:'hist',  blockId:'hist' },
+  { id:'t-exer', name:'Exercise',           sub:'2 hrs',                color:'exer',  blockId:'exer' },
+  { id:'t-yard', name:'Yard Work',          sub:'4 hrs',                color:'yard',  blockId:'yard' },
+  { id:'t-ally',    name:'Ally IRA',        sub:'finance',              color:'supp',  blockId:null   },
+  { id:'t-stfarm',  name:'State Farm',      sub:'finance',              color:'supp',  blockId:null   },
+  { id:'t-heloc',   name:'HELOC',           sub:'finance',              color:'supp',  blockId:null   },
+  { id:'t-bathroom',name:'Bathroom',        sub:'house',                color:'yard',  blockId:null   },
+  { id:'t-tub',     name:'Tub',             sub:'house',                color:'yard',  blockId:null   },
+  { id:'t-paint',   name:'Paint',           sub:'house',                color:'yard',  blockId:null   },
+  { id:'t-clean',   name:'Clean',           sub:'house',                color:'yard',  blockId:null   },
+  { id:'t-yardh',   name:'Yard',            sub:'house',                color:'yard',  blockId:null   },
+  { id:'t-car',     name:'Car',             sub:'house',                color:'yard',  blockId:null   },
+];
+
+// Tasks that always show regardless of calendar (not calendar-linked)
+const STATIC_TASK_IDS = new Set(['t-hw','t-psu','t-ally','t-stfarm','t-heloc','t-bathroom','t-tub','t-paint','t-clean','t-yardh','t-car']);
+
+// Group task defs by section label
+const TASK_SECTION_MAP = [
+  { label:'Work',     ids:['t-work'] },
+  { label:'Learning', ids:['t-hw','t-psu','t-hist'] },
+  { label:'Fitness',  ids:['t-exer','t-yard'] },
+  { label:'Finance',  ids:['t-ally','t-stfarm','t-heloc'] },
+  { label:'House',    ids:['t-bathroom','t-tub','t-paint','t-clean','t-yardh','t-car'] },
+];
+
+function getTasksForDay(calIdx) {
+  const dayBlocks = new Set(schedule[calIdx].blocks.map(b => b.id));
+  return ALL_TASK_DEFS.filter(t => STATIC_TASK_IDS.has(t.id) || dayBlocks.has(t.blockId));
+}
+
+let taskDone = {};
+let customTasks = [];
+
+function taskStorageKey() {
+  const d = new Date();
+  return `jg-tasks-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function customTaskKey() { return 'jg-custom-tasks'; }
+
+function loadTasks() {
+  try {
+    const t = localStorage.getItem(taskStorageKey());
+    if(t) taskDone = JSON.parse(t);
+    const ct = localStorage.getItem(customTaskKey());
+    if(ct) customTasks = JSON.parse(ct);
+  } catch(e) {}
+}
+function saveTasks() {
+  try { localStorage.setItem(taskStorageKey(), JSON.stringify(taskDone)); } catch(e) {}
+}
+function saveCustomTasks() {
+  try { localStorage.setItem(customTaskKey(), JSON.stringify(customTasks)); } catch(e) {}
+}
+
+function toggleTask(id) {
+  taskDone[id] = !taskDone[id];
+  saveTasks();
+  renderTasks();
+  renderCalendar();
+  updateProgress();
+}
+
+function deleteTask(id) {
+  customTasks = customTasks.filter(t => t.id !== id);
+  delete taskDone[id];
+  saveCustomTasks();
+  saveTasks();
+  renderTasks();
+}
+
+function addTask() {
+  const input = document.getElementById('task-input');
+  const name = input.value.trim();
+  if(!name) return;
+  const id = 'custom-' + Date.now();
+  customTasks.push({ id, name, sub: 'custom', color: 'other' });
+  saveCustomTasks();
+  input.value = '';
+  renderTasks();
+}
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && document.activeElement.id === 'task-input') addTask();
+});
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  let total = 0, done = 0;
+
+  // Get tasks for the current day
+  const todayCalIdx = jsToCalIdx(new Date().getDay());
+  const dayTasks = getTasksForDay(todayCalIdx);
+  const dayTaskIds = new Set(dayTasks.map(t => t.id));
+
+  // Render by section, only show sections that have tasks today
+  TASK_SECTION_MAP.forEach(sec => {
+    const secTasks = sec.ids.map(id => ALL_TASK_DEFS.find(t => t.id === id)).filter(t => t && dayTaskIds.has(t.id));
+    if(secTasks.length === 0) return;
+
+    const label = document.createElement('div');
+    label.className = 'task-section-label';
+    label.textContent = sec.label;
+    list.appendChild(label);
+
+    secTasks.forEach(item => {
+      total++;
+      const isSkipped = !!skipped['task-' + item.id];
+      if(taskDone[item.id]) done++;
+      const row = document.createElement('div');
+      row.className = 'task-item' + (taskDone[item.id] ? ' done' : '') + (isSkipped ? ' skipped' : '');
+      row.innerHTML = `
+        <div class="task-check">${taskDone[item.id] ? '✓' : ''}</div>
+        <div class="task-info">
+          <div class="task-name">${item.name}</div>
+          <div class="task-sub">${item.sub}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="task-dot" style="background:${TASK_COLORS[item.color]}"></div>
+          <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipTask('${item.id}',event)">S</button>
+        </div>
+      `;
+      row.onclick = () => { if(!skipped['task-'+item.id]) toggleTask(item.id); };
+      list.appendChild(row);
+    });
+  });
+
+  // Custom tasks
+  if(customTasks.length > 0) {
+    const label = document.createElement('div');
+    label.className = 'task-section-label';
+    label.textContent = 'Custom';
+    list.appendChild(label);
+    customTasks.forEach(item => {
+      total++;
+      const isSkipped = !!skipped['task-' + item.id];
+      if(taskDone[item.id]) done++;
+      const row = document.createElement('div');
+      row.className = 'task-item' + (taskDone[item.id] ? ' done' : '') + (isSkipped ? ' skipped' : '');
+      row.innerHTML = `
+        <div class="task-check">${taskDone[item.id] ? '✓' : ''}</div>
+        <div class="task-info">
+          <div class="task-name">${item.name}</div>
+          <div class="task-sub">custom</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipTask('${item.id}',event)">S</button>
+          <button class="task-delete-btn" title="Delete task" onclick="event.stopPropagation();deleteTask('${item.id}')">✕</button>
+        </div>
+      `;
+      row.onclick = () => { if(!skipped['task-'+item.id]) toggleTask(item.id); };
+      list.appendChild(row);
+    });
+  }
+
+  // Show day name in header
+  const todayName = DAY_NAMES[new Date().getDay()];
+  const titleEl = document.querySelector('.tasks-title');
+  if(titleEl) titleEl.textContent = `Tasks · ${todayName}`;
+
+  document.getElementById('tasks-progress').textContent = `${done} / ${total}`;
+
+  // Add task input at the bottom
+  const addRow = document.createElement('div');
+  addRow.className = 'task-add-row';
+  addRow.innerHTML = `
+    <input class="task-input" id="task-input" placeholder="Add a task..." maxlength="60" />
+    <button class="task-add-btn" onclick="addTask()">+</button>
+  `;
+  list.appendChild(addRow);
+  document.getElementById('task-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') addTask();
+  });
+}
+
+// ── Food log ──
+function renderFood() {
+  const list = document.getElementById('food-list');
+  list.innerHTML = '';
+  FOOD_SECTIONS.forEach(sec => {
+    const label = document.createElement('div');
+    label.className = 'food-section-label';
+    label.textContent = sec.label;
+    list.appendChild(label);
+    sec.items.forEach(item => {
+      const isCounter = !!COUNTER_ITEMS[item.id];
+      const count = isCounter ? (logged[item.id] || 0) : null;
+      const max = isCounter ? COUNTER_ITEMS[item.id] : null;
+      const isDone = isCounter ? count >= max : !!logged[item.id];
+
+      const row = document.createElement('div');
+      row.className = 'food-item' + (isDone ? ' logged' : '');
+
+      if(isCounter) {
+        const isSkipped = !!skipped[item.id];
+        row.className = 'food-item' + (isDone ? ' logged' : '') + (isSkipped ? ' skipped' : '');
+        row.innerHTML = `
+          <div class="food-left">
+            <div class="food-check">${isDone ? '✓' : ''}</div>
+            <div>
+              <div class="food-name">${item.name}</div>
+              <div class="food-sub">${item.protein}g protein</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="counter-row">
+              <button class="counter-btn" id="btn-minus-${item.id}">−</button>
+              <div class="counter-val${isDone ? ' done' : ''}">${count}/${max}</div>
+              <button class="counter-btn" id="btn-plus-${item.id}">+</button>
+            </div>
+            <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipFood('${item.id}',event)">${isSkipped ? 'S' : 'S'}</button>
+          </div>
+        `;
+        // No onclick on row for counter items
+        list.appendChild(row);
+        document.getElementById(`btn-minus-${item.id}`).onclick = (e) => {
+          e.stopPropagation();
+          logged[item.id] = Math.max(0, (logged[item.id] || 0) - 1);
+          saveLogged();
+          renderFood();
+          updateProgress();
+        };
+        document.getElementById(`btn-plus-${item.id}`).onclick = (e) => {
+          e.stopPropagation();
+          logged[item.id] = Math.min(max, (logged[item.id] || 0) + 1);
+          saveLogged();
+          renderFood();
+          updateProgress();
+        };
+      } else {
+        const isSkipped = !!skipped[item.id];
+        row.className = 'food-item' + (logged[item.id] ? ' logged' : '') + (isSkipped ? ' skipped' : '');
+        row.innerHTML = `
+          <div class="food-left">
+            <div class="food-check">${logged[item.id] ? '✓' : ''}</div>
+            <div>
+              <div class="food-name">${item.name}</div>
+              <div class="food-sub">${item.protein}g protein</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="food-right">
+              <div class="food-protein">${item.protein}g</div>
+              <div class="food-cal">${item.cal} cal</div>
+            </div>
+            <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipFood('${item.id}',event)">S</button>
+          </div>
+        `;
+        row.onclick = () => {
+          if(skipped[item.id]) return; // can't check a skipped item
+          logged[item.id] = !logged[item.id];
+          saveLogged();
+          renderFood();
+          updateProgress();
+        };
+        list.appendChild(row);
+      }
+    });
+  });
+}
+
+// ── Init ──
+loadState();
+loadTasks();
+loadEpisodes();
+loadAiLessons();
+loadFoodSections();
+loadAdhoc();
+setDateLabel();
+buildGutter();
+buildDayPills();
+renderCalendar();
+renderFood();
+renderTasks();
+renderAdhocTags();
+updateProgress();
+
+// ── Wisdom Quotes ──
+const QUOTES = [
+  // Kierkegaard
+  { text: "Life can only be understood backwards; but it must be lived forwards.", author: "Søren Kierkegaard", work: "Journals (1843)", tradition: "Existentialism" },
+  { text: "The most common form of despair is not being who you are.", author: "Søren Kierkegaard", work: "The Sickness Unto Death", tradition: "Existentialism" },
+  { text: "Anxiety is the dizziness of freedom.", author: "Søren Kierkegaard", work: "The Concept of Anxiety", tradition: "Existentialism" },
+  { text: "To dare is to lose one's footing momentarily. Not to dare is to lose oneself.", author: "Søren Kierkegaard", work: "The Sickness Unto Death", tradition: "Existentialism" },
+  { text: "The function of prayer is not to influence God, but rather to change the nature of the one who prays.", author: "Søren Kierkegaard", work: "Journals", tradition: "Existentialism" },
+  { text: "It is perfectly true, as philosophers say, that life can only be understood backwards. But they forget the other proposition, that it must be lived forwards.", author: "Søren Kierkegaard", work: "Journals (1843)", tradition: "Existentialism" },
+
+  // Nietzsche
+  { text: "He who has a why to live can bear almost any how.", author: "Friedrich Nietzsche", work: "Twilight of the Idols", tradition: "Existentialism / Vitalism" },
+  { text: "Without music, life would be a mistake.", author: "Friedrich Nietzsche", work: "Twilight of the Idols", tradition: "Existentialism / Vitalism" },
+  { text: "That which does not kill us makes us stronger.", author: "Friedrich Nietzsche", work: "Twilight of the Idols", tradition: "Existentialism / Vitalism" },
+  { text: "In individuals, insanity is rare; but in groups, parties, nations, and epochs, it is the rule.", author: "Friedrich Nietzsche", work: "Beyond Good and Evil", tradition: "Existentialism / Vitalism" },
+  { text: "The higher we soar, the smaller we appear to those who cannot fly.", author: "Friedrich Nietzsche", work: "Thus Spoke Zarathustra", tradition: "Existentialism / Vitalism" },
+  { text: "One must still have chaos in oneself to be able to give birth to a dancing star.", author: "Friedrich Nietzsche", work: "Thus Spoke Zarathustra", tradition: "Existentialism / Vitalism" },
+  { text: "Become who you are.", author: "Friedrich Nietzsche", work: "Thus Spoke Zarathustra", tradition: "Existentialism / Vitalism" },
+  { text: "All truly great thoughts are conceived while walking.", author: "Friedrich Nietzsche", work: "Twilight of the Idols", tradition: "Existentialism / Vitalism" },
+
+  // Sartre
+  { text: "Existence precedes essence.", author: "Jean-Paul Sartre", work: "Existentialism is a Humanism", tradition: "Existentialism" },
+  { text: "We are condemned to be free.", author: "Jean-Paul Sartre", work: "Being and Nothingness", tradition: "Existentialism" },
+  { text: "Man is nothing else but what he makes of himself.", author: "Jean-Paul Sartre", work: "Existentialism is a Humanism", tradition: "Existentialism" },
+  { text: "Freedom is what you do with what's been done to you.", author: "Jean-Paul Sartre", work: "Saint Genet", tradition: "Existentialism" },
+  { text: "Every existing thing is born without reason, prolongs itself out of weakness, and dies by chance.", author: "Jean-Paul Sartre", work: "Nausea", tradition: "Existentialism" },
+  { text: "Hell is other people.", author: "Jean-Paul Sartre", work: "No Exit", tradition: "Existentialism" },
+
+  // Wittgenstein
+  { text: "Whereof one cannot speak, thereof one must be silent.", author: "Ludwig Wittgenstein", work: "Tractatus Logico-Philosophicus", tradition: "Analytic Philosophy" },
+  { text: "The limits of my language mean the limits of my world.", author: "Ludwig Wittgenstein", work: "Tractatus Logico-Philosophicus", tradition: "Analytic Philosophy" },
+  { text: "If a lion could speak, we could not understand him.", author: "Ludwig Wittgenstein", work: "Philosophical Investigations", tradition: "Analytic Philosophy" },
+  { text: "A philosopher who is not taking part in discussions is like a boxer who never goes into the ring.", author: "Ludwig Wittgenstein", work: "Culture and Value", tradition: "Analytic Philosophy" },
+  { text: "Philosophy is a battle against the bewitchment of our intelligence by means of our language.", author: "Ludwig Wittgenstein", work: "Philosophical Investigations", tradition: "Analytic Philosophy" },
+  { text: "The world is all that is the case.", author: "Ludwig Wittgenstein", work: "Tractatus Logico-Philosophicus", tradition: "Analytic Philosophy" },
+
+  // Kant
+  { text: "Act only according to that maxim whereby you can at the same time will that it should become a universal law.", author: "Immanuel Kant", work: "Groundwork of the Metaphysics of Morals", tradition: "German Idealism" },
+  { text: "Two things fill me with constantly increasing admiration: the starry heavens above me and the moral law within me.", author: "Immanuel Kant", work: "Critique of Practical Reason", tradition: "German Idealism" },
+  { text: "Dare to know! Have the courage to use your own understanding.", author: "Immanuel Kant", work: "What is Enlightenment?", tradition: "German Idealism" },
+  { text: "We are not rich by what we possess but by what we can do without.", author: "Immanuel Kant", work: "Metaphysics of Morals", tradition: "German Idealism" },
+  { text: "All our knowledge begins with the senses, proceeds then to the understanding, and ends with reason.", author: "Immanuel Kant", work: "Critique of Pure Reason", tradition: "German Idealism" },
+  { text: "Science is organized knowledge. Wisdom is organized life.", author: "Immanuel Kant", work: "Critique of Pure Reason", tradition: "German Idealism" },
+
+  // William James
+  { text: "Act as if what you do makes a difference. It does.", author: "William James", work: "The Will to Believe", tradition: "American Pragmatism" },
+  { text: "The greatest weapon against stress is our ability to choose one thought over another.", author: "William James", work: "The Principles of Psychology", tradition: "American Pragmatism" },
+  { text: "Begin to be now what you will be hereafter.", author: "William James", work: "The Principles of Psychology", tradition: "American Pragmatism" },
+  { text: "A great many people think they are thinking when they are merely rearranging their prejudices.", author: "William James", work: "The Meaning of Truth", tradition: "American Pragmatism" },
+  { text: "The art of being wise is knowing what to overlook.", author: "William James", work: "The Principles of Psychology", tradition: "American Pragmatism" },
+
+  // John Dewey
+  { text: "We do not learn from experience. We learn from reflecting on experience.", author: "John Dewey", work: "Experience and Education", tradition: "American Pragmatism" },
+  { text: "Education is not preparation for life; education is life itself.", author: "John Dewey", work: "Experience and Education", tradition: "American Pragmatism" },
+  { text: "Arriving at one goal is the starting point to another.", author: "John Dewey", work: "Democracy and Education", tradition: "American Pragmatism" },
+
+  // Charles Peirce
+  { text: "The opinion which is fated to be ultimately agreed to by all who investigate is what we mean by the truth.", author: "Charles Sanders Peirce", work: "How to Make Our Ideas Clear", tradition: "American Pragmatism" },
+  { text: "Consider what effects, that might conceivably have practical bearings, we conceive the object of our conception to have. Then our conception of these effects is the whole of our conception of the object.", author: "Charles Sanders Peirce", work: "How to Make Our Ideas Clear", tradition: "American Pragmatism" },
+
+  // Camus
+  { text: "In the midst of winter, I found there was, within me, an invincible summer.", author: "Albert Camus", work: "Return to Tipasa", tradition: "Absurdism" },
+  { text: "You will never be happy if you continue to search for what happiness consists of. You will never live if you are looking for the meaning of life.", author: "Albert Camus", work: "The Myth of Sisyphus", tradition: "Absurdism" },
+  { text: "One must imagine Sisyphus happy.", author: "Albert Camus", work: "The Myth of Sisyphus", tradition: "Absurdism" },
+  { text: "The absurd is born of the confrontation between the human need and the unreasonable silence of the world.", author: "Albert Camus", work: "The Myth of Sisyphus", tradition: "Absurdism" },
+
+  // Stoics
+  { text: "You have power over your mind, not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius", work: "Meditations", tradition: "Stoicism" },
+  { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius", work: "Meditations", tradition: "Stoicism" },
+  { text: "Waste no more time arguing about what a good man should be. Be one.", author: "Marcus Aurelius", work: "Meditations", tradition: "Stoicism" },
+  { text: "It is not death that a man should fear, but he should fear never beginning to live.", author: "Marcus Aurelius", work: "Meditations", tradition: "Stoicism" },
+  { text: "We suffer more in imagination than in reality.", author: "Seneca", work: "Letters from a Stoic", tradition: "Stoicism" },
+  { text: "Luck is what happens when preparation meets opportunity.", author: "Seneca", work: "Letters from a Stoic", tradition: "Stoicism" },
+  { text: "Make the best use of what is in your power, and take the rest as it happens.", author: "Epictetus", work: "Enchiridion", tradition: "Stoicism" },
+  { text: "He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.", author: "Epictetus", work: "Discourses", tradition: "Stoicism" },
+];
+
+let lastQuoteIdx = -1;
+
+function newQuote() {
+  let idx;
+  do { idx = Math.floor(Math.random() * QUOTES.length); } while(idx === lastQuoteIdx);
+  lastQuoteIdx = idx;
+  const q = QUOTES[idx];
+  document.getElementById('quote-text').textContent = q.text;
+  document.getElementById('quote-author').textContent = `— ${q.author}`;
+  document.getElementById('quote-work').textContent = q.work;
+  document.getElementById('quote-tradition').textContent = q.tradition;
+  document.getElementById('quote-counter').textContent = `${idx+1} of ${QUOTES.length} quotes`;
+}
+
+function openQuote() {
+  document.getElementById('quote-modal').classList.add('open');
+  newQuote();
+}
+
+
+let selectedMood = 0;
+
+function reviewStorageKey(dateStr) { return `jg-review-${dateStr}`; }
+function allReviewKeys() {
+  const keys = [];
+  for(let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if(k && k.startsWith('jg-review-')) keys.push(k);
+  }
+  return keys.sort().reverse();
+}
+
+function renderReviewStats() {
+  // Calories & protein
+  let cal = 0, pro = 0;
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
+    if(isCounter) {
+      const count = logged[item.id] || 0;
+      cal += (item.cal / max) * count;
+      pro += (item.protein / max) * count;
+    } else {
+      if(logged[item.id]) { cal += item.cal; pro += item.protein; }
+    }
+  }));
+
+  // Points
+  const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-ally':4,'t-stfarm':4,'t-heloc':4,'t-bathroom':5,'t-tub':5,'t-paint':5,'t-clean':3,'t-yardh':4,'t-car':3 };
+  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,premier2:5,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:4,banana:2,carrots:2,bar:2,centrum:2,coffee:1 };
+  let earnedPts = 0, totalPts = 0;
+  const todayCalIdx = jsToCalIdx(new Date().getDay());
+  getTasksForDay(todayCalIdx).forEach(t => {
+    if(skipped['task-'+t.id]) return;
+    const w = TASK_WEIGHTS[t.id] || 4;
+    totalPts += w;
+    if(taskDone[t.id]) earnedPts += w;
+  });
+  customTasks.forEach(t => {
+    if(skipped['task-'+t.id]) return;
+    totalPts += 4; if(taskDone[t.id]) earnedPts += 4;
+  });
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    if(skipped[item.id]) return;
+    const w = FOOD_WEIGHTS[item.id] || 1;
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
+    totalPts += w;
+    if(isCounter) { earnedPts += (Math.min(logged[item.id]||0,max)/max)*w; }
+    else { if(logged[item.id]) earnedPts += w; }
+  }));
+
+  // Skipped count
+  const skippedCount = Object.values(skipped).filter(Boolean).length;
+
+  // Grade
+  const pct = totalPts === 0 ? 0 : Math.round((earnedPts/totalPts)*100);
+  const { letter, color } = getGrade(pct);
+
+  const stats = [
+    { label:'Grade',    value: totalPts===0 ? '—' : letter,              color: color },
+    { label:'Points',   value: `${Math.round(earnedPts)}/${totalPts}`,   color: 'var(--text)' },
+    { label:'Calories', value: Math.round(cal),                           color: '#f59e0b' },
+    { label:'Protein',  value: Math.round(pro)+'g',                      color: '#3b82f6' },
+    { label:'Skipped',  value: skippedCount,                              color: skippedCount>0 ? '#fb923c' : 'var(--text3)' },
+  ];
+
+  const container = document.getElementById('review-stats');
+  container.innerHTML = stats.map(s => `
+    <div class="review-stat-card">
+      <div class="review-stat-label">${s.label}</div>
+      <div class="review-stat-value" style="color:${s.color}">${s.value}</div>
+    </div>
+  `).join('');
+}
+
+function openReview() {
+  const modal = document.getElementById('review-modal');
+  modal.classList.add('open');
+  renderReviewStats();
+  const today = todayDateStr();
+  document.getElementById('review-date-sub').textContent = new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('review-saved-txt').textContent = '';
+  // Load existing review if any
+  try {
+    const saved = localStorage.getItem(reviewStorageKey(today));
+    if(saved) {
+      const r = JSON.parse(saved);
+      document.getElementById('review-weight').value = r.weight || '';
+      document.getElementById('review-wins').value = r.wins || '';
+      document.getElementById('review-learned').value = r.learned || '';
+      document.getElementById('review-different').value = r.different || '';
+      document.getElementById('review-notes').value = r.notes || '';
+      setMood(r.mood || 0);
+    } else {
+      document.getElementById('review-weight').value = '';
+      document.getElementById('review-wins').value = '';
+      document.getElementById('review-learned').value = '';
+      document.getElementById('review-different').value = '';
+      document.getElementById('review-notes').value = '';
+      setMood(0);
+    }
+  } catch(e) {}
+  // Wire mood buttons
+  document.querySelectorAll('.mood-btn').forEach(btn => {
+    btn.onclick = () => setMood(parseInt(btn.dataset.mood));
+  });
+}
+
+function setMood(val) {
+  selectedMood = val;
+  document.querySelectorAll('.mood-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.mood) === val);
+  });
+}
+
+function saveReview() {
+  const today = todayDateStr();
+  const review = {
+    date: today,
+    mood: selectedMood,
+    weight: document.getElementById('review-weight').value,
+    wins: document.getElementById('review-wins').value,
+    learned: document.getElementById('review-learned').value,
+    different: document.getElementById('review-different').value,
+    notes: document.getElementById('review-notes').value,
+    grade: document.getElementById('grade-letter').textContent,
+    gradePct: document.getElementById('grade-pct').textContent,
+    cal: document.getElementById('cal-val').textContent,
+    protein: document.getElementById('pro-val').textContent,
+    skippedCount: Object.values(skipped).filter(Boolean).length,
+    savedAt: new Date().toISOString(),
+  };
+  try {
+    localStorage.setItem(reviewStorageKey(today), JSON.stringify(review));
+    document.getElementById('review-saved-txt').textContent = '✓ Saved';
+    setTimeout(() => { document.getElementById('review-saved-txt').textContent = ''; }, 2000);
+  } catch(e) {}
+}
+
+function closeReviewModal(e) {
+  if(e.target.id === 'review-modal') document.getElementById('review-modal').classList.remove('open');
+}
+
+const MOOD_LABELS = { 1:'😞 Rough', 2:'😕 Meh', 3:'😐 OK', 4:'😊 Good', 5:'🔥 Crushed it' };
+const MOOD_EMOJIS = { 1:'😞', 2:'😕', 3:'😐', 4:'😊', 5:'🔥' };
+
+function viewPastReviews() {
+  document.getElementById('review-modal').classList.remove('open');
+  document.getElementById('past-modal').classList.add('open');
+  const list = document.getElementById('past-list');
+  list.innerHTML = '';
+  const keys = allReviewKeys();
+  if(keys.length === 0) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">No reviews yet</div>';
+    return;
+  }
+  keys.forEach(key => {
+    try {
+      const r = JSON.parse(localStorage.getItem(key));
+      const d = new Date(r.date + 'T12:00:00');
+      const dateStr = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      const card = document.createElement('div');
+      card.className = 'past-review-card';
+      const fields = [
+        r.wins      && { label:'Wins',             val: r.wins },
+        r.learned   && { label:'Learned',          val: r.learned },
+        r.different && { label:'Do differently',   val: r.different },
+        r.notes     && { label:'Notes',            val: r.notes },
+      ].filter(Boolean);
+      card.innerHTML = `
+        <div class="past-review-date">
+          <span>${dateStr}</span>
+          ${r.mood ? `<span class="past-review-mood">${MOOD_EMOJIS[r.mood]}</span>` : ''}
+          ${r.grade && r.grade !== '—' ? `<span style="font-size:11px;color:#a78bfa">${r.grade}</span>` : ''}
+          ${r.weight ? `<span class="past-review-weight">${r.weight} lbs</span>` : ''}
+        </div>
+        ${r.gradePct || r.cal || r.protein ? `
+        <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+          ${r.gradePct ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)">${r.gradePct}</span>` : ''}
+          ${r.cal ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:#f59e0b">${r.cal} cal</span>` : ''}
+          ${r.protein ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:#3b82f6">${r.protein} protein</span>` : ''}
+          ${r.skippedCount ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:#fb923c">${r.skippedCount} skipped</span>` : ''}
+        </div>` : ''}
+        ${fields.map(f => `
+          <div class="past-field">
+            <div class="past-field-label">${f.label}</div>
+            <div class="past-field-val">${f.val}</div>
+          </div>
+        `).join('')}
+      `;
+      list.appendChild(card);
+    } catch(e) {}
+  });
+}
+
+// ── Ad-hoc calories/protein ──
+let adhocType = 'cal';
+
+const CAL_PRESETS = [
+  { label:'Snack ~150', val:150 },
+  { label:'Meal ~500', val:500 },
+  { label:'Drink ~100', val:100 },
+  { label:'Dessert ~300', val:300 },
+];
+const PRO_PRESETS = [
+  { label:'Egg ~6g', val:6 },
+  { label:'Shake ~25g', val:25 },
+  { label:'Meat ~30g', val:30 },
+];
+
+function adhocKey() {
+  const d = new Date();
+  return `jg-adhoc-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function loadAdhoc() {
+  try { const a = localStorage.getItem(adhocKey()); if(a) adhocEntries = JSON.parse(a); } catch(e) {}
+}
+function saveAdhoc() {
+  try { localStorage.setItem(adhocKey(), JSON.stringify(adhocEntries)); } catch(e) {}
+}
+
+function openAdhoc(type) {
+  adhocType = type;
+  document.getElementById('adhoc-modal').classList.add('open');
+  document.getElementById('adhoc-title').textContent = type === 'cal' ? '+ Extra Calories' : '+ Extra Protein';
+  document.getElementById('adhoc-label').textContent = type === 'cal' ? 'Calories' : 'Protein (g)';
+  document.getElementById('adhoc-unit').textContent = type === 'cal' ? 'cal' : 'g';
+  document.getElementById('adhoc-amount').value = '';
+  document.getElementById('adhoc-note').value = '';
+  // Presets
+  const presets = type === 'cal' ? CAL_PRESETS : PRO_PRESETS;
+  document.getElementById('adhoc-presets').innerHTML = presets.map(p =>
+    `<button class="adhoc-preset" onclick="document.getElementById('adhoc-amount').value=${p.val}">${p.label}</button>`
+  ).join('');
+  setTimeout(() => document.getElementById('adhoc-amount').focus(), 100);
+}
+
+function closeAdhoc() {
+  document.getElementById('adhoc-modal').classList.remove('open');
+}
+
+function confirmAdhoc() {
+  const amount = parseFloat(document.getElementById('adhoc-amount').value);
+  const note = document.getElementById('adhoc-note').value.trim() || (adhocType === 'cal' ? 'extra cal' : 'extra protein');
+  if(!amount || amount <= 0) return;
+  adhocEntries[adhocType].push({ amount, note, id: Date.now() });
+  saveAdhoc();
+  closeAdhoc();
+  renderAdhocTags();
+  updateProgress();
+}
+
+function removeAdhoc(type, id) {
+  adhocEntries[type] = adhocEntries[type].filter(e => e.id !== id);
+  saveAdhoc();
+  renderAdhocTags();
+  updateProgress();
+}
+
+function renderAdhocTags() {
+  ['cal','pro'].forEach(type => {
+    const container = document.getElementById(`${type}-adhoc-list`);
+    if(!container) return;
+    container.innerHTML = adhocEntries[type].map(e => `
+      <div class="adhoc-tag">
+        <span>+${e.amount}${type==='pro'?'g':''} ${e.note}</span>
+        <button class="adhoc-tag-remove" onclick="removeAdhoc('${type}',${e.id})">✕</button>
+      </div>
+    `).join('');
+  });
+}
+
+// Enter key in adhoc modal
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && document.getElementById('adhoc-modal').classList.contains('open')) {
+    confirmAdhoc();
+  }
+});
+
+// ── Food Editor ──
+function foodSectionsKey() { return 'jg-food-sections-v1'; }
+
+function saveFoodSections() {
+  try { localStorage.setItem(foodSectionsKey(), JSON.stringify(FOOD_SECTIONS)); } catch(e) {}
+}
+
+function loadFoodSections() {
+  try {
+    const s = localStorage.getItem(foodSectionsKey());
+    if(s) FOOD_SECTIONS = JSON.parse(s);
+  } catch(e) {}
+}
+
+function openFoodEditor() {
+  document.getElementById('food-editor-modal').classList.add('open');
+  renderFoodEditor();
+}
+
+function closeFoodEditor() {
+  document.getElementById('food-editor-modal').classList.remove('open');
+}
+
+function renderFoodEditor() {
+  const list = document.getElementById('food-editor-list');
+  list.innerHTML = '';
+  FOOD_SECTIONS.forEach((sec, si) => {
+    const secLabel = document.createElement('div');
+    secLabel.className = 'food-section-label';
+    secLabel.style.padding = '10px 18px 4px';
+    secLabel.textContent = sec.label;
+    list.appendChild(secLabel);
+    sec.items.forEach((item, ii) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(255,255,255,0.04)';
+      row.innerHTML = `
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500;color:var(--text)">${item.name}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${item.protein}g protein · ${item.cal} cal</div>
+        </div>
+        <button class="task-delete-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.3);padding:3px 8px;font-size:11px" onclick="deleteFoodItem(${si},${ii})">✕ Remove</button>
+      `;
+      list.appendChild(row);
+    });
+  });
+}
+
+function deleteFoodItem(secIdx, itemIdx) {
+  const item = FOOD_SECTIONS[secIdx].items[itemIdx];
+  FOOD_SECTIONS[secIdx].items.splice(itemIdx, 1);
+  delete logged[item.id];
+  delete skipped[item.id];
+  saveFoodSections();
+  saveLogged();
+  saveSkipped();
+  renderFoodEditor();
+  renderFood();
+  updateProgress();
+}
+
+function addFoodItem() {
+  const name = document.getElementById('fe-name').value.trim();
+  const protein = parseInt(document.getElementById('fe-protein').value) || 0;
+  const cal = parseInt(document.getElementById('fe-cal').value) || 0;
+  const sectionLabel = document.getElementById('fe-section').value;
+  if(!name) { document.getElementById('fe-name').focus(); return; }
+  const id = 'cf-' + name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10) + '-' + Date.now();
+  const sec = FOOD_SECTIONS.find(s => s.label === sectionLabel);
+  if(sec) {
+    sec.items.push({ id, name, protein, cal });
+    saveFoodSections();
+    document.getElementById('fe-name').value = '';
+    document.getElementById('fe-protein').value = '';
+    document.getElementById('fe-cal').value = '';
+    renderFoodEditor();
+    renderFood();
+    updateProgress();
+  }
+}
+
+let _lastDate = new Date().toDateString();
+
+function checkDayChange() {
+  const nowDate = new Date().toDateString();
+  if(nowDate !== _lastDate) {
+    _lastDate = nowDate;
+    // Reset daily state — food and tasks are date-keyed so just reload
+    logged = {};
+    taskDone = {};
+    skipped = {};
+    adhocEntries = { cal: [], pro: [] };
+    loadState();   // loads fresh empty key for new day
+    loadTasks();   // loads fresh empty key for new day
+    setDateLabel();
+    buildDayPills();
+    renderFood();
+    renderTasks();
+    renderAdhocTags();
+    renderCalendar();
+    updateProgress();
+  }
+}
+
+// Update now-line every minute, check for day change at same time
+setInterval(() => {
+  renderCalendar();
+  checkDayChange();
+}, 60000);
+</script>
+</body>
+</html>
