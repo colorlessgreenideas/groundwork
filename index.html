@@ -2117,15 +2117,14 @@ const COUNTER_ITEMS = { arofum: 4, meatstick: 6 };
 let adhocEntries = { cal: [], pro: [] };
 
 function updateProgress() {
-  // ── Food: cal & protein tracking (unchanged) ──
+  // ── Food: cal & protein tracking ──
   let cal = 0, pro = 0;
   FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
     const isCounter = !!COUNTER_ITEMS[item.id];
-    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
     if(isCounter) {
       const count = logged[item.id] || 0;
-      cal += (item.cal / max) * count;
-      pro += (item.protein / max) * count;
+      cal += item.cal * count;
+      pro += item.protein * count;
     } else {
       if(logged[item.id]) { cal += item.cal; pro += item.protein; }
     }
@@ -3287,11 +3286,10 @@ function renderReviewStats() {
   let cal = 0, pro = 0;
   FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
     const isCounter = !!COUNTER_ITEMS[item.id];
-    const max = isCounter ? COUNTER_ITEMS[item.id] : 1;
     if(isCounter) {
       const count = logged[item.id] || 0;
-      cal += (item.cal / max) * count;
-      pro += (item.protein / max) * count;
+      cal += item.cal * count;
+      pro += item.protein * count;
     } else {
       if(logged[item.id]) { cal += item.cal; pro += item.protein; }
     }
