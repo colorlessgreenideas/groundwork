@@ -2112,6 +2112,7 @@ function getGrade(pct) {
 
 // Items that use a counter instead of checkbox
 const COUNTER_ITEMS = { arofum: 4, meatstick: 6 };
+const COUNTER_FLEXIBLE = new Set(['meatstick']); // can mark done at any count
 
 // Ad-hoc entries state
 let adhocEntries = { cal: [], pro: [] };
@@ -2196,7 +2197,9 @@ function updateProgress() {
     totalPts += w;
     if(isCounter) {
       const count = Math.min(logged[item.id] || 0, max);
-      earnedPts += (count / max) * w;
+      const isFlexible = COUNTER_FLEXIBLE.has(item.id);
+      const flexDone = isFlexible && !!skipped['done-' + item.id];
+      earnedPts += isFlexible ? (flexDone ? w : 0) : (count / max) * w;
     } else {
       if(logged[item.id]) earnedPts += w;
     }
@@ -2667,7 +2670,9 @@ function renderFood() {
       const isCounter = !!COUNTER_ITEMS[item.id];
       const count = isCounter ? (logged[item.id] || 0) : null;
       const max = isCounter ? COUNTER_ITEMS[item.id] : null;
-      const isDone = isCounter ? count >= max : !!logged[item.id];
+      const isFlexible = isCounter && COUNTER_FLEXIBLE.has(item.id);
+      const flexDone = isFlexible && !!skipped['done-' + item.id]; // reuse skipped namespace for done flag
+      const isDone = isCounter ? (isFlexible ? flexDone : count >= max) : !!logged[item.id];
 
       const row = document.createElement('div');
       row.className = 'food-item' + (isDone ? ' logged' : '');
@@ -2675,39 +2680,49 @@ function renderFood() {
       if(isCounter) {
         const isSkipped = !!skipped[item.id];
         row.className = 'food-item' + (isDone ? ' logged' : '') + (isSkipped ? ' skipped' : '');
+        const countDisplay = isFlexible ? `${count}` : `${count}/${max}`;
         row.innerHTML = `
           <div class="food-left">
             <div class="food-check">${isDone ? '✓' : ''}</div>
             <div>
               <div class="food-name">${item.name}</div>
-              <div class="food-sub">${item.protein}g protein</div>
+              <div class="food-sub">${item.protein}g protein · ${item.cal} cal each</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
             <div class="counter-row">
               <button class="counter-btn" id="btn-minus-${item.id}">−</button>
-              <div class="counter-val${isDone ? ' done' : ''}">${count}/${max}</div>
+              <div class="counter-val${isDone ? ' done' : ''}">${countDisplay}</div>
               <button class="counter-btn" id="btn-plus-${item.id}">+</button>
             </div>
-            <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipFood('${item.id}',event)">${isSkipped ? 'S' : 'S'}</button>
+            ${isFlexible ? `<button class="counter-btn" id="btn-done-${item.id}" style="${isDone ? 'border-color:#22c55e;color:#22c55e' : ''}" title="Mark done">${isDone ? '✓' : '✓'}</button>` : ''}
+            <button class="skip-btn${isSkipped ? ' skipped' : ''}" onclick="toggleSkipFood('${item.id}',event)">S</button>
           </div>
         `;
-        // No onclick on row for counter items
         list.appendChild(row);
         document.getElementById(`btn-minus-${item.id}`).onclick = (e) => {
           e.stopPropagation();
+          if(isDone && isFlexible) return; // locked when done
           logged[item.id] = Math.max(0, (logged[item.id] || 0) - 1);
-          saveLogged();
-          renderFood();
-          updateProgress();
+          saveLogged(); renderFood(); updateProgress();
         };
         document.getElementById(`btn-plus-${item.id}`).onclick = (e) => {
           e.stopPropagation();
+          if(isDone && isFlexible) return; // locked when done
           logged[item.id] = Math.min(max, (logged[item.id] || 0) + 1);
-          saveLogged();
-          renderFood();
-          updateProgress();
+          saveLogged(); renderFood(); updateProgress();
         };
+        if(isFlexible) {
+          document.getElementById(`btn-done-${item.id}`).onclick = (e) => {
+            e.stopPropagation();
+            if(skipped['done-' + item.id]) {
+              delete skipped['done-' + item.id];
+            } else {
+              skipped['done-' + item.id] = true;
+            }
+            saveSkipped(); renderFood(); updateProgress();
+          };
+        }
       } else {
         const isSkipped = !!skipped[item.id];
         row.className = 'food-item' + (logged[item.id] ? ' logged' : '') + (isSkipped ? ' skipped' : '');
