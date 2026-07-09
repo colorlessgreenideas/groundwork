@@ -55,12 +55,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 10px 24px;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   background: var(--bg);
   z-index: 100;
+  gap: 16px;
 }
 .header-left h1 {
   font-size: 18px;
@@ -905,6 +906,49 @@ body {
 .food-item.skipped { opacity: 0.35; }
 .task-item.skipped { opacity: 0.35; }
 
+.header-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  min-width: 110px;
+}
+.header-stat-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 2px;
+}
+.header-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.header-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  line-height: 1;
+}
+.header-stat-goal {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.header-grade {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
 .adhoc-btn {
   width: 20px; height: 20px;
   border-radius: 50%;
@@ -1192,6 +1236,36 @@ body {
       </div>
     </div>
   </div>
+
+  <!-- Inline stats -->
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="header-stat">
+      <div class="header-stat-label">Calories</div>
+      <div class="header-stat-row">
+        <span class="header-stat-value" style="color:var(--cal-color)" id="cal-val">0</span>
+        <span class="header-stat-goal">/ 1835</span>
+        <button class="adhoc-btn" onclick="openAdhoc('cal')" title="Add extra calories">+</button>
+      </div>
+      <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar cal-fill" id="cal-bar" style="width:0%"></div></div>
+      <div id="cal-adhoc-list" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px"></div>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Protein</div>
+      <div class="header-stat-row">
+        <span class="header-stat-value" style="color:var(--pro-color)" id="pro-val">0g</span>
+        <span class="header-stat-goal">/ 170g</span>
+        <button class="adhoc-btn" onclick="openAdhoc('pro')" title="Add extra protein">+</button>
+      </div>
+      <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar pro-fill" id="pro-bar" style="width:0%"></div></div>
+      <div id="pro-adhoc-list" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px"></div>
+    </div>
+    <div class="header-grade">
+      <div class="header-stat-label">Grade</div>
+      <div class="grade-letter" id="grade-letter" style="font-size:26px">—</div>
+      <div class="grade-pct" id="grade-pct" style="font-size:10px">0%</div>
+    </div>
+  </div>
+
   <div style="display:flex;gap:8px;align-items:center">
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
     <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
@@ -1202,36 +1276,6 @@ body {
       <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
       <button class="view-btn" id="btn-day" onclick="setView('day')">Day</button>
     </div>
-  </div>
-</div>
-
-<div class="progress-row">
-  <div class="prog-card">
-    <div class="prog-top">
-      <div class="prog-label">Calories</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div><span class="prog-value cal-val" id="cal-val">0</span> <span class="prog-goal">/ 1835</span></div>
-        <button class="adhoc-btn" onclick="openAdhoc('cal')" title="Add extra calories">+</button>
-      </div>
-    </div>
-    <div class="prog-bar-bg"><div class="prog-bar cal-fill" id="cal-bar" style="width:0%"></div></div>
-    <div id="cal-adhoc-list" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px"></div>
-  </div>
-  <div class="prog-card">
-    <div class="prog-top">
-      <div class="prog-label">Protein</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div><span class="prog-value pro-val" id="pro-val">0g</span> <span class="prog-goal">/ 170g</span></div>
-        <button class="adhoc-btn" onclick="openAdhoc('pro')" title="Add extra protein">+</button>
-      </div>
-    </div>
-    <div class="prog-bar-bg"><div class="prog-bar pro-fill" id="pro-bar" style="width:0%"></div></div>
-    <div id="pro-adhoc-list" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px"></div>
-  </div>
-  <div class="grade-card">
-    <div class="grade-label">Today</div>
-    <div class="grade-letter" id="grade-letter">—</div>
-    <div class="grade-pct" id="grade-pct">0%</div>
   </div>
 </div>
 
