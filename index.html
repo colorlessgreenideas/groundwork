@@ -307,6 +307,8 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .col-head.today-head { color: var(--pro-color); }
+.col-head.selected-head { color: #ec4899; background: rgba(236,72,153,0.08); }
+.col-head:hover { background: var(--surface2); }
 .col-body {
   position: relative;
   border: 1px solid var(--border);
@@ -1272,10 +1274,6 @@ body {
     <button class="map-btn" onclick="openMapModal()">🌍 World Map</button>
     <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
-    <div class="view-toggle">
-      <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
-      <button class="view-btn" id="btn-day" onclick="setView('day')">Day</button>
-    </div>
   </div>
 </div>
 
@@ -2298,8 +2296,6 @@ function setDateLabel() {
 // ── View toggle ──
 function setView(v) {
   currentView = v;
-  document.getElementById('btn-week').classList.toggle('active', v==='week');
-  document.getElementById('btn-day').classList.toggle('active', v==='day');
   renderCalendar();
 }
 
@@ -2368,13 +2364,27 @@ function renderCalendar() {
   daysToShow.forEach(dayData => {
     const jsDay = calToJsDay(dayData.calIdx);
     const isToday = jsDay === today;
+    const isSelectedDay = currentView === 'day' && jsDay === selectedDay;
 
     const wrap = document.createElement('div');
     wrap.className = 'col-wrap';
 
     const head = document.createElement('div');
-    head.className = 'col-head' + (isToday ? ' today-head' : '');
+    head.className = 'col-head' + (isToday ? ' today-head' : '') + (isSelectedDay ? ' selected-head' : '');
+    head.style.cursor = 'pointer';
+    head.title = currentView === 'week' ? `Click to view ${dayData.name} only` : `Click to return to week view`;
     head.textContent = dayData.name + (isToday ? ' ·' : '');
+    head.onclick = () => {
+      if(currentView === 'week') {
+        selectedDay = jsDay;
+        setView('day');
+      } else if(currentView === 'day' && jsDay === selectedDay) {
+        setView('week');
+      } else {
+        selectedDay = jsDay;
+        setView('day');
+      }
+    };
     wrap.appendChild(head);
 
     const body = document.createElement('div');
