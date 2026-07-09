@@ -1235,26 +1235,7 @@ body {
     <div style="display:flex;align-items:center;gap:10px">
       <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#0d1117"/><polygon points="16,31 28,24 28,13 16,20" fill="#0d9488"/><polygon points="16,31 4,24 4,13 16,20" fill="#0f766e"/><polygon points="16,20 4,13 16,6 28,13" fill="#2dd4bf"/><polygon points="16,11 24,6 24,-1 16,4" fill="#1d4ed8"/><polygon points="16,11 8,6 8,-1 16,4" fill="#1e3a8a"/><polygon points="16,4 8,-1 16,-6 24,-1" fill="#60a5fa"/></svg>
       <div>
-        <h1 style="font-size:22px;font-weight:900;letter-spacing:2px;text-transform:uppercase;position:relative">
-          <svg width="180" height="32" viewBox="0 0 180 32" style="display:block;overflow:visible">
-            <defs>
-              <filter id="erode" x="-5%" y="-5%" width="110%" height="110%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="4" seed="8" result="noise"/>
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-                <feComposite in="displaced" in2="SourceGraphic" operator="in"/>
-              </filter>
-            </defs>
-            <text x="0" y="24"
-              font-family="'DM Sans', system-ui, sans-serif"
-              font-size="22"
-              font-weight="900"
-              letter-spacing="3"
-              text-transform="uppercase"
-              fill="var(--text, #f0f0f4)"
-              filter="url(#erode)"
-              style="text-transform:uppercase">GROUNDWORK</text>
-          </svg>
-        </h1>
+        <h1>Groundwork</h1>
         <div class="sub" id="date-label"></div>
       </div>
     </div>
