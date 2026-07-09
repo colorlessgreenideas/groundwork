@@ -700,6 +700,20 @@ body {
 }
 .counter-val.done { color: #22c55e; }
 
+.wheel-btn {
+  background: rgba(236,72,153,0.15);
+  border: 1px solid rgba(236,72,153,0.3);
+  color: #ec4899;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.wheel-btn:hover { background: rgba(236,72,153,0.25); }
+
 .map-btn {
   background: rgba(56,189,248,0.15);
   border: 1px solid rgba(56,189,248,0.3);
@@ -1198,6 +1212,7 @@ body {
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
     <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
     <button class="map-btn" onclick="openMapModal()">🌍 World Map</button>
+    <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <div class="view-toggle">
       <button class="view-btn active" id="btn-week" onclick="setView('week')">Week</button>
@@ -1391,6 +1406,38 @@ body {
     <div class="modal-footer">
       <span id="ai-footer-txt"></span>
       <button class="next-ep-btn" onclick="markTodayAiDone()">Mark today's ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Boredom Wheel Modal -->
+<div class="modal-overlay" id="wheel-modal" onclick="if(event.target.id==='wheel-modal')closeWheel()">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🎡 Boredom Wheel</div>
+        <div class="modal-sub">Spin for something to do</div>
+      </div>
+      <button class="modal-close" onclick="closeWheel()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div style="position:relative;width:320px;height:320px;flex-shrink:0">
+        <canvas id="wheel-canvas" width="320" height="320" style="display:block"></canvas>
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:26px solid var(--text);filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))"></div>
+      </div>
+      <button id="wheel-spin-btn" onclick="spinWheel()" style="font-size:14px;font-weight:500;padding:10px 36px;border-radius:999px;background:#ec4899;color:#fff;border:none;cursor:pointer;transition:opacity 0.15s">Spin</button>
+      <div id="wheel-result" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;text-align:center;width:100%">
+        <div id="wheel-result-emoji" style="font-size:28px;margin-bottom:4px"></div>
+        <div id="wheel-result-text" style="font-size:15px;font-weight:500;color:var(--text)"></div>
+      </div>
+      <details style="width:100%">
+        <summary style="font-size:12px;color:var(--text2);cursor:pointer;user-select:none">Edit wheel</summary>
+        <div id="wheel-editor" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="wheel-new-item" class="review-input" style="flex:1;font-size:12px" placeholder="Add activity..." maxlength="40" />
+          <button onclick="addWheelItem()" class="next-ep-btn">Add</button>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -2755,6 +2802,134 @@ function renderFood() {
   });
 }
 
+// ── Boredom Wheel ──
+const WHEEL_COLORS = ['#3b82f6','#14b8a6','#a78bfa','#38bdf8','#22c55e','#f59e0b','#ec4899','#fb923c','#8b5cf6','#ef4444','#06b6d4','#84cc16'];
+const DEFAULT_SEGMENTS = [
+  { label:'Watch History',   emoji:'📺', color:'#3b82f6' },
+  { label:'Take a walk',     emoji:'🚶', color:'#14b8a6' },
+  { label:'Read a book',     emoji:'📖', color:'#a78bfa' },
+  { label:'AI lesson',       emoji:'🤖', color:'#38bdf8' },
+  { label:'Yard work',       emoji:'🌿', color:'#22c55e' },
+  { label:'Call someone',    emoji:'📞', color:'#f59e0b' },
+  { label:'Stretch/yoga',    emoji:'🧘', color:'#ec4899' },
+  { label:'Home project',    emoji:'🔨', color:'#fb923c' },
+  { label:'Journal',         emoji:'✍️', color:'#8b5cf6' },
+  { label:'Cook something',  emoji:'🍳', color:'#ef4444' },
+  { label:'Clean a room',    emoji:'🧹', color:'#06b6d4' },
+  { label:'Plan a trip',     emoji:'🌍', color:'#84cc16' },
+];
+
+let wheelSegments = [];
+let wheelAngle = 0;
+let wheelSpinning = false;
+let wheelLoaded = false;
+
+function wheelKey() { return 'gw-wheel'; }
+function loadWheel() {
+  try { const w = localStorage.getItem(wheelKey()); if(w) wheelSegments = JSON.parse(w); else wheelSegments = [...DEFAULT_SEGMENTS]; } catch(e) { wheelSegments = [...DEFAULT_SEGMENTS]; }
+}
+function saveWheel() { try { localStorage.setItem(wheelKey(), JSON.stringify(wheelSegments)); } catch(e) {} }
+
+function openWheel() {
+  document.getElementById('wheel-modal').classList.add('open');
+  if(!wheelLoaded) { wheelLoaded = true; loadWheel(); }
+  drawWheel(wheelAngle);
+  renderWheelEditor();
+}
+function closeWheel() { document.getElementById('wheel-modal').classList.remove('open'); }
+
+function drawWheel(angle) {
+  const canvas = document.getElementById('wheel-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 160, cy = 160, r = 148;
+  ctx.clearRect(0, 0, 320, 320);
+  const n = wheelSegments.length;
+  if(n === 0) return;
+  const arc = (2 * Math.PI) / n;
+  wheelSegments.forEach((seg, i) => {
+    const start = angle + i * arc;
+    const end = start + arc;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+    ctx.fillStyle = seg.color; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(start + arc / 2);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#fff';
+    ctx.font = '500 12px DM Sans,system-ui,sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 3;
+    const maxW = r - 28;
+    let label = seg.label;
+    while(ctx.measureText(label).width > maxW && label.length > 2) label = label.slice(0,-1);
+    if(label !== seg.label) label += '…';
+    ctx.fillText(label, r - 10, 4); ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(cx, cy, 20, 0, 2*Math.PI);
+  ctx.fillStyle = 'var(--surface, #1a1a2e)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function spinWheel() {
+  if(wheelSpinning || wheelSegments.length === 0) return;
+  wheelSpinning = true;
+  document.getElementById('wheel-result').style.display = 'none';
+  document.getElementById('wheel-spin-btn').style.opacity = '0.5';
+  const n = wheelSegments.length;
+  const arc = (2 * Math.PI) / n;
+  const targetIdx = Math.floor(Math.random() * n);
+  const extra = (5 + Math.random() * 5) * 2 * Math.PI;
+  const targetAngle = -(targetIdx * arc + arc / 2) + Math.PI / 2 - wheelAngle;
+  const total = extra + ((targetAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const duration = 3500 + Math.random() * 1000;
+  const startAngle = wheelAngle;
+  const t0 = performance.now();
+  function ease(t) { return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+  function frame(now) {
+    const p = Math.min((now-t0)/duration, 1);
+    wheelAngle = startAngle + total * ease(p);
+    drawWheel(wheelAngle);
+    if(p < 1) { requestAnimationFrame(frame); return; }
+    wheelSpinning = false;
+    document.getElementById('wheel-spin-btn').style.opacity = '1';
+    const seg = wheelSegments[targetIdx];
+    document.getElementById('wheel-result-emoji').textContent = seg.emoji || '🎯';
+    document.getElementById('wheel-result-text').textContent = seg.label;
+    document.getElementById('wheel-result').style.display = 'block';
+  }
+  requestAnimationFrame(frame);
+}
+
+function renderWheelEditor() {
+  const ed = document.getElementById('wheel-editor');
+  if(!ed) return;
+  ed.innerHTML = '';
+  wheelSegments.forEach((seg, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px';
+    row.innerHTML = `
+      <span style="width:10px;height:10px;border-radius:50%;background:${seg.color};flex-shrink:0"></span>
+      <span style="flex:1;font-size:12px;color:var(--text)">${seg.label}</span>
+      <button onclick="removeWheelItem(${i})" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 6px">✕</button>
+    `;
+    ed.appendChild(row);
+  });
+}
+
+function removeWheelItem(i) {
+  wheelSegments.splice(i, 1);
+  saveWheel(); drawWheel(wheelAngle); renderWheelEditor();
+}
+
+function addWheelItem() {
+  const input = document.getElementById('wheel-new-item');
+  const label = input.value.trim();
+  if(!label) return;
+  wheelSegments.push({ label, emoji:'🎯', color: WHEEL_COLORS[wheelSegments.length % WHEEL_COLORS.length] });
+  input.value = '';
+  saveWheel(); drawWheel(wheelAngle); renderWheelEditor();
+}
+
+document.getElementById('wheel-new-item') && document.getElementById('wheel-new-item').addEventListener('keydown', e => { if(e.key==='Enter') addWheelItem(); });
+
 // ── World Map ──
 const VISITED_IDS = new Set([
   '250','056','124','392','410','408','484','643','826','682',
@@ -3167,6 +3342,7 @@ function initApp() {
   loadAdhoc();
   loadCountdowns();
   loadNotes();
+  loadWheel();
   setDateLabel();
   buildGutter();
   renderCalendar();
