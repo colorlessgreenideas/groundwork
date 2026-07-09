@@ -2875,21 +2875,25 @@ function spinWheel() {
   document.getElementById('wheel-spin-btn').style.opacity = '0.5';
   const n = wheelSegments.length;
   const arc = (2 * Math.PI) / n;
-  const targetIdx = Math.floor(Math.random() * n);
   const extra = (5 + Math.random() * 5) * 2 * Math.PI;
-  const targetAngle = -(targetIdx * arc + arc / 2) + Math.PI / 2 - wheelAngle;
-  const total = extra + ((targetAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  // Pick a random total spin amount
+  const randomSpin = extra + Math.random() * 2 * Math.PI;
   const duration = 3500 + Math.random() * 1000;
   const startAngle = wheelAngle;
+  const totalSpin = randomSpin;
   const t0 = performance.now();
   function ease(t) { return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
   function frame(now) {
     const p = Math.min((now-t0)/duration, 1);
-    wheelAngle = startAngle + total * ease(p);
+    wheelAngle = startAngle + totalSpin * ease(p);
     drawWheel(wheelAngle);
     if(p < 1) { requestAnimationFrame(frame); return; }
     wheelSpinning = false;
     document.getElementById('wheel-spin-btn').style.opacity = '1';
+    // Pointer is at top = -Math.PI/2 in standard coords
+    // Normalize angle so we know which segment is under the pointer
+    const normalized = (((-wheelAngle - Math.PI/2) % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+    const targetIdx = Math.floor(normalized / arc) % n;
     const seg = wheelSegments[targetIdx];
     document.getElementById('wheel-result-emoji').textContent = seg.emoji || '🎯';
     document.getElementById('wheel-result-text').textContent = seg.label;
