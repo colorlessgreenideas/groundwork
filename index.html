@@ -1349,9 +1349,12 @@ body {
     <div class="food-panel">
       <div class="food-header">
         <div class="food-title">Food Log</div>
-        <div style="display:flex;gap:6px">
-          <button class="reset-btn" onclick="openFoodEditor()">Edit</button>
-          <button class="reset-btn" onclick="resetDay()">Reset</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="fiber-val">0g fiber</span>
+          <div style="display:flex;gap:6px">
+            <button class="reset-btn" onclick="openFoodEditor()">Edit</button>
+            <button class="reset-btn" onclick="resetDay()">Reset</button>
+          </div>
         </div>
       </div>
       <div id="food-list"></div>
@@ -1394,9 +1397,10 @@ body {
     <div class="modal-body" id="food-editor-list" style="padding:0"></div>
     <div class="modal-footer" style="flex-direction:column;gap:10px;align-items:stretch">
       <div class="review-label" style="padding:0">Add new item</div>
-      <div style="display:grid;grid-template-columns:1fr 80px 70px 80px;gap:6px;align-items:center">
+      <div style="display:grid;grid-template-columns:1fr 70px 60px 60px 80px;gap:6px;align-items:center">
         <input class="review-input" style="width:100%" id="fe-name" placeholder="Item name" />
         <input class="review-input" style="width:100%" id="fe-protein" placeholder="Protein g" type="number" min="0" />
+        <input class="review-input" style="width:100%" id="fe-fiber" placeholder="Fiber g" type="number" min="0" />
         <input class="review-input" style="width:100%" id="fe-cal" placeholder="Cal" type="number" min="0" />
         <select class="review-input" style="width:100%;padding:7px 8px" id="fe-section">
           <option value="Morning Stack">Morning</option>
@@ -2078,25 +2082,27 @@ const TASK_BLOCK_MAP = {
 // ── Food items ──
 let FOOD_SECTIONS = [
   { label: 'Morning Stack', items: [
-    {id:'coffee',    name:'Coffee',                     protein:0,  cal:5  },
-    {id:'premier1',  name:'Premier Protein + Creatine', protein:30, cal:160},
-    {id:'eggs',      name:'Hard Boiled Eggs (2)',        protein:12, cal:140},
-    {id:'banana',    name:'Banana',                     protein:1,  cal:105},
-    {id:'carrots',   name:'Carrots',                    protein:1,  cal:35 },
+    {id:'coffee',    name:'Coffee',                     protein:0,  cal:5,   fiber:0},
+    {id:'premier1',  name:'Premier Protein + Creatine', protein:30, cal:160, fiber:0},
+    {id:'eggs',      name:'Hard Boiled Eggs (2)',        protein:12, cal:140, fiber:0},
+    {id:'banana',    name:'Banana',                     protein:1,  cal:105, fiber:3},
+    {id:'carrots',   name:'Carrots',                    protein:1,  cal:35,  fiber:3},
   ]},
   { label: 'Midday Stack', items: [
-    {id:'tuna',      name:'Tuna (2 cans)',               protein:50, cal:150},
-    {id:'peanuts',   name:'Planters Peanuts',            protein:7,  cal:160},
-    {id:'meatstick', name:'Meat Stick',                  protein:9,  cal:75 },
+    {id:'tuna',      name:'Tuna (2 cans)',               protein:50, cal:150, fiber:0},
+    {id:'peanuts',   name:'Planters Peanuts',            protein:7,  cal:160, fiber:2},
+    {id:'meatstick', name:'Meat Stick',                  protein:9,  cal:75,  fiber:0},
   ]},
   { label: 'Dinner Stack', items: [
-    {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400},
-    {id:'cottage',   name:'Cottage Cheese (1 cup)',      protein:17, cal:120},
-    {id:'premier2',  name:'Premier Protein #2',          protein:30, cal:160},
-    {id:'centrum',   name:'Centrum Men',                 protein:0,  cal:0  },
-    {id:'arofum',    name:'Arofum Fish Oil + D3/K2 (4)',  protein:0,  cal:0  },
+    {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400, fiber:0},
+    {id:'cottage',   name:'Cottage Cheese (1 cup)',      protein:17, cal:120, fiber:0},
+    {id:'premier2',  name:'Premier Protein #2',          protein:30, cal:160, fiber:0},
+    {id:'centrum',   name:'Centrum Men',                 protein:0,  cal:0,   fiber:0},
+    {id:'arofum',    name:'Arofum Fish Oil + D3/K2 (4)',  protein:0,  cal:0,  fiber:0},
   ]},
   { label: 'Anytime', items: [
+    {id:'chiaseeds', name:'Chia Seeds (2 tbsp)',         protein:5,  cal:138, fiber:10},
+    {id:'avocado',   name:'Avocado (1/2)',               protein:2,  cal:120, fiber:5 },
   ]},
 ];
 
@@ -2202,15 +2208,16 @@ let adhocEntries = { cal: [], pro: [] };
 
 function updateProgress() {
   // ── Food: cal & protein tracking ──
-  let cal = 0, pro = 0;
+  let cal = 0, pro = 0, fiber = 0;
   FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
     const isCounter = !!COUNTER_ITEMS[item.id];
     if(isCounter) {
       const count = logged[item.id] || 0;
       cal += item.cal * count;
       pro += item.protein * count;
+      fiber += (item.fiber || 0) * count;
     } else {
-      if(logged[item.id]) { cal += item.cal; pro += item.protein; }
+      if(logged[item.id]) { cal += item.cal; pro += item.protein; fiber += (item.fiber || 0); }
     }
   }));
   // Add ad-hoc entries
@@ -2221,6 +2228,7 @@ function updateProgress() {
   document.getElementById('pro-val').textContent = Math.round(pro) + 'g';
   document.getElementById('cal-bar').style.width = Math.min(100, (cal/1835)*100) + '%';
   document.getElementById('pro-bar').style.width = Math.min(100, (pro/170)*100) + '%';
+  document.getElementById('fiber-val').textContent = Math.round(fiber) + 'g fiber';
 
   // ── Weighted grade ──
   // Points reflect time commitment and difficulty
@@ -2783,7 +2791,7 @@ function renderFood() {
             <div class="food-check">${isDone ? '✓' : ''}</div>
             <div>
               <div class="food-name">${item.name}</div>
-              <div class="food-sub">${item.protein}g protein · ${item.cal} cal each</div>
+              <div class="food-sub">${item.protein}g protein · ${item.fiber || 0}g fiber · ${item.cal} cal each</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
@@ -2828,7 +2836,7 @@ function renderFood() {
             <div class="food-check">${logged[item.id] ? '✓' : ''}</div>
             <div>
               <div class="food-name">${item.name}</div>
-              <div class="food-sub">${item.protein}g protein</div>
+              <div class="food-sub">${item.protein}g protein · ${item.fiber || 0}g fiber</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
@@ -3925,7 +3933,7 @@ function renderFoodEditor() {
       row.innerHTML = `
         <div style="flex:1">
           <div style="font-size:12px;font-weight:500;color:var(--text)">${item.name}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${item.protein}g protein · ${item.cal} cal</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${item.protein}g protein · ${item.fiber || 0}g fiber · ${item.cal} cal</div>
         </div>
         <button class="task-delete-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.3);padding:3px 8px;font-size:11px" onclick="deleteFoodItem(${si},${ii})">✕ Remove</button>
       `;
@@ -3950,16 +3958,18 @@ function deleteFoodItem(secIdx, itemIdx) {
 function addFoodItem() {
   const name = document.getElementById('fe-name').value.trim();
   const protein = parseInt(document.getElementById('fe-protein').value) || 0;
+  const fiber = parseInt(document.getElementById('fe-fiber').value) || 0;
   const cal = parseInt(document.getElementById('fe-cal').value) || 0;
   const sectionLabel = document.getElementById('fe-section').value;
   if(!name) { document.getElementById('fe-name').focus(); return; }
   const id = 'cf-' + name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10) + '-' + Date.now();
   const sec = FOOD_SECTIONS.find(s => s.label === sectionLabel);
   if(sec) {
-    sec.items.push({ id, name, protein, cal });
+    sec.items.push({ id, name, protein, fiber, cal });
     saveFoodSections();
     document.getElementById('fe-name').value = '';
     document.getElementById('fe-protein').value = '';
+    document.getElementById('fe-fiber').value = '';
     document.getElementById('fe-cal').value = '';
     renderFoodEditor();
     renderFood();
