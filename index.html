@@ -35,6 +35,7 @@
   --ai-bg: rgba(56,189,248,0.18);
   --cal-color: #f59e0b;
   --pro-color: #3b82f6;
+  --fiber-color: #22c55e;
   --radius: 8px;
   --slot: 36px;
 }
@@ -187,6 +188,7 @@ body {
 .pro-val { color: var(--pro-color); }
 .cal-fill { background: var(--cal-color); }
 .pro-fill { background: var(--pro-color); }
+.fiber-fill { background: var(--fiber-color); }
 
 /* ── Content area ── */
 .content {
@@ -1266,6 +1268,14 @@ body {
       <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar pro-fill" id="pro-bar" style="width:0%"></div></div>
       <div id="pro-adhoc-list" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px"></div>
     </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Fiber</div>
+      <div class="header-stat-row">
+        <span class="header-stat-value" style="color:var(--fiber-color)" id="fiber-val">0g</span>
+        <span class="header-stat-goal">/ 30g</span>
+      </div>
+      <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar fiber-fill" id="fiber-bar" style="width:0%"></div></div>
+    </div>
     <div class="header-stat" style="justify-content:center;align-items:center;display:flex;flex-direction:column">
       <div class="header-stat-label">Grade</div>
       <div class="grade-letter" id="grade-letter" style="font-size:22px;font-family:'DM Mono',monospace;font-weight:700;line-height:1">—</div>
@@ -1349,12 +1359,9 @@ body {
     <div class="food-panel">
       <div class="food-header">
         <div class="food-title">Food Log</div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="fiber-val">0g fiber</span>
-          <div style="display:flex;gap:6px">
-            <button class="reset-btn" onclick="openFoodEditor()">Edit</button>
-            <button class="reset-btn" onclick="resetDay()">Reset</button>
-          </div>
+        <div style="display:flex;gap:6px">
+          <button class="reset-btn" onclick="openFoodEditor()">Edit</button>
+          <button class="reset-btn" onclick="resetDay()">Reset</button>
         </div>
       </div>
       <div id="food-list"></div>
@@ -2228,7 +2235,8 @@ function updateProgress() {
   document.getElementById('pro-val').textContent = Math.round(pro) + 'g';
   document.getElementById('cal-bar').style.width = Math.min(100, (cal/1835)*100) + '%';
   document.getElementById('pro-bar').style.width = Math.min(100, (pro/170)*100) + '%';
-  document.getElementById('fiber-val').textContent = Math.round(fiber) + 'g fiber';
+  document.getElementById('fiber-val').textContent = Math.round(fiber) + 'g';
+  document.getElementById('fiber-bar').style.width = Math.min(100, (fiber/30)*100) + '%';
 
   // ── Weighted grade ──
   // Points reflect time commitment and difficulty
