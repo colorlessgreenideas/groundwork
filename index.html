@@ -2249,7 +2249,7 @@ function updateProgress() {
     't-hist':   6,
     't-psu':    8,
     't-ally':4,
-    't-bathroom':5,'t-paint':5,'t-clean':3,'t-yardh':4,'t-car':3,
+    't-paint':5,'t-clean':3,'t-car':3,
   };
   const CUSTOM_TASK_WEIGHT = 4;
 
@@ -2586,15 +2586,13 @@ const ALL_TASK_DEFS = [
   { id:'t-exer', name:'Exercise',           sub:'2 hrs',                color:'exer',  blockId:'exer' },
   { id:'t-yard', name:'Yard Work',          sub:'4 hrs',                color:'yard',  blockId:'yard' },
   { id:'t-ally',    name:'Ally IRA',        sub:'finance',              color:'supp',  blockId:null   },
-  { id:'t-bathroom',name:'Bathroom',        sub:'house',                color:'yard',  blockId:null   },
   { id:'t-paint',   name:'Paint',           sub:'house',                color:'yard',  blockId:null   },
   { id:'t-clean',   name:'Clean',           sub:'house',                color:'yard',  blockId:null   },
-  { id:'t-yardh',   name:'Septic',          sub:'house',                color:'yard',  blockId:null   },
   { id:'t-car',     name:'Car',             sub:'house',                color:'yard',  blockId:null   },
 ];
 
 // Tasks that always show regardless of calendar (not calendar-linked)
-const STATIC_TASK_IDS = new Set(['t-hw','t-psu','t-ally','t-bathroom','t-paint','t-clean','t-yardh','t-car']);
+const STATIC_TASK_IDS = new Set(['t-hw','t-psu','t-ally','t-paint','t-clean','t-car']);
 
 // Group task defs by section label
 const TASK_SECTION_MAP = [
@@ -2602,7 +2600,7 @@ const TASK_SECTION_MAP = [
   { label:'Learning', ids:['t-hw','t-psu','t-hist'] },
   { label:'Fitness',  ids:['t-exer','t-yard'] },
   { label:'Finance',  ids:['t-ally'] },
-  { label:'House',    ids:['t-bathroom','t-paint','t-clean','t-yardh','t-car'] },
+  { label:'House',    ids:['t-paint','t-clean','t-car'] },
 ];
 
 function getTasksForDay(calIdx) {
@@ -3556,7 +3554,7 @@ function renderReviewStats() {
   }));
 
   // Points
-  const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-ally':4,'t-bathroom':5,'t-paint':5,'t-clean':3,'t-yardh':4,'t-car':3 };
+  const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-ally':4,'t-paint':5,'t-clean':3,'t-car':3 };
   const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,premier2:5,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:4,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
