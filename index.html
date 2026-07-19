@@ -54,6 +54,8 @@ body {
 /* ── Header ── */
 .header {
   display: flex;
+  flex-wrap: wrap;
+  row-gap: 8px;
   align-items: center;
   justify-content: space-between;
   padding: 10px 24px;
@@ -748,6 +750,19 @@ body {
   transition: background 0.15s;
 }
 .countdown-btn:hover { background: rgba(20,184,166,0.25); }
+.tomorrow-btn {
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  color: #6366f1;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.tomorrow-btn:hover { background: rgba(99,102,241,0.25); }
 
 .cd-card {
   background: var(--surface2);
@@ -1290,12 +1305,13 @@ body {
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;align-items:center">
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
     <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
     <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
     <button class="map-btn" onclick="openMapModal()">🌍 World Map</button>
     <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
+    <button class="tomorrow-btn" onclick="openTomorrow()">🌙 Tomorrow</button>
   </div>
 </div>
 
@@ -1584,6 +1600,27 @@ body {
       <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="quote-counter"></span>
       <span></span>
     </div>
+  </div>
+</div>
+
+<!-- Plan Tomorrow Modal -->
+<div class="modal-overlay" id="tomorrow-modal" onclick="if(event.target.id==='tomorrow-modal')closeTomorrow()">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🌙 Plan Tomorrow</div>
+        <div class="modal-sub">Freeform — top priorities, reminders, whatever's on your mind</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-saved"></span>
+        <button class="modal-close" onclick="closeTomorrow()">✕</button>
+      </div>
+    </div>
+    <div id="tomorrow-today-block" style="display:none;padding:12px 18px 0">
+      <div class="review-label" style="padding:0 0 6px">What you planned for today</div>
+      <div id="tomorrow-today-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px"></div>
+    </div>
+    <textarea id="tomorrow-area" placeholder="Tomorrow I want to..." style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;padding:16px 18px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:220px"></textarea>
   </div>
 </div>
 
@@ -3367,6 +3404,58 @@ function saveNotes() {
     setTimeout(() => el.textContent = '', 1500);
   } catch(e) {}
 }
+
+// ── Plan Tomorrow ──
+function tomorrowPlanKey(d) {
+  return `gw-tomorrow-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function tomorrowKey() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return tomorrowPlanKey(d);
+}
+
+function loadTomorrowNote() {
+  try {
+    const n = localStorage.getItem(tomorrowKey());
+    document.getElementById('tomorrow-area').value = n !== null ? n : '';
+  } catch(e) {}
+}
+
+function saveTomorrowNote() {
+  try {
+    localStorage.setItem(tomorrowKey(), document.getElementById('tomorrow-area').value);
+    const el = document.getElementById('tomorrow-saved');
+    el.textContent = 'saved';
+    setTimeout(() => el.textContent = '', 1500);
+  } catch(e) {}
+}
+
+function openTomorrow() {
+  loadTomorrowNote();
+  // Surface whatever was planned yesterday for today, if any.
+  try {
+    const todayPlan = localStorage.getItem(tomorrowPlanKey(new Date()));
+    const block = document.getElementById('tomorrow-today-block');
+    if(todayPlan && todayPlan.trim()) {
+      document.getElementById('tomorrow-today-text').textContent = todayPlan;
+      block.style.display = 'block';
+    } else {
+      block.style.display = 'none';
+    }
+  } catch(e) {}
+  document.getElementById('tomorrow-modal').classList.add('open');
+  setTimeout(() => document.getElementById('tomorrow-area').focus(), 100);
+}
+
+function closeTomorrow() {
+  document.getElementById('tomorrow-modal').classList.remove('open');
+}
+
+document.getElementById('tomorrow-area').addEventListener('input', () => {
+  clearTimeout(window._tomorrowSaveTimer);
+  window._tomorrowSaveTimer = setTimeout(saveTomorrowNote, 800);
+});
 
 // ── Password ──
 const PW_HASH = btoa('vector2030');
