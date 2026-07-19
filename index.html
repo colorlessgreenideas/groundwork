@@ -207,6 +207,31 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  transition: flex-basis 0.15s ease, width 0.15s ease;
+}
+.cal-panel.collapsed {
+  flex: 0 0 0;
+  width: 0;
+  overflow: hidden;
+  border-right: none;
+}
+.cal-collapse-handle {
+  width: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  color: var(--text3);
+  font-size: 11px;
+  user-select: none;
+  transition: background 0.15s, color 0.15s;
+}
+.cal-collapse-handle:hover {
+  background: var(--surface2);
+  color: var(--text2);
 }
 
 .cal-header {
@@ -1371,11 +1396,14 @@ body {
   <div class="content">
 
     <!-- Calendar -->
-    <div class="cal-panel">
+    <div class="cal-panel" id="cal-panel">
       <div class="week-grid">
         <div class="week-gutter" id="gutter"></div>
         <div class="week-cols view-week" id="week-cols"></div>
       </div>
+    </div>
+    <div class="cal-collapse-handle" id="cal-collapse-handle" onclick="toggleCalendarCollapse()" title="Collapse/expand calendar">
+      <span id="cal-collapse-icon">‹</span>
     </div>
 
     <!-- Tasks -->
@@ -1391,7 +1419,7 @@ body {
     </div>
 
     <!-- Notes -->
-    <div style="width:220px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;">
+    <div id="notes-panel" style="flex:0 0 220px;border-right:1px solid var(--border);display:flex;flex-direction:column;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10">
         <div style="font-size:13px;font-weight:600;color:var(--text)">Notes</div>
         <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="notes-saved"></span>
@@ -2439,6 +2467,29 @@ function setDateLabel() {
 function setView(v) {
   currentView = v;
   renderCalendar();
+}
+
+// ── Calendar collapse ──
+function calCollapsedKey() { return 'gw-cal-collapsed'; }
+
+function applyCalendarCollapsed(collapsed) {
+  document.getElementById('cal-panel').classList.toggle('collapsed', collapsed);
+  document.getElementById('cal-collapse-icon').textContent = collapsed ? '›' : '‹';
+  document.getElementById('cal-collapse-handle').title = collapsed ? 'Expand calendar' : 'Collapse calendar';
+  // With the calendar gone, let Notes absorb the freed space instead of leaving it empty.
+  document.getElementById('notes-panel').style.flex = collapsed ? '1' : '0 0 220px';
+}
+
+function toggleCalendarCollapse() {
+  const collapsed = !document.getElementById('cal-panel').classList.contains('collapsed');
+  applyCalendarCollapsed(collapsed);
+  try { localStorage.setItem(calCollapsedKey(), collapsed ? '1' : '0'); } catch(e) {}
+}
+
+function loadCalendarCollapsed() {
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(calCollapsedKey()) === '1'; } catch(e) {}
+  applyCalendarCollapsed(collapsed);
 }
 
 // ── Day pills ──
@@ -3958,6 +4009,7 @@ function initApp() {
   loadNotes();
   loadWheel();
   setDateLabel();
+  loadCalendarCollapsed();
   buildGutter();
   renderCalendar();
   renderFood();
