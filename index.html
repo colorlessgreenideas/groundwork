@@ -763,6 +763,17 @@ body {
   transition: background 0.15s;
 }
 .tomorrow-btn:hover { background: rgba(99,102,241,0.25); }
+.sync-settings-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sync-settings-btn:hover { background: rgba(255,255,255,0.12); }
 
 .cd-card {
   background: var(--surface2);
@@ -1312,6 +1323,7 @@ body {
     <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <button class="tomorrow-btn" onclick="openTomorrow()">🌙 Tomorrow</button>
+    <button class="sync-settings-btn" onclick="openSyncSettings()" title="AI plan sync settings">⚙</button>
   </div>
 </div>
 
@@ -1620,7 +1632,40 @@ body {
       <div class="review-label" style="padding:0 0 6px">What you planned for today</div>
       <div id="tomorrow-today-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px"></div>
     </div>
-    <textarea id="tomorrow-area" placeholder="Tomorrow I want to..." style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;padding:16px 18px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:220px"></textarea>
+    <div id="tomorrow-suggested-block" style="display:none;padding:12px 18px 0">
+      <div class="review-label" style="padding:0 0 6px;color:#6366f1">Suggested plan</div>
+      <div id="tomorrow-suggested-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius);padding:10px 12px"></div>
+      <button class="next-ep-btn" style="margin-top:8px" onclick="useSuggestedPlan()">Use this</button>
+    </div>
+    <textarea id="tomorrow-area" placeholder="Tomorrow I want to..." style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;padding:16px 18px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:180px"></textarea>
+    <div class="modal-footer">
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-export-status"></span>
+      <button class="next-ep-btn" id="tomorrow-export-btn" onclick="exportTodayForPlanning()">📤 Export for AI plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync Settings Modal -->
+<div class="modal-overlay" id="sync-settings-modal" onclick="if(event.target.id==='sync-settings-modal')closeSyncSettings()">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚙ AI Plan Sync</div>
+        <div class="modal-sub">Stored only in this browser, never committed</div>
+      </div>
+      <button class="modal-close" onclick="closeSyncSettings()">✕</button>
+    </div>
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:12px">
+      <div class="review-label" style="padding:0">GitHub Personal Access Token</div>
+      <input class="review-input" style="width:100%;box-sizing:border-box" id="sync-pat" type="password" placeholder="ghp_..." autocomplete="off" />
+      <div class="review-label" style="padding:0">Encryption Passphrase</div>
+      <input class="review-input" style="width:100%;box-sizing:border-box" id="sync-passphrase" type="password" placeholder="shared with Claude" autocomplete="off" />
+      <span style="font-size:11px;color:var(--text3);line-height:1.5">Token needs "repo" scope (classic) — generate at github.com/settings/tokens. The passphrase must match the one Claude uses to decrypt.</span>
+    </div>
+    <div class="modal-footer">
+      <span></span>
+      <button class="next-ep-btn" onclick="saveSyncSettings()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -3444,8 +3489,11 @@ function openTomorrow() {
       block.style.display = 'none';
     }
   } catch(e) {}
+  document.getElementById('tomorrow-suggested-block').style.display = 'none';
+  document.getElementById('tomorrow-export-status').textContent = '';
   document.getElementById('tomorrow-modal').classList.add('open');
   setTimeout(() => document.getElementById('tomorrow-area').focus(), 100);
+  checkForSuggestedPlan();
 }
 
 function closeTomorrow() {
@@ -3456,6 +3504,160 @@ document.getElementById('tomorrow-area').addEventListener('input', () => {
   clearTimeout(window._tomorrowSaveTimer);
   window._tomorrowSaveTimer = setTimeout(saveTomorrowNote, 800);
 });
+
+function useSuggestedPlan() {
+  const text = document.getElementById('tomorrow-suggested-text').textContent;
+  const area = document.getElementById('tomorrow-area');
+  area.value = text;
+  saveTomorrowNote();
+  document.getElementById('tomorrow-suggested-block').style.display = 'none';
+}
+
+// ── AI Plan Sync (export today's state, encrypted, for Claude to read & plan) ──
+const SYNC_REPO_OWNER = 'colorlessgreenideas';
+const SYNC_REPO_NAME = 'groundwork';
+const SYNC_PBKDF2_ITERATIONS = 100000;
+
+function openSyncSettings() {
+  document.getElementById('sync-pat').value = localStorage.getItem('gw-sync-pat') || '';
+  document.getElementById('sync-passphrase').value = localStorage.getItem('gw-sync-passphrase') || '';
+  document.getElementById('sync-settings-modal').classList.add('open');
+}
+function closeSyncSettings() {
+  document.getElementById('sync-settings-modal').classList.remove('open');
+}
+function saveSyncSettings() {
+  localStorage.setItem('gw-sync-pat', document.getElementById('sync-pat').value.trim());
+  localStorage.setItem('gw-sync-passphrase', document.getElementById('sync-passphrase').value.trim());
+  closeSyncSettings();
+}
+
+async function syncDeriveKey(passphrase, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: SYNC_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+function syncBufToB64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function syncB64ToBuf(b64) {
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+async function syncEncrypt(plaintext, passphrase) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await syncDeriveKey(passphrase, salt);
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
+  return `${syncBufToB64(salt)}:${syncBufToB64(iv)}:${syncBufToB64(ciphertext)}`;
+}
+async function syncDecrypt(blob, passphrase) {
+  const [saltB64, ivB64, dataB64] = blob.trim().split(':');
+  if(!saltB64 || !ivB64 || !dataB64) throw new Error('malformed blob');
+  const salt = syncB64ToBuf(saltB64), iv = syncB64ToBuf(ivB64), data = syncB64ToBuf(dataB64);
+  const key = await syncDeriveKey(passphrase, salt);
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  return new TextDecoder().decode(plainBuf);
+}
+
+function gatherExportData() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const todayCalIdx = jsToCalIdx(now.getDay());
+  const tomorrowCalIdx = jsToCalIdx(tomorrow.getDay());
+
+  const taskStatus = (t) => skipped['task-' + t.id] ? 'skipped' : (taskDone[t.id] ? 'done' : 'not done');
+  const tasks = getTasksForDay(todayCalIdx).map(t => ({ name: t.name, sub: t.sub, status: taskStatus(t) }))
+    .concat(customTasks.map(t => ({ name: t.name, sub: 'custom', status: taskStatus(t) })));
+
+  const food = [];
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const count = logged[item.id] || 0;
+    food.push({
+      name: item.name,
+      section: sec.label,
+      status: skipped[item.id] ? 'skipped' : (isCounter ? `${count} logged` : (logged[item.id] ? 'logged' : 'not logged')),
+      protein: item.protein, fiber: item.fiber || 0, cal: item.cal,
+    });
+  }));
+
+  const tomorrowBlocks = (schedule[tomorrowCalIdx]?.blocks || []).map(b => ({ label: b.l, start: b.s, end: b.e }));
+
+  return {
+    exportedAt: now.toISOString(),
+    today: {
+      date: now.toDateString(),
+      tasks,
+      food,
+      nutrition: {
+        calories: document.getElementById('cal-val').textContent, caloriesGoal: 1835,
+        protein: document.getElementById('pro-val').textContent, proteinGoal: '170g',
+        fiber: document.getElementById('fiber-val').textContent, fiberGoal: '30g',
+      },
+      notes: document.getElementById('notes-area').value,
+    },
+    tomorrow: {
+      date: tomorrow.toDateString(),
+      calendarBlocks: tomorrowBlocks,
+      existingPlanNote: document.getElementById('tomorrow-area').value,
+    },
+  };
+}
+
+async function commitToGitHub(pathInRepo, content, message) {
+  const pat = localStorage.getItem('gw-sync-pat');
+  if(!pat) throw new Error('no PAT set');
+  const url = `https://api.github.com/repos/${SYNC_REPO_OWNER}/${SYNC_REPO_NAME}/contents/${pathInRepo}`;
+  let sha;
+  const getRes = await fetch(url, { headers: { Authorization: `token ${pat}` } });
+  if(getRes.ok) { const j = await getRes.json(); sha = j.sha; }
+  const body = { message, content: btoa(content) };
+  if(sha) body.sha = sha;
+  const putRes = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `token ${pat}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if(!putRes.ok) throw new Error(`GitHub commit failed (${putRes.status}): ${await putRes.text()}`);
+  return putRes.json();
+}
+
+async function exportTodayForPlanning() {
+  const statusEl = document.getElementById('tomorrow-export-status');
+  const pat = localStorage.getItem('gw-sync-pat');
+  const passphrase = localStorage.getItem('gw-sync-passphrase');
+  if(!pat || !passphrase) { statusEl.textContent = 'Set up sync in ⚙ first'; return; }
+  statusEl.textContent = 'Exporting...';
+  try {
+    const data = gatherExportData();
+    const encrypted = await syncEncrypt(JSON.stringify(data, null, 2), passphrase);
+    await commitToGitHub('data/export.json', encrypted, 'export today for AI planning');
+    statusEl.textContent = 'Exported ✓ — ask Claude to plan tomorrow';
+    setTimeout(() => { if(statusEl.textContent.startsWith('Exported')) statusEl.textContent = ''; }, 5000);
+  } catch(e) {
+    statusEl.textContent = 'Export failed: ' + e.message;
+  }
+}
+
+async function checkForSuggestedPlan() {
+  const passphrase = localStorage.getItem('gw-sync-passphrase');
+  if(!passphrase) return;
+  try {
+    const res = await fetch('./data/plan.json?t=' + Date.now());
+    if(!res.ok) return;
+    const encrypted = await res.text();
+    const plaintext = await syncDecrypt(encrypted, passphrase);
+    document.getElementById('tomorrow-suggested-text').textContent = plaintext;
+    document.getElementById('tomorrow-suggested-block').style.display = 'block';
+  } catch(e) { /* no suggested plan available or wrong passphrase — stay silent */ }
+}
 
 // ── Password ──
 const PW_HASH = btoa('vector2030');
