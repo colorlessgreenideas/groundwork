@@ -3757,6 +3757,9 @@ function adhocKey() {
 }
 function loadAdhoc() {
   try { const a = localStorage.getItem(adhocKey()); if(a) adhocEntries = JSON.parse(a); } catch(e) {}
+  adhocEntries.cal = adhocEntries.cal || [];
+  adhocEntries.pro = adhocEntries.pro || [];
+  adhocEntries.fiber = adhocEntries.fiber || [];
 }
 function saveAdhoc() {
   try { localStorage.setItem(adhocKey(), JSON.stringify(adhocEntries)); } catch(e) {}
