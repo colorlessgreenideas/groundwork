@@ -1273,8 +1273,10 @@ body {
       <div class="header-stat-row">
         <span class="header-stat-value" style="color:var(--fiber-color)" id="fiber-val">0g</span>
         <span class="header-stat-goal">/ 30g</span>
+        <button class="adhoc-btn" onclick="openAdhoc('fiber')" title="Add extra fiber">+</button>
       </div>
       <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar fiber-fill" id="fiber-bar" style="width:0%"></div></div>
+      <div id="fiber-adhoc-list" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px"></div>
     </div>
     <div class="header-stat" style="justify-content:center;align-items:center;display:flex;flex-direction:column">
       <div class="header-stat-label">Grade</div>
@@ -2211,7 +2213,7 @@ const COUNTER_ITEMS = { arofum: 4, meatstick: 6 };
 const COUNTER_FLEXIBLE = new Set(['meatstick']); // can mark done at any count
 
 // Ad-hoc entries state
-let adhocEntries = { cal: [], pro: [] };
+let adhocEntries = { cal: [], pro: [], fiber: [] };
 
 function updateProgress() {
   // ── Food: cal & protein tracking ──
@@ -2230,6 +2232,7 @@ function updateProgress() {
   // Add ad-hoc entries
   adhocEntries.cal.forEach(e => { cal += e.amount; });
   adhocEntries.pro.forEach(e => { pro += e.amount; });
+  adhocEntries.fiber.forEach(e => { fiber += e.amount; });
 
   document.getElementById('cal-val').textContent = Math.round(cal);
   document.getElementById('pro-val').textContent = Math.round(pro) + 'g';
@@ -3722,9 +3725,14 @@ function viewPastReviews() {
   });
 }
 
-// ── Ad-hoc calories/protein ──
+// ── Ad-hoc calories/protein/fiber ──
 let adhocType = 'cal';
 
+const ADHOC_META = {
+  cal:   { title:'+ Extra Calories', label:'Calories',    unit:'cal', defaultNote:'extra cal',     hasG:false },
+  pro:   { title:'+ Extra Protein',  label:'Protein (g)', unit:'g',   defaultNote:'extra protein',  hasG:true  },
+  fiber: { title:'+ Extra Fiber',    label:'Fiber (g)',   unit:'g',   defaultNote:'extra fiber',    hasG:true  },
+};
 const CAL_PRESETS = [
   { label:'Snack ~150', val:150 },
   { label:'Meal ~500', val:500 },
@@ -3736,6 +3744,12 @@ const PRO_PRESETS = [
   { label:'Shake ~25g', val:25 },
   { label:'Meat ~30g', val:30 },
 ];
+const FIBER_PRESETS = [
+  { label:'Apple ~4g', val:4 },
+  { label:'Almonds ~3.5g', val:3.5 },
+  { label:'Berries ~8g', val:8 },
+];
+const ADHOC_PRESETS = { cal: CAL_PRESETS, pro: PRO_PRESETS, fiber: FIBER_PRESETS };
 
 function adhocKey() {
   const d = new Date();
@@ -3750,15 +3764,15 @@ function saveAdhoc() {
 
 function openAdhoc(type) {
   adhocType = type;
+  const meta = ADHOC_META[type];
   document.getElementById('adhoc-modal').classList.add('open');
-  document.getElementById('adhoc-title').textContent = type === 'cal' ? '+ Extra Calories' : '+ Extra Protein';
-  document.getElementById('adhoc-label').textContent = type === 'cal' ? 'Calories' : 'Protein (g)';
-  document.getElementById('adhoc-unit').textContent = type === 'cal' ? 'cal' : 'g';
+  document.getElementById('adhoc-title').textContent = meta.title;
+  document.getElementById('adhoc-label').textContent = meta.label;
+  document.getElementById('adhoc-unit').textContent = meta.unit;
   document.getElementById('adhoc-amount').value = '';
   document.getElementById('adhoc-note').value = '';
   // Presets
-  const presets = type === 'cal' ? CAL_PRESETS : PRO_PRESETS;
-  document.getElementById('adhoc-presets').innerHTML = presets.map(p =>
+  document.getElementById('adhoc-presets').innerHTML = ADHOC_PRESETS[type].map(p =>
     `<button class="adhoc-preset" onclick="document.getElementById('adhoc-amount').value=${p.val}">${p.label}</button>`
   ).join('');
   setTimeout(() => document.getElementById('adhoc-amount').focus(), 100);
@@ -3770,7 +3784,7 @@ function closeAdhoc() {
 
 function confirmAdhoc() {
   const amount = parseFloat(document.getElementById('adhoc-amount').value);
-  const note = document.getElementById('adhoc-note').value.trim() || (adhocType === 'cal' ? 'extra cal' : 'extra protein');
+  const note = document.getElementById('adhoc-note').value.trim() || ADHOC_META[adhocType].defaultNote;
   if(!amount || amount <= 0) return;
   adhocEntries[adhocType].push({ amount, note, id: Date.now() });
   saveAdhoc();
@@ -3787,12 +3801,12 @@ function removeAdhoc(type, id) {
 }
 
 function renderAdhocTags() {
-  ['cal','pro'].forEach(type => {
+  ['cal','pro','fiber'].forEach(type => {
     const container = document.getElementById(`${type}-adhoc-list`);
     if(!container) return;
     container.innerHTML = adhocEntries[type].map(e => `
       <div class="adhoc-tag">
-        <span>+${e.amount}${type==='pro'?'g':''} ${e.note}</span>
+        <span>+${e.amount}${ADHOC_META[type].hasG?'g':''} ${e.note}</span>
         <button class="adhoc-tag-remove" onclick="removeAdhoc('${type}',${e.id})">✕</button>
       </div>
     `).join('');
@@ -3992,7 +4006,7 @@ function checkDayChange() {
     logged = {};
     taskDone = {};
     skipped = {};
-    adhocEntries = { cal: [], pro: [] };
+    adhocEntries = { cal: [], pro: [], fiber: [] };
     loadState();   // loads fresh empty key for new day
     loadTasks();   // loads fresh empty key for new day
     setDateLabel();
