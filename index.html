@@ -774,6 +774,19 @@ body {
   transition: background 0.15s;
 }
 .sync-settings-btn:hover { background: rgba(255,255,255,0.12); }
+.trends-btn {
+  background: rgba(45,212,191,0.15);
+  border: 1px solid rgba(45,212,191,0.3);
+  color: #2dd4bf;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.trends-btn:hover { background: rgba(45,212,191,0.25); }
 
 .cd-card {
   background: var(--surface2);
@@ -1323,6 +1336,7 @@ body {
     <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <button class="tomorrow-btn" onclick="openTomorrow()">🌙 Tomorrow</button>
+    <button class="trends-btn" onclick="openTrends()">📈 Trends</button>
     <button class="sync-settings-btn" onclick="openSyncSettings()" title="AI plan sync settings">⚙</button>
   </div>
 </div>
@@ -1666,6 +1680,20 @@ body {
       <span></span>
       <button class="next-ep-btn" onclick="saveSyncSettings()">Save</button>
     </div>
+  </div>
+</div>
+
+<!-- Trends Modal -->
+<div class="modal-overlay" id="trends-modal" onclick="if(event.target.id==='trends-modal')closeTrends()">
+  <div class="modal" style="width:640px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📈 Trends</div>
+        <div class="modal-sub">From your exported history</div>
+      </div>
+      <button class="modal-close" onclick="closeTrends()">✕</button>
+    </div>
+    <div id="trends-body" style="padding:18px;min-height:200px"></div>
   </div>
 </div>
 
@@ -3629,21 +3657,40 @@ async function commitToGitHub(pathInRepo, content, message) {
   return putRes.json();
 }
 
-async function exportTodayForPlanning() {
+function exportDateStr(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+async function exportTodayForPlanning(opts) {
+  const silent = opts && opts.silent;
   const statusEl = document.getElementById('tomorrow-export-status');
+  const setStatus = (msg) => { if(statusEl && !silent) statusEl.textContent = msg; };
   const pat = localStorage.getItem('gw-sync-pat');
   const passphrase = localStorage.getItem('gw-sync-passphrase');
-  if(!pat || !passphrase) { statusEl.textContent = 'Set up sync in ⚙ first'; return; }
-  statusEl.textContent = 'Exporting...';
+  if(!pat || !passphrase) { setStatus('Set up sync in ⚙ first'); return false; }
+  setStatus('Exporting...');
   try {
     const data = gatherExportData();
     const encrypted = await syncEncrypt(JSON.stringify(data, null, 2), passphrase);
-    await commitToGitHub('data/export.json', encrypted, 'export today for AI planning');
-    statusEl.textContent = 'Exported ✓ — ask Claude to plan tomorrow';
-    setTimeout(() => { if(statusEl.textContent.startsWith('Exported')) statusEl.textContent = ''; }, 5000);
+    await commitToGitHub(`data/exports/${exportDateStr(new Date())}.json`, encrypted, 'export today for AI planning');
+    setStatus('Exported ✓ — ask Claude to plan tomorrow');
+    setTimeout(() => { if(statusEl && statusEl.textContent.startsWith('Exported')) statusEl.textContent = ''; }, 5000);
+    return true;
   } catch(e) {
-    statusEl.textContent = 'Export failed: ' + e.message;
+    setStatus('Export failed: ' + e.message);
+    return false;
   }
+}
+
+async function maybeAutoExport() {
+  const pat = localStorage.getItem('gw-sync-pat');
+  const passphrase = localStorage.getItem('gw-sync-passphrase');
+  if(!pat || !passphrase) return;
+  const today = exportDateStr(new Date());
+  if(localStorage.getItem('gw-last-auto-export') === today) return;
+  const ok = await exportTodayForPlanning({ silent: true });
+  if(ok) localStorage.setItem('gw-last-auto-export', today);
 }
 
 async function checkForSuggestedPlan() {
@@ -3657,6 +3704,212 @@ async function checkForSuggestedPlan() {
     document.getElementById('tomorrow-suggested-text').textContent = plaintext;
     document.getElementById('tomorrow-suggested-block').style.display = 'block';
   } catch(e) { /* no suggested plan available or wrong passphrase — stay silent */ }
+}
+
+// ── Trends ──
+async function fetchExportHistory() {
+  const pat = localStorage.getItem('gw-sync-pat');
+  const passphrase = localStorage.getItem('gw-sync-passphrase');
+  if(!pat || !passphrase) throw new Error('Set up sync in ⚙ first');
+  const url = `https://api.github.com/repos/${SYNC_REPO_OWNER}/${SYNC_REPO_NAME}/contents/data/exports`;
+  const res = await fetch(url, { headers: { Authorization: `token ${pat}` } });
+  if(!res.ok) {
+    if(res.status === 404) return [];
+    throw new Error(`Failed to list exports (${res.status})`);
+  }
+  const files = await res.json();
+  const jsonFiles = files.filter(f => f.name.endsWith('.json')).sort((a, b) => a.name.localeCompare(b.name));
+  const results = [];
+  for(const f of jsonFiles) {
+    try {
+      const rawRes = await fetch(f.download_url);
+      const encrypted = await rawRes.text();
+      const plaintext = await syncDecrypt(encrypted, passphrase);
+      results.push({ date: f.name.replace('.json', ''), data: JSON.parse(plaintext) });
+    } catch(e) { /* skip unreadable file (wrong passphrase, corrupt, etc.) */ }
+  }
+  return results;
+}
+
+function computeDayMetrics(entry) {
+  const nutrition = entry.data.today.nutrition;
+  const clampPct = (v, goal) => Math.max(0, Math.min(150, (parseFloat(v) / parseFloat(goal)) * 100)) || 0;
+  const calPct = clampPct(nutrition.calories, nutrition.caloriesGoal);
+  const proPct = clampPct(nutrition.protein, nutrition.proteinGoal);
+  const fiberPct = clampPct(nutrition.fiber, nutrition.fiberGoal);
+  const scored = entry.data.today.tasks.filter(t => t.status !== 'skipped');
+  const taskPct = scored.length ? (scored.filter(t => t.status === 'done').length / scored.length) * 100 : 0;
+  return { date: entry.date, calPct, proPct, fiberPct, taskPct };
+}
+
+function svgLineChart(containerEl, { dates, series, yMax = 100, height = 180 }) {
+  const width = containerEl.clientWidth || 580;
+  const padL = 34, padR = 12, padT = 16, padB = 24;
+  const plotW = width - padL - padR, plotH = height - padT - padB;
+  const n = dates.length;
+  const xFor = (i) => padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+  const yFor = (v) => padT + plotH - (Math.min(v, yMax) / yMax) * plotH;
+  const fmt = (v) => Math.round(v) + '%';
+
+  const ticks = [0, yMax * 0.5, yMax];
+  const gridSvg = ticks.map(t => `<line x1="${padL}" y1="${yFor(t)}" x2="${width - padR}" y2="${yFor(t)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const tickLabels = ticks.map(t => `<text x="${padL - 6}" y="${yFor(t) + 3}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="'DM Mono',monospace">${Math.round(t)}</text>`).join('');
+
+  // Direct end-labels collide when lines converge at the right edge — per dataviz
+  // guidance, don't stack them; fall back to legend + hover tooltip instead.
+  const lastI = dates.length - 1;
+  const endYs = series.map(s => yFor(s.points[lastI])).sort((a, b) => a - b);
+  const labelsCollide = endYs.some((y, i) => i > 0 && (y - endYs[i - 1]) < 12);
+
+  let linesSvg = '', dotsSvg = '', endLabelsSvg = '';
+  series.forEach(s => {
+    const pts = s.points.map((v, i) => `${xFor(i)},${yFor(v)}`).join(' ');
+    linesSvg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    dotsSvg += `<circle cx="${xFor(lastI)}" cy="${yFor(s.points[lastI])}" r="4" fill="${s.color}" stroke="var(--bg)" stroke-width="2"/>`;
+    if(!labelsCollide) {
+      endLabelsSvg += `<text x="${xFor(lastI) + 7}" y="${yFor(s.points[lastI]) + 3}" font-size="10" fill="var(--text2)" font-family="'DM Mono',monospace">${fmt(s.points[lastI])}</text>`;
+    }
+  });
+
+  const showEvery = n <= 7 ? 1 : Math.ceil(n / 6);
+  let xLabels = '';
+  dates.forEach((d, i) => {
+    if(i % showEvery === 0 || i === n - 1) {
+      xLabels += `<text x="${xFor(i)}" y="${height - 6}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="'DM Mono',monospace">${d.slice(5)}</text>`;
+    }
+  });
+
+  containerEl.style.position = 'relative';
+  containerEl.innerHTML = `
+    <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;overflow:visible">
+      ${gridSvg}${tickLabels}${linesSvg}${dotsSvg}${endLabelsSvg}${xLabels}
+      <rect class="trend-hover-rect" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>
+      <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="var(--text3)" stroke-width="1" style="display:none;pointer-events:none"/>
+    </svg>
+    <div class="trend-legend" style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap"></div>
+    <div class="trend-tooltip" style="display:none;position:absolute;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;font-family:'DM Mono',monospace;pointer-events:none;z-index:1000"></div>
+  `;
+
+  if(series.length > 1) {
+    containerEl.querySelector('.trend-legend').innerHTML = series.map(s =>
+      `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:2px;background:${s.color};display:inline-block"></span>${s.label}</div>`
+    ).join('');
+  }
+
+  const svgEl = containerEl.querySelector('svg');
+  const hoverRect = containerEl.querySelector('.trend-hover-rect');
+  const crosshair = containerEl.querySelector('.trend-crosshair');
+  const tooltip = containerEl.querySelector('.trend-tooltip');
+  hoverRect.addEventListener('mousemove', (e) => {
+    const rect = svgEl.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) * (width / rect.width);
+    let idx = Math.round(((mouseX - padL) / plotW) * (n - 1));
+    idx = Math.max(0, Math.min(n - 1, idx));
+    const cx = xFor(idx);
+    crosshair.setAttribute('x1', cx); crosshair.setAttribute('x2', cx);
+    crosshair.style.display = 'block';
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX - containerEl.getBoundingClientRect().left + 10) + 'px';
+    tooltip.style.top = (e.clientY - containerEl.getBoundingClientRect().top - 10) + 'px';
+    tooltip.innerHTML = `<div style="color:var(--text3);margin-bottom:4px">${dates[idx]}</div>` + series.map(s =>
+      `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:2px;background:${s.color};display:inline-block"></span><span style="color:var(--text)">${fmt(s.points[idx])}</span><span style="color:var(--text3)">${s.label}</span></div>`
+    ).join('');
+  });
+  hoverRect.addEventListener('mouseleave', () => { crosshair.style.display = 'none'; tooltip.style.display = 'none'; });
+}
+
+function svgBarChart(containerEl, { dates, values, color, yMax = 100, height = 140 }) {
+  const width = containerEl.clientWidth || 580;
+  const padL = 34, padR = 12, padT = 16, padB = 24;
+  const plotW = width - padL - padR, plotH = height - padT - padB;
+  const n = values.length;
+  const bandW = plotW / n;
+  const barW = Math.min(24, bandW * 0.5);
+  const fmt = (v) => Math.round(v) + '%';
+
+  const ticks = [0, yMax * 0.5, yMax];
+  const yForTick = (t) => padT + plotH - (t / yMax) * plotH;
+  const gridSvg = ticks.map(t => `<line x1="${padL}" y1="${yForTick(t)}" x2="${width - padR}" y2="${yForTick(t)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const tickLabels = ticks.map(t => `<text x="${padL - 6}" y="${yForTick(t) + 3}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="'DM Mono',monospace">${Math.round(t)}</text>`).join('');
+
+  let barsSvg = '';
+  values.forEach((v, i) => {
+    const cx = padL + bandW * i + bandW / 2;
+    const barH = (Math.min(v, yMax) / yMax) * plotH;
+    const y = padT + plotH - barH;
+    barsSvg += `<rect class="trend-bar" data-idx="${i}" x="${cx - barW / 2}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="4" fill="${color}" style="cursor:pointer"/>`;
+  });
+
+  const showEvery = n <= 7 ? 1 : Math.ceil(n / 6);
+  let xLabels = '';
+  dates.forEach((d, i) => {
+    if(i % showEvery === 0 || i === n - 1) {
+      const cx = padL + bandW * i + bandW / 2;
+      xLabels += `<text x="${cx}" y="${height - 6}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="'DM Mono',monospace">${d.slice(5)}</text>`;
+    }
+  });
+
+  containerEl.style.position = 'relative';
+  containerEl.innerHTML = `
+    <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;overflow:visible">
+      ${gridSvg}${tickLabels}${barsSvg}${xLabels}
+    </svg>
+    <div class="trend-tooltip" style="display:none;position:absolute;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;font-family:'DM Mono',monospace;pointer-events:none;z-index:1000"></div>
+  `;
+
+  const tooltip = containerEl.querySelector('.trend-tooltip');
+  containerEl.querySelectorAll('.trend-bar').forEach(bar => {
+    bar.addEventListener('mousemove', (e) => {
+      const idx = +bar.dataset.idx;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX - containerEl.getBoundingClientRect().left + 10) + 'px';
+      tooltip.style.top = (e.clientY - containerEl.getBoundingClientRect().top - 10) + 'px';
+      tooltip.innerHTML = `<div style="color:var(--text3)">${dates[idx]}</div><div style="color:var(--text)">${fmt(values[idx])}</div>`;
+    });
+    bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  });
+}
+
+async function openTrends() {
+  document.getElementById('trends-modal').classList.add('open');
+  const body = document.getElementById('trends-body');
+  body.innerHTML = `<div style="color:var(--text3);font-size:12px">Loading history...</div>`;
+  try {
+    const history = await fetchExportHistory();
+    if(history.length < 2) {
+      body.innerHTML = `<div style="color:var(--text3);font-size:12px;text-align:center;padding:40px 0">
+        ${history.length === 0 ? 'No exported history yet.' : 'Only one day of history so far.'}<br/>
+        Export a few more days (or wait for auto-export) to see trends.
+      </div>`;
+      return;
+    }
+    const metrics = history.map(computeDayMetrics);
+    const dates = metrics.map(m => m.date);
+    body.innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Goal adherence (% of daily goal)</div>
+      <div id="trend-chart-goals"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-top:24px;margin-bottom:8px">Tasks completed (%)</div>
+      <div id="trend-chart-tasks"></div>
+    `;
+    svgLineChart(document.getElementById('trend-chart-goals'), {
+      dates,
+      series: [
+        { label: 'Calories', color: '#f59e0b', points: metrics.map(m => m.calPct) },
+        { label: 'Protein', color: '#3b82f6', points: metrics.map(m => m.proPct) },
+        { label: 'Fiber', color: '#22c55e', points: metrics.map(m => m.fiberPct) },
+      ],
+    });
+    svgBarChart(document.getElementById('trend-chart-tasks'), { dates, values: metrics.map(m => m.taskPct), color: '#3b82f6' });
+  } catch(e) {
+    body.textContent = '';
+    const errEl = document.createElement('div');
+    errEl.style.cssText = 'color:#ef4444;font-size:12px';
+    errEl.textContent = e.message;
+    body.appendChild(errEl);
+  }
+}
+function closeTrends() {
+  document.getElementById('trends-modal').classList.remove('open');
 }
 
 // ── Password ──
@@ -3711,6 +3964,7 @@ function initApp() {
   renderTasks();
   renderAdhocTags();
   updateProgress();
+  maybeAutoExport();
 }
 
 if(checkAuth()) {
