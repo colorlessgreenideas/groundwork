@@ -2230,7 +2230,7 @@ const TASK_BLOCK_MAP = {
 let FOOD_SECTIONS = [
   { label: 'Morning Stack', items: [
     {id:'coffee',    name:'Coffee',                     protein:0,  cal:5,   fiber:0},
-    {id:'premier1',  name:'Premier Protein + Creatine', protein:30, cal:160, fiber:0},
+    {id:'premier1',  name:'On Protein + Creatine', protein:40, cal:220, fiber:5},
     {id:'eggs',      name:'Hard Boiled Eggs (2)',        protein:12, cal:140, fiber:0},
     {id:'banana',    name:'Banana',                     protein:1,  cal:105, fiber:3},
     {id:'carrots',   name:'Carrots',                    protein:1,  cal:35,  fiber:3},
@@ -2243,7 +2243,6 @@ let FOOD_SECTIONS = [
   { label: 'Dinner Stack', items: [
     {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400, fiber:0},
     {id:'cottage',   name:'Cottage Cheese (1 cup)',      protein:17, cal:120, fiber:0},
-    {id:'premier2',  name:'Premier Protein #2',          protein:30, cal:160, fiber:0},
     {id:'centrum',   name:'Centrum Men',                 protein:0,  cal:0,   fiber:0},
     {id:'arofum',    name:'Fish Oil',  protein:0,  cal:0,  fiber:0},
   ]},
@@ -2399,7 +2398,6 @@ function updateProgress() {
     premier1:  6,   // primary protein + creatine
     tuna:      6,   // main protein hit
     chicken:   6,   // dinner protein
-    premier2:  5,   // secondary protein
     eggs:      4,
     cottage:   4,
     meatstick: 3,
@@ -4160,7 +4158,7 @@ function renderReviewStats() {
 
   // Points
   const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-ally':4,'t-clean':3,'t-car':3 };
-  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,premier2:5,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:4,banana:2,carrots:2,centrum:2,coffee:1 };
+  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:4,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
   getTasksForDay(todayCalIdx).forEach(t => {
