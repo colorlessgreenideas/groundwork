@@ -3665,6 +3665,12 @@ function gatherExportData() {
       protein: item.protein, fiber: item.fiber || 0, cal: item.cal,
     });
   }));
+  // Ad-hoc entries contribute to the nutrition totals below but aren't tied to a
+  // FOOD_SECTIONS item — list them separately so the food array sums to the same
+  // totals as `nutrition` instead of silently undercounting them.
+  adhocEntries.cal.forEach(e => food.push({ name: e.note || 'extra cal', section: 'Ad-hoc', status: 'logged', protein: 0, fiber: 0, cal: e.amount }));
+  adhocEntries.pro.forEach(e => food.push({ name: e.note || 'extra protein', section: 'Ad-hoc', status: 'logged', protein: e.amount, fiber: 0, cal: 0 }));
+  adhocEntries.fiber.forEach(e => food.push({ name: e.note || 'extra fiber', section: 'Ad-hoc', status: 'logged', protein: 0, fiber: e.amount, cal: 0 }));
 
   const tomorrowBlocks = (schedule[tomorrowCalIdx]?.blocks || []).map(b => ({ label: b.l, start: b.s, end: b.e }));
 
