@@ -437,6 +437,22 @@ body {
   font-family: 'DM Mono', monospace;
   color: var(--text3);
 }
+#tasks-notes-area {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  outline: none;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.5;
+}
 .task-section-label {
   font-size: 10px;
   font-weight: 500;
@@ -1723,6 +1739,7 @@ body {
           <div class="tasks-progress" id="tasks-progress">0 / 0</div>
         </div>
       </div>
+      <textarea id="tasks-notes-area" placeholder="Quick notes..." rows="1"></textarea>
       <div id="task-list"></div>
     </div>
 
@@ -3657,6 +3674,34 @@ function saveNotes() {
   } catch(e) {}
 }
 
+// ── Tasks panel quick notes (auto-grows as lines are added) ──
+function tasksNotesKey() { return 'gw-tasks-notes'; }
+
+function loadTasksNotes() {
+  try {
+    const n = localStorage.getItem(tasksNotesKey());
+    const area = document.getElementById('tasks-notes-area');
+    if(n !== null) area.value = n;
+    autoGrowTasksNotes();
+  } catch(e) {}
+}
+
+function saveTasksNotes() {
+  try { localStorage.setItem(tasksNotesKey(), document.getElementById('tasks-notes-area').value); } catch(e) {}
+}
+
+function autoGrowTasksNotes() {
+  const area = document.getElementById('tasks-notes-area');
+  area.style.height = 'auto';
+  area.style.height = area.scrollHeight + 'px';
+}
+
+document.getElementById('tasks-notes-area').addEventListener('input', () => {
+  autoGrowTasksNotes();
+  clearTimeout(window._tasksNotesSaveTimer);
+  window._tasksNotesSaveTimer = setTimeout(saveTasksNotes, 800);
+});
+
 // ── Plan Tomorrow ──
 function tomorrowPlanKey(d) {
   return `gw-tomorrow-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -4180,6 +4225,7 @@ function initApp() {
   loadAdhoc();
   loadCountdowns();
   loadNotes();
+  loadTasksNotes();
   loadWheel();
   setDateLabel();
   loadCalendarCollapsed();
