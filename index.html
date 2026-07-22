@@ -812,6 +812,38 @@ body {
   transition: background 0.15s;
 }
 .trends-btn:hover { background: rgba(45,212,191,0.25); }
+.nutrients-btn {
+  background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.3);
+  color: #a855f7;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.nutrients-btn:hover { background: rgba(168,85,247,0.25); }
+.nutrient-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 115px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+.nutrient-label { font-size: 12px; color: var(--text2); }
+.nutrient-bar-bg {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.nutrient-bar-fill { height: 100%; border-radius: 3px; transition: width 0.2s; }
+.nutrient-bar-fill.green { background: #4ade80; }
+.nutrient-bar-fill.yellow { background: #fbbf24; }
+.nutrient-bar-fill.red { background: #ef4444; }
+.nutrient-value { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
 
 .cd-card {
   background: var(--surface2);
@@ -1362,6 +1394,7 @@ body {
     <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
     <button class="tomorrow-btn" onclick="openTomorrow()">🌙 Tomorrow</button>
     <button class="trends-btn" onclick="openTrends()">📈 Trends</button>
+    <button class="nutrients-btn" onclick="openNutrients()">🧬 Vitamins</button>
     <button class="sync-settings-btn" onclick="openSyncSettings()" title="AI plan sync settings">⚙</button>
   </div>
 </div>
@@ -1722,6 +1755,20 @@ body {
       <button class="modal-close" onclick="closeTrends()">✕</button>
     </div>
     <div id="trends-body" style="padding:18px;min-height:200px"></div>
+  </div>
+</div>
+
+<!-- Vitamins & Minerals Modal -->
+<div class="modal-overlay" id="nutrients-modal" onclick="if(event.target.id==='nutrients-modal')closeNutrients()">
+  <div class="modal" style="width:480px;max-height:80vh;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🧬 Vitamins &amp; Minerals</div>
+        <div class="modal-sub">Estimated from today's logged food — not lab data</div>
+      </div>
+      <button class="modal-close" onclick="closeNutrients()">✕</button>
+    </div>
+    <div id="nutrients-body" style="padding:16px 18px;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -2252,6 +2299,55 @@ let FOOD_SECTIONS = [
     {id:'kbrownie',  name:'Kellogg Brownie Batter Bar',  protein:12, cal:180, fiber:7 },
   ]},
 ];
+
+// ── Vitamins & Minerals ──
+// Values are estimates (typical USDA figures for these food types, not lab data for
+// specific branded products) — directional guidance, not a substitute for real tracking.
+// isLimit nutrients (sodium) have a DV that's a ceiling, not a target — see nutrientColor().
+const NUTRIENT_DEFS = [
+  { key:'vitA',        label:'Vitamin A',         unit:'mcg', dv:900 },
+  { key:'vitC',        label:'Vitamin C',         unit:'mg',  dv:90 },
+  { key:'vitD',        label:'Vitamin D',         unit:'mcg', dv:20 },
+  { key:'vitE',        label:'Vitamin E',         unit:'mg',  dv:15 },
+  { key:'vitK',        label:'Vitamin K',         unit:'mcg', dv:120 },
+  { key:'b1',          label:'Thiamin (B1)',      unit:'mg',  dv:1.2 },
+  { key:'b2',          label:'Riboflavin (B2)',   unit:'mg',  dv:1.3 },
+  { key:'b3',          label:'Niacin (B3)',       unit:'mg',  dv:16 },
+  { key:'b6',          label:'Vitamin B6',        unit:'mg',  dv:1.7 },
+  { key:'folate',      label:'Folate',            unit:'mcg', dv:400 },
+  { key:'b12',         label:'Vitamin B12',       unit:'mcg', dv:2.4 },
+  { key:'biotin',      label:'Biotin',            unit:'mcg', dv:30 },
+  { key:'pantothenic', label:'Pantothenic Acid',  unit:'mg',  dv:5 },
+  { key:'calcium',     label:'Calcium',           unit:'mg',  dv:1300 },
+  { key:'iron',        label:'Iron',              unit:'mg',  dv:8 },
+  { key:'magnesium',   label:'Magnesium',         unit:'mg',  dv:420 },
+  { key:'phosphorus',  label:'Phosphorus',        unit:'mg',  dv:1250 },
+  { key:'potassium',   label:'Potassium',         unit:'mg',  dv:3400 },
+  { key:'sodium',      label:'Sodium',            unit:'mg',  dv:2300, isLimit:true },
+  { key:'zinc',        label:'Zinc',              unit:'mg',  dv:11 },
+  { key:'copper',      label:'Copper',            unit:'mcg', dv:900 },
+  { key:'manganese',   label:'Manganese',         unit:'mg',  dv:2.3 },
+  { key:'selenium',    label:'Selenium',          unit:'mcg', dv:55 },
+  { key:'iodine',      label:'Iodine',            unit:'mcg', dv:150 },
+];
+
+const FOOD_NUTRIENTS = {
+  coffee:    { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0, b2:0, b3:0.5, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:5, iron:0, magnesium:7, phosphorus:7, potassium:116, sodium:5, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
+  premier1:  { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.2, b3:0.3, b6:0.05, folate:5, b12:0.3, biotin:0, pantothenic:0.3, calcium:180, iron:0.2, magnesium:20, phosphorus:200, potassium:200, sodium:200, zinc:0.5, copper:0, manganese:0, selenium:5, iodine:0 },
+  eggs:      { vitA:130, vitC:0, vitD:2, vitE:1, vitK:0.2, b1:0.05, b2:0.5, b3:0.06, b6:0.12, folate:44, b12:1.0, biotin:20, pantothenic:1.4, calcium:56, iron:1.8, magnesium:11, phosphorus:198, potassium:130, sodium:140, zinc:1.3, copper:0.02, manganese:0, selenium:30, iodine:24 },
+  banana:    { vitA:4, vitC:10, vitD:0, vitE:0.1, vitK:0.6, b1:0.04, b2:0.09, b3:0.8, b6:0.4, folate:24, b12:0, biotin:0, pantothenic:0.4, calcium:6, iron:0.3, magnesium:32, phosphorus:26, potassium:422, sodium:1, zinc:0.2, copper:0.09, manganese:0.3, selenium:1, iodine:0 },
+  carrots:   { vitA:1069, vitC:7, vitD:0, vitE:0.4, vitK:16, b1:0.08, b2:0.05, b3:0.9, b6:0.1, folate:15, b12:0, biotin:0, pantothenic:0.3, calcium:33, iron:0.4, magnesium:13, phosphorus:35, potassium:410, sodium:65, zinc:0.3, copper:0.04, manganese:0.1, selenium:0, iodine:0 },
+  tuna:      { vitA:20, vitC:0, vitD:3, vitE:0.5, vitK:0, b1:0.03, b2:0.1, b3:22, b6:0.6, folate:5, b12:5, biotin:0, pantothenic:0.3, calcium:20, iron:1.4, magnesium:50, phosphorus:400, potassium:550, sodium:600, zinc:1, copper:0.1, manganese:0, selenium:160, iodine:0 },
+  peanuts:   { vitA:0, vitC:0, vitD:0, vitE:2.4, vitK:0, b1:0.1, b2:0.02, b3:3.8, b6:0.1, folate:41, b12:0, biotin:0, pantothenic:0.4, calcium:15, iron:0.7, magnesium:50, phosphorus:107, potassium:200, sodium:5, zinc:1, copper:0.2, manganese:0.7, selenium:2, iodine:0 },
+  meatstick: { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.05, b3:1.5, b6:0.1, folate:0, b12:0.6, biotin:0, pantothenic:0.3, calcium:5, iron:0.8, magnesium:8, phosphorus:70, potassium:120, sodium:450, zinc:1.5, copper:0, manganese:0, selenium:8, iodine:0 },
+  chicken:   { vitA:20, vitC:0, vitD:0.2, vitE:0.3, vitK:0, b1:0.1, b2:0.2, b3:18, b6:1.1, folate:10, b12:0.5, biotin:0, pantothenic:1.5, calcium:25, iron:1.5, magnesium:45, phosphorus:350, potassium:450, sodium:300, zinc:3, copper:0.1, manganese:0, selenium:55, iodine:0 },
+  cottage:   { vitA:24, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.4, b3:0.3, b6:0.15, folate:27, b12:1.4, biotin:0, pantothenic:0.5, calcium:138, iron:0.3, magnesium:12, phosphorus:277, potassium:220, sodium:820, zinc:1, copper:0, manganese:0, selenium:20, iodine:0 },
+  centrum:   { vitA:900, vitC:90, vitD:25, vitE:15, vitK:80, b1:1.2, b2:1.3, b3:16, b6:2, folate:400, b12:12, biotin:30, pantothenic:5, calcium:210, iron:0, magnesium:60, phosphorus:20, potassium:80, sodium:5, zinc:11, copper:900, manganese:2.3, selenium:55, iodine:150 },
+  arofum:    { vitA:0, vitC:0, vitD:2, vitE:2, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:0, iron:0, magnesium:0, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
+  chiaseeds: { vitA:0, vitC:0, vitD:0, vitE:0.1, vitK:0, b1:0, b2:0, b3:0.5, b6:0, folate:8, b12:0, biotin:0, pantothenic:0, calcium:179, iron:2.2, magnesium:95, phosphorus:265, potassium:115, sodium:5, zinc:1, copper:0.1, manganese:0.6, selenium:6, iodine:0 },
+  avocado:   { vitA:7, vitC:10, vitD:0, vitE:2, vitK:21, b1:0.07, b2:0.13, b3:1.7, b6:0.2, folate:60, b12:0, biotin:0, pantothenic:1.4, calcium:12, iron:0.5, magnesium:29, phosphorus:52, potassium:487, sodium:7, zinc:0.6, copper:0.2, manganese:0.1, selenium:0, iodine:0 },
+  kbrownie:  { vitA:135, vitC:9, vitD:2, vitE:2.25, vitK:0, b1:0.12, b2:0.13, b3:1.6, b6:0.17, folate:40, b12:0.24, biotin:0, pantothenic:0.5, calcium:260, iron:4, magnesium:0, phosphorus:0, potassium:100, sodium:135, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
+};
 
 // ── State ──
 let logged = {};
@@ -3965,6 +4061,59 @@ async function openTrends() {
 }
 function closeTrends() {
   document.getElementById('trends-modal').classList.remove('open');
+}
+
+// ── Vitamins & Minerals ──
+function nutrientColor(pct, isLimit) {
+  if(isLimit) {
+    if(pct <= 70) return 'green';
+    if(pct <= 100) return 'yellow';
+    return 'red';
+  }
+  if(pct >= 100) return 'green';
+  if(pct >= 50) return 'yellow';
+  return 'red';
+}
+
+function computeNutrientTotals() {
+  const totals = {};
+  NUTRIENT_DEFS.forEach(n => { totals[n.key] = 0; });
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    const nutrients = FOOD_NUTRIENTS[item.id];
+    if(!nutrients) return; // custom/unrecognized items have no known micronutrient data
+    const isCounter = !!COUNTER_ITEMS[item.id];
+    const mult = isCounter ? (logged[item.id] || 0) : (logged[item.id] ? 1 : 0);
+    if(mult === 0) return;
+    NUTRIENT_DEFS.forEach(n => { totals[n.key] += (nutrients[n.key] || 0) * mult; });
+  }));
+  return totals;
+}
+
+function renderNutrients() {
+  const totals = computeNutrientTotals();
+  const body = document.getElementById('nutrients-body');
+  body.innerHTML = NUTRIENT_DEFS.map(n => {
+    const val = totals[n.key] || 0;
+    const pct = (val / n.dv) * 100;
+    const color = nutrientColor(pct, n.isLimit);
+    const barPct = Math.min(100, pct);
+    const valDisplay = val >= 10 ? Math.round(val) : Math.round(val * 10) / 10;
+    return `
+      <div class="nutrient-row">
+        <div class="nutrient-label">${n.label}</div>
+        <div class="nutrient-bar-bg"><div class="nutrient-bar-fill ${color}" style="width:${barPct}%"></div></div>
+        <div class="nutrient-value">${valDisplay}${n.unit} · ${Math.round(pct)}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openNutrients() {
+  renderNutrients();
+  document.getElementById('nutrients-modal').classList.add('open');
+}
+function closeNutrients() {
+  document.getElementById('nutrients-modal').classList.remove('open');
 }
 
 // ── Password ──
