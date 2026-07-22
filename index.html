@@ -925,6 +925,34 @@ body {
 .nutrient-bar-fill.red { background: #ef4444; }
 .nutrient-value { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
 
+.essentials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.essentials-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.essentials-card.highlight {
+  background: rgba(45,212,191,0.06);
+  border-color: rgba(45,212,191,0.3);
+}
+.essentials-card-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.essentials-card-body { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.essentials-callout {
+  margin-top: 14px;
+  background: rgba(168,85,247,0.06);
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
 .cd-card {
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -1512,6 +1540,7 @@ body {
         <button class="workspace-tab" data-tab="tomorrow" onclick="switchWorkspaceTab('tomorrow')">🌙 Tomorrow</button>
         <button class="workspace-tab" data-tab="trends" onclick="switchWorkspaceTab('trends')">📈 Trends</button>
         <button class="workspace-tab" data-tab="nutrients" onclick="switchWorkspaceTab('nutrients')">🧬 Vitamins</button>
+        <button class="workspace-tab" data-tab="essentials" onclick="switchWorkspaceTab('essentials')">🥗 Essentials</button>
       </div>
 
       <!-- Calendar tab -->
@@ -1750,6 +1779,53 @@ body {
           </div>
         </div>
         <div id="nutrients-body"></div>
+      </div>
+
+      <!-- Essentials tab -->
+      <div class="workspace-tab-content" id="tab-essentials" style="display:none;padding:16px 20px;overflow-y:auto">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">🥗 Essentials</div>
+            <div class="workspace-tab-sub">What your body needs beyond vitamins &amp; minerals</div>
+          </div>
+        </div>
+        <div class="essentials-grid">
+          <div class="essentials-card">
+            <div class="essentials-card-title">Protein</div>
+            <div class="essentials-card-body">Muscle repair, immune function, enzymes and hormones. Already tracked live via the Protein pill.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Fat</div>
+            <div class="essentials-card-body">Especially essential fatty acids your body can't make itself — needed for hormone production, cell membranes, and brain function.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Carbohydrates</div>
+            <div class="essentials-card-body">Your body's preferred energy source, particularly for the brain and high-intensity exercise. Not strictly "essential" like certain fats/amino acids, but hard to feel good long-term without some.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Fiber</div>
+            <div class="essentials-card-body">Technically a carb, but functions differently: feeds gut bacteria, regulates blood sugar, supports digestion and heart health. Already tracked live via the Fiber pill.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Water</div>
+            <div class="essentials-card-body">Often overlooked, but hydration affects digestion, joint lubrication, temperature regulation, and cognitive function.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Essential Amino Acids</div>
+            <div class="essentials-card-body">9 of them your body can't synthesize — only gets from protein sources. This is why protein <em>quality</em> (complete vs. incomplete) matters, not just quantity.</div>
+          </div>
+          <div class="essentials-card highlight">
+            <div class="essentials-card-title">Essential Fatty Acids</div>
+            <div class="essentials-card-body">Omega-3 (ALA, EPA, DHA) and omega-6 (linoleic acid). Most people get plenty of omega-6 but are short on omega-3s — fatty fish, walnuts, flaxseed, or a fish oil supplement help here.</div>
+          </div>
+          <div class="essentials-card">
+            <div class="essentials-card-title">Phytonutrients / Antioxidants</div>
+            <div class="essentials-card-body">Not "essential" in the classic sense — no deficiency disease from lacking them — but compounds in colorful fruits/veggies that reduce inflammation and oxidative stress, linked to lower long-term disease risk.</div>
+          </div>
+        </div>
+        <div class="essentials-callout">
+          You've got protein and fiber covered. The piece that's easy to miss in a no-cook, high-protein setup is <strong>omega-3s</strong> and <strong>variety of plant foods</strong> for phytonutrients — worth keeping an eye on since most of your no-cook meals lean toward meat/dairy/protein products.
+        </div>
       </div>
     </div>
     <div class="cal-collapse-handle" id="cal-collapse-handle" onclick="toggleCalendarCollapse()" title="Collapse/expand calendar">
@@ -2662,7 +2738,7 @@ function loadCalendarCollapsed() {
 }
 
 // ── Workspace tabs (calendar panel doubles as a tab host for Wisdom, Countdowns, etc.) ──
-const WORKSPACE_TABS = ['calendar','wisdom','countdown','map','wheel','review','tomorrow','trends','nutrients'];
+const WORKSPACE_TABS = ['calendar','wisdom','countdown','map','wheel','review','tomorrow','trends','nutrients','essentials'];
 
 function switchWorkspaceTab(tabId) {
   WORKSPACE_TABS.forEach(id => {
