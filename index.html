@@ -234,6 +234,44 @@ body {
   color: var(--text2);
 }
 
+/* ── Workspace tabs (calendar / wisdom / countdowns / etc.) ── */
+.workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.workspace-tab {
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.workspace-tab:hover { background: var(--surface2); }
+.workspace-tab.active { background: var(--surface2); color: var(--text); border-color: #444; }
+.workspace-tab-content { padding: 16px 20px; }
+.workspace-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.workspace-tab-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.workspace-tab-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
 .cal-header {
   display: flex;
   align-items: center;
@@ -1387,14 +1425,6 @@ body {
   </div>
 
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-    <button class="quote-btn" onclick="openQuote()">💡 Wisdom</button>
-    <button class="countdown-btn" onclick="openCountdown()">⏳ Countdowns</button>
-    <button class="map-btn" onclick="openMapModal()">🌍 World Map</button>
-    <button class="wheel-btn" onclick="openWheel()">🎡 Wheel</button>
-    <button class="review-btn" onclick="openReview()">📝 Daily Review</button>
-    <button class="tomorrow-btn" onclick="openTomorrow()">🌙 Tomorrow</button>
-    <button class="trends-btn" onclick="openTrends()">📈 Trends</button>
-    <button class="nutrients-btn" onclick="openNutrients()">🧬 Vitamins</button>
     <button class="sync-settings-btn" onclick="openSyncSettings()" title="AI plan sync settings">⚙</button>
   </div>
 </div>
@@ -1428,11 +1458,256 @@ body {
 <div class="main">
   <div class="content">
 
-    <!-- Calendar -->
+    <!-- Calendar / workspace tabs -->
     <div class="cal-panel" id="cal-panel">
-      <div class="week-grid">
-        <div class="week-gutter" id="gutter"></div>
-        <div class="week-cols view-week" id="week-cols"></div>
+      <div class="workspace-tabs" id="workspace-tabs">
+        <button class="workspace-tab active" data-tab="calendar" onclick="switchWorkspaceTab('calendar')">📅 Calendar</button>
+        <button class="workspace-tab" data-tab="wisdom" onclick="switchWorkspaceTab('wisdom')">💡 Wisdom</button>
+        <button class="workspace-tab" data-tab="countdown" onclick="switchWorkspaceTab('countdown')">⏳ Countdowns</button>
+        <button class="workspace-tab" data-tab="map" onclick="switchWorkspaceTab('map')">🌍 World Map</button>
+        <button class="workspace-tab" data-tab="wheel" onclick="switchWorkspaceTab('wheel')">🎡 Wheel</button>
+        <button class="workspace-tab" data-tab="review" onclick="switchWorkspaceTab('review')">📝 Daily Review</button>
+        <button class="workspace-tab" data-tab="tomorrow" onclick="switchWorkspaceTab('tomorrow')">🌙 Tomorrow</button>
+        <button class="workspace-tab" data-tab="trends" onclick="switchWorkspaceTab('trends')">📈 Trends</button>
+        <button class="workspace-tab" data-tab="nutrients" onclick="switchWorkspaceTab('nutrients')">🧬 Vitamins</button>
+      </div>
+
+      <!-- Calendar tab -->
+      <div class="workspace-tab-content" id="tab-calendar">
+        <div class="week-grid">
+          <div class="week-gutter" id="gutter"></div>
+          <div class="week-cols view-week" id="week-cols"></div>
+        </div>
+      </div>
+
+      <!-- Wisdom tab -->
+      <div class="workspace-tab-content" id="tab-wisdom" style="display:none;padding:16px 20px">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">💡 Wisdom</div>
+            <div class="workspace-tab-sub" id="quote-tradition"></div>
+          </div>
+          <button class="next-ep-btn" onclick="newQuote()">New quote</button>
+        </div>
+        <div class="quote-display">
+          <div class="quote-divider"></div>
+          <div class="quote-text" id="quote-text"></div>
+          <div class="quote-divider"></div>
+          <div class="quote-author" id="quote-author"></div>
+          <div class="quote-work" id="quote-work"></div>
+        </div>
+        <div class="modal-footer">
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="quote-counter"></span>
+          <span></span>
+        </div>
+      </div>
+
+      <!-- Countdowns tab -->
+      <div class="workspace-tab-content" id="tab-countdown" style="display:none">
+        <div class="workspace-tab-header" style="padding:16px 20px 0">
+          <div>
+            <div class="workspace-tab-title">⏳ Countdowns</div>
+            <div class="workspace-tab-sub" id="cd-sub">Track upcoming dates</div>
+          </div>
+        </div>
+        <div id="cd-list" style="padding:0"></div>
+        <div class="cd-add-section">
+          <div class="review-label">Add countdown</div>
+          <div class="cd-inputs">
+            <input class="review-input" style="width:100%" id="cd-title-input" placeholder="Title (e.g. San Diego trip)" maxlength="40" />
+            <input class="review-input" style="width:100%" id="cd-date-input" type="date" />
+          </div>
+          <button class="next-ep-btn" style="align-self:flex-end" onclick="addCountdown()">+ Add</button>
+        </div>
+      </div>
+
+      <!-- World Map tab -->
+      <div class="workspace-tab-content" id="tab-map" style="display:none;padding:16px 20px">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">🌍 Countries</div>
+            <div class="workspace-tab-sub" id="map-sub"></div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="next-ep-btn" id="toggle-visited" onclick="toggleLayer('visited')">✓ Visited</button>
+            <button class="next-ep-btn" id="toggle-bucket" onclick="toggleLayer('bucket')">★ Bucket List</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div class="review-stat-card">
+              <div class="review-stat-label">Visited</div>
+              <div class="review-stat-value" style="color:#14b8a6">26</div>
+            </div>
+            <div class="review-stat-card">
+              <div class="review-stat-label">Bucket list</div>
+              <div class="review-stat-value" style="color:#f59e0b" id="map-bucket-count">—</div>
+            </div>
+            <div class="review-stat-card">
+              <div class="review-stat-label">Total</div>
+              <div class="review-stat-value">195</div>
+            </div>
+            <div class="review-stat-card">
+              <div class="review-stat-label">% Visited</div>
+              <div class="review-stat-value" style="color:#14b8a6">13.3%</div>
+            </div>
+          </div>
+          <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden"></div>
+          <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#14b8a6;display:inline-block"></span>Visited</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Bucket list</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="day-pill active" id="maptab-visited" onclick="showMapList('visited')">Visited (26)</button>
+            <button class="day-pill" id="maptab-bucket" onclick="showMapList('bucket')">Bucket list</button>
+          </div>
+          <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+        </div>
+      </div>
+
+      <!-- Wheel tab -->
+      <div class="workspace-tab-content" id="tab-wheel" style="display:none;padding:16px 20px">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">🎡 Boredom Wheel</div>
+            <div class="workspace-tab-sub">Spin for something to do</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+          <div style="position:relative;width:320px;height:320px;flex-shrink:0">
+            <canvas id="wheel-canvas" width="320" height="320" style="display:block"></canvas>
+            <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:26px solid var(--text);filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))"></div>
+          </div>
+          <button id="wheel-spin-btn" onclick="spinWheel()" style="font-size:14px;font-weight:500;padding:10px 36px;border-radius:999px;background:#ec4899;color:#fff;border:none;cursor:pointer;transition:opacity 0.15s">Spin</button>
+          <div id="wheel-result" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;text-align:center;width:100%">
+            <div id="wheel-result-emoji" style="font-size:28px;margin-bottom:4px"></div>
+            <div id="wheel-result-text" style="font-size:15px;font-weight:500;color:var(--text)"></div>
+          </div>
+          <details style="width:100%">
+            <summary style="font-size:12px;color:var(--text2);cursor:pointer;user-select:none">Edit wheel</summary>
+            <div id="wheel-editor" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <input id="wheel-new-item" class="review-input" style="flex:1;font-size:12px" placeholder="Add activity..." maxlength="40" />
+              <button onclick="addWheelItem()" class="next-ep-btn">Add</button>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Daily Review tab -->
+      <div class="workspace-tab-content" id="tab-review" style="display:none;padding:16px 20px">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">📝 Daily Review</div>
+            <div class="workspace-tab-sub" id="review-date-sub"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="review-saved-txt" style="color:#22c55e;font-size:11px"></span>
+            <button class="next-ep-btn" id="review-save-btn" onclick="saveReview()">Save</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Stats -->
+          <div id="review-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+
+          <!-- Mood -->
+          <div class="review-section">
+            <div class="review-label">How did you feel today?</div>
+            <div class="mood-row" id="mood-row">
+              <button class="mood-btn" data-mood="1">😞</button>
+              <button class="mood-btn" data-mood="2">😕</button>
+              <button class="mood-btn" data-mood="3">😐</button>
+              <button class="mood-btn" data-mood="4">😊</button>
+              <button class="mood-btn" data-mood="5">🔥</button>
+            </div>
+            <div class="mood-labels">
+              <span>Rough</span><span>Meh</span><span>OK</span><span>Good</span><span>Crushed it</span>
+            </div>
+          </div>
+
+          <!-- Weight -->
+          <div class="review-section">
+            <div class="review-label">Weight today (lbs)</div>
+            <input class="review-input" type="number" id="review-weight" placeholder="e.g. 198.4" step="0.1" min="100" max="400" />
+          </div>
+
+          <!-- Wins -->
+          <div class="review-section">
+            <div class="review-label">Wins of the day</div>
+            <textarea class="review-textarea" id="review-wins" placeholder="What went well today?"></textarea>
+          </div>
+
+          <!-- Learned -->
+          <div class="review-section">
+            <div class="review-label">What I learned (AI + History)</div>
+            <textarea class="review-textarea" id="review-learned" placeholder="Key takeaways from today's learning..."></textarea>
+          </div>
+
+          <!-- Do differently -->
+          <div class="review-section">
+            <div class="review-label">What I'd do differently</div>
+            <textarea class="review-textarea" id="review-different" placeholder="What would you change?"></textarea>
+          </div>
+
+          <!-- Notes -->
+          <div class="review-section">
+            <div class="review-label">Notes</div>
+            <textarea class="review-textarea" id="review-notes" placeholder="Anything else on your mind..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <span></span>
+          <button class="next-ep-btn" onclick="viewPastReviews()">Past reviews →</button>
+        </div>
+      </div>
+
+      <!-- Tomorrow tab -->
+      <div class="workspace-tab-content" id="tab-tomorrow" style="display:none">
+        <div class="workspace-tab-header" style="padding:16px 20px 0">
+          <div>
+            <div class="workspace-tab-title">🌙 Plan Tomorrow</div>
+            <div class="workspace-tab-sub">Freeform — top priorities, reminders, whatever's on your mind</div>
+          </div>
+          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-saved"></span>
+        </div>
+        <div id="tomorrow-today-block" style="display:none;padding:12px 20px 0">
+          <div class="review-label" style="padding:0 0 6px">What you planned for today</div>
+          <div id="tomorrow-today-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px"></div>
+        </div>
+        <div id="tomorrow-suggested-block" style="display:none;padding:12px 20px 0">
+          <div class="review-label" style="padding:0 0 6px;color:#6366f1">Suggested plan</div>
+          <div id="tomorrow-suggested-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius);padding:10px 12px"></div>
+          <button class="next-ep-btn" style="margin-top:8px" onclick="useSuggestedPlan()">Use this</button>
+        </div>
+        <textarea id="tomorrow-area" placeholder="Tomorrow I want to..." style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;padding:16px 20px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:180px"></textarea>
+        <div class="modal-footer">
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-export-status"></span>
+          <button class="next-ep-btn" id="tomorrow-export-btn" onclick="exportTodayForPlanning()">📤 Export for AI plan</button>
+        </div>
+      </div>
+
+      <!-- Trends tab -->
+      <div class="workspace-tab-content" id="tab-trends" style="display:none;padding:16px 20px">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">📈 Trends</div>
+            <div class="workspace-tab-sub">From your exported history</div>
+          </div>
+        </div>
+        <div id="trends-body" style="min-height:200px"></div>
+      </div>
+
+      <!-- Vitamins & Minerals tab -->
+      <div class="workspace-tab-content" id="tab-nutrients" style="display:none;padding:16px 20px;overflow-y:auto">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">🧬 Vitamins &amp; Minerals</div>
+            <div class="workspace-tab-sub">Estimated from today's logged food — not lab data</div>
+          </div>
+        </div>
+        <div id="nutrients-body"></div>
       </div>
     </div>
     <div class="cal-collapse-handle" id="cal-collapse-handle" onclick="toggleCalendarCollapse()" title="Collapse/expand calendar">
@@ -1562,164 +1837,6 @@ body {
   </div>
 </div>
 
-<!-- Boredom Wheel Modal -->
-<div class="modal-overlay" id="wheel-modal" onclick="if(event.target.id==='wheel-modal')closeWheel()">
-  <div class="modal" style="width:420px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">🎡 Boredom Wheel</div>
-        <div class="modal-sub">Spin for something to do</div>
-      </div>
-      <button class="modal-close" onclick="closeWheel()">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;align-items:center;gap:14px">
-      <div style="position:relative;width:320px;height:320px;flex-shrink:0">
-        <canvas id="wheel-canvas" width="320" height="320" style="display:block"></canvas>
-        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:26px solid var(--text);filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))"></div>
-      </div>
-      <button id="wheel-spin-btn" onclick="spinWheel()" style="font-size:14px;font-weight:500;padding:10px 36px;border-radius:999px;background:#ec4899;color:#fff;border:none;cursor:pointer;transition:opacity 0.15s">Spin</button>
-      <div id="wheel-result" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;text-align:center;width:100%">
-        <div id="wheel-result-emoji" style="font-size:28px;margin-bottom:4px"></div>
-        <div id="wheel-result-text" style="font-size:15px;font-weight:500;color:var(--text)"></div>
-      </div>
-      <details style="width:100%">
-        <summary style="font-size:12px;color:var(--text2);cursor:pointer;user-select:none">Edit wheel</summary>
-        <div id="wheel-editor" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <input id="wheel-new-item" class="review-input" style="flex:1;font-size:12px" placeholder="Add activity..." maxlength="40" />
-          <button onclick="addWheelItem()" class="next-ep-btn">Add</button>
-        </div>
-      </details>
-    </div>
-  </div>
-</div>
-
-<!-- World Map Modal -->
-<div class="modal-overlay" id="map-modal" onclick="if(event.target.id==='map-modal')closeMapModal()">
-  <div class="modal" style="width:760px;max-width:95vw">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">🌍 Countries</div>
-        <div class="modal-sub" id="map-sub"></div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="next-ep-btn" id="toggle-visited" onclick="toggleLayer('visited')">✓ Visited</button>
-        <button class="next-ep-btn" id="toggle-bucket" onclick="toggleLayer('bucket')">★ Bucket List</button>
-        <button class="modal-close" onclick="closeMapModal()">✕</button>
-      </div>
-    </div>
-    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div class="review-stat-card">
-          <div class="review-stat-label">Visited</div>
-          <div class="review-stat-value" style="color:#14b8a6">26</div>
-        </div>
-        <div class="review-stat-card">
-          <div class="review-stat-label">Bucket list</div>
-          <div class="review-stat-value" style="color:#f59e0b" id="map-bucket-count">—</div>
-        </div>
-        <div class="review-stat-card">
-          <div class="review-stat-label">Total</div>
-          <div class="review-stat-value">195</div>
-        </div>
-        <div class="review-stat-card">
-          <div class="review-stat-label">% Visited</div>
-          <div class="review-stat-value" style="color:#14b8a6">13.3%</div>
-        </div>
-      </div>
-      <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden"></div>
-      <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#14b8a6;display:inline-block"></span>Visited</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Bucket list</span>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button class="day-pill active" id="maptab-visited" onclick="showMapList('visited')">Visited (26)</button>
-        <button class="day-pill" id="maptab-bucket" onclick="showMapList('bucket')">Bucket list</button>
-      </div>
-      <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Countdown Modal -->
-<div class="modal-overlay" id="countdown-modal" onclick="if(event.target.id==='countdown-modal')closeCountdown()">
-  <div class="modal" style="width:460px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">⏳ Countdowns</div>
-        <div class="modal-sub" id="cd-sub">Track upcoming dates</div>
-      </div>
-      <button class="modal-close" onclick="closeCountdown()">✕</button>
-    </div>
-    <div class="modal-body" id="cd-list" style="padding:0"></div>
-    <div class="cd-add-section">
-      <div class="review-label">Add countdown</div>
-      <div class="cd-inputs">
-        <input class="review-input" style="width:100%" id="cd-title-input" placeholder="Title (e.g. San Diego trip)" maxlength="40" />
-        <input class="review-input" style="width:100%" id="cd-date-input" type="date" />
-      </div>
-      <button class="next-ep-btn" style="align-self:flex-end" onclick="addCountdown()">+ Add</button>
-    </div>
-  </div>
-</div>
-
-<!-- Wisdom Quote Modal -->
-<div class="modal-overlay" id="quote-modal" onclick="if(event.target.id==='quote-modal')document.getElementById('quote-modal').classList.remove('open')">
-  <div class="modal" style="width:480px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">💡 Wisdom</div>
-        <div class="modal-sub" id="quote-tradition"></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="next-ep-btn" onclick="newQuote()">New quote</button>
-        <button class="modal-close" onclick="document.getElementById('quote-modal').classList.remove('open')">✕</button>
-      </div>
-    </div>
-    <div class="quote-display">
-      <div class="quote-divider"></div>
-      <div class="quote-text" id="quote-text"></div>
-      <div class="quote-divider"></div>
-      <div class="quote-author" id="quote-author"></div>
-      <div class="quote-work" id="quote-work"></div>
-    </div>
-    <div class="modal-footer">
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="quote-counter"></span>
-      <span></span>
-    </div>
-  </div>
-</div>
-
-<!-- Plan Tomorrow Modal -->
-<div class="modal-overlay" id="tomorrow-modal" onclick="if(event.target.id==='tomorrow-modal')closeTomorrow()">
-  <div class="modal" style="width:480px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">🌙 Plan Tomorrow</div>
-        <div class="modal-sub">Freeform — top priorities, reminders, whatever's on your mind</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-saved"></span>
-        <button class="modal-close" onclick="closeTomorrow()">✕</button>
-      </div>
-    </div>
-    <div id="tomorrow-today-block" style="display:none;padding:12px 18px 0">
-      <div class="review-label" style="padding:0 0 6px">What you planned for today</div>
-      <div id="tomorrow-today-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px"></div>
-    </div>
-    <div id="tomorrow-suggested-block" style="display:none;padding:12px 18px 0">
-      <div class="review-label" style="padding:0 0 6px;color:#6366f1">Suggested plan</div>
-      <div id="tomorrow-suggested-text" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius);padding:10px 12px"></div>
-      <button class="next-ep-btn" style="margin-top:8px" onclick="useSuggestedPlan()">Use this</button>
-    </div>
-    <textarea id="tomorrow-area" placeholder="Tomorrow I want to..." style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;padding:16px 18px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:180px"></textarea>
-    <div class="modal-footer">
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace" id="tomorrow-export-status"></span>
-      <button class="next-ep-btn" id="tomorrow-export-btn" onclick="exportTodayForPlanning()">📤 Export for AI plan</button>
-    </div>
-  </div>
-</div>
-
 <!-- Sync Settings Modal -->
 <div class="modal-overlay" id="sync-settings-modal" onclick="if(event.target.id==='sync-settings-modal')closeSyncSettings()">
   <div class="modal" style="width:420px">
@@ -1740,105 +1857,6 @@ body {
     <div class="modal-footer">
       <span></span>
       <button class="next-ep-btn" onclick="saveSyncSettings()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Trends Modal -->
-<div class="modal-overlay" id="trends-modal" onclick="if(event.target.id==='trends-modal')closeTrends()">
-  <div class="modal" style="width:640px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">📈 Trends</div>
-        <div class="modal-sub">From your exported history</div>
-      </div>
-      <button class="modal-close" onclick="closeTrends()">✕</button>
-    </div>
-    <div id="trends-body" style="padding:18px;min-height:200px"></div>
-  </div>
-</div>
-
-<!-- Vitamins & Minerals Modal -->
-<div class="modal-overlay" id="nutrients-modal" onclick="if(event.target.id==='nutrients-modal')closeNutrients()">
-  <div class="modal" style="width:480px;max-height:80vh;display:flex;flex-direction:column">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">🧬 Vitamins &amp; Minerals</div>
-        <div class="modal-sub">Estimated from today's logged food — not lab data</div>
-      </div>
-      <button class="modal-close" onclick="closeNutrients()">✕</button>
-    </div>
-    <div id="nutrients-body" style="padding:16px 18px;overflow-y:auto"></div>
-  </div>
-</div>
-
-<!-- Daily Review Modal -->
-<div class="modal-overlay" id="review-modal" onclick="closeReviewModal(event)">
-  <div class="modal" style="width:520px">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">📝 Daily Review</div>
-        <div class="modal-sub" id="review-date-sub"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button class="next-ep-btn" onclick="saveReview()">Save</button>
-        <button class="modal-close" onclick="document.getElementById('review-modal').classList.remove('open')">✕</button>
-      </div>
-    </div>
-    <div class="modal-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:16px">
-
-      <!-- Stats -->
-      <div id="review-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
-
-      <!-- Mood -->
-      <div class="review-section">
-        <div class="review-label">How did you feel today?</div>
-        <div class="mood-row" id="mood-row">
-          <button class="mood-btn" data-mood="1">😞</button>
-          <button class="mood-btn" data-mood="2">😕</button>
-          <button class="mood-btn" data-mood="3">😐</button>
-          <button class="mood-btn" data-mood="4">😊</button>
-          <button class="mood-btn" data-mood="5">🔥</button>
-        </div>
-        <div class="mood-labels">
-          <span>Rough</span><span>Meh</span><span>OK</span><span>Good</span><span>Crushed it</span>
-        </div>
-      </div>
-
-      <!-- Weight -->
-      <div class="review-section">
-        <div class="review-label">Weight today (lbs)</div>
-        <input class="review-input" type="number" id="review-weight" placeholder="e.g. 198.4" step="0.1" min="100" max="400" />
-      </div>
-
-      <!-- Wins -->
-      <div class="review-section">
-        <div class="review-label">Wins of the day</div>
-        <textarea class="review-textarea" id="review-wins" placeholder="What went well today?"></textarea>
-      </div>
-
-      <!-- Learned -->
-      <div class="review-section">
-        <div class="review-label">What I learned (AI + History)</div>
-        <textarea class="review-textarea" id="review-learned" placeholder="Key takeaways from today's learning..."></textarea>
-      </div>
-
-      <!-- Do differently -->
-      <div class="review-section">
-        <div class="review-label">What I'd do differently</div>
-        <textarea class="review-textarea" id="review-different" placeholder="What would you change?"></textarea>
-      </div>
-
-      <!-- Notes -->
-      <div class="review-section">
-        <div class="review-label">Notes</div>
-        <textarea class="review-textarea" id="review-notes" placeholder="Anything else on your mind..."></textarea>
-      </div>
-
-    </div>
-    <div class="modal-footer">
-      <span id="review-saved-txt" style="color:#22c55e;font-size:11px"></span>
-      <button class="next-ep-btn" onclick="viewPastReviews()">Past reviews →</button>
     </div>
   </div>
 </div>
@@ -2587,6 +2605,31 @@ function loadCalendarCollapsed() {
   applyCalendarCollapsed(collapsed);
 }
 
+// ── Workspace tabs (calendar panel doubles as a tab host for Wisdom, Countdowns, etc.) ──
+const WORKSPACE_TABS = ['calendar','wisdom','countdown','map','wheel','review','tomorrow','trends','nutrients'];
+
+function switchWorkspaceTab(tabId) {
+  WORKSPACE_TABS.forEach(id => {
+    const content = document.getElementById(`tab-${id}`);
+    if(content) content.style.display = id === tabId ? '' : 'none';
+  });
+  document.querySelectorAll('.workspace-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+
+  // Countdown ticker only runs while that tab is actually visible
+  if(tabId === 'countdown') startCountdownTicker(); else stopCountdownTicker();
+
+  if(tabId === 'wisdom') openQuote();
+  else if(tabId === 'countdown') openCountdown();
+  else if(tabId === 'map') openMapModal();
+  else if(tabId === 'wheel') openWheel();
+  else if(tabId === 'review') openReview();
+  else if(tabId === 'tomorrow') openTomorrow();
+  else if(tabId === 'trends') openTrends();
+  else if(tabId === 'nutrients') openNutrients();
+}
+
 // ── Day pills ──
 function buildDayPills() {
   const today = new Date().getDay();
@@ -3152,12 +3195,10 @@ function loadWheel() {
 function saveWheel() { try { localStorage.setItem(wheelKey(), JSON.stringify(wheelSegments)); } catch(e) {} }
 
 function openWheel() {
-  document.getElementById('wheel-modal').classList.add('open');
   if(!wheelLoaded) { wheelLoaded = true; loadWheel(); }
   drawWheel(wheelAngle);
   renderWheelEditor();
 }
-function closeWheel() { document.getElementById('wheel-modal').classList.remove('open'); }
 
 function drawWheel(angle) {
   const canvas = document.getElementById('wheel-canvas');
@@ -3313,15 +3354,10 @@ let showBucket = true;
 let mapListMode = 'visited';
 
 function openMapModal() {
-  document.getElementById('map-modal').classList.add('open');
   updateMapSub();
   document.getElementById('map-bucket-count').textContent = Object.keys(BUCKET_NAMES).length + BUCKET_US.length;
   showMapList('visited');
   if(!mapLoaded) { mapLoaded = true; loadWorldMap(); }
-}
-
-function closeMapModal() {
-  document.getElementById('map-modal').classList.remove('open');
 }
 
 function updateMapSub() {
@@ -3499,14 +3535,10 @@ function saveCountdowns() {
 }
 
 function openCountdown() {
-  document.getElementById('countdown-modal').classList.add('open');
   // Set default date to today
   const d = new Date();
   document.getElementById('cd-date-input').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   renderCountdowns();
-}
-function closeCountdown() {
-  document.getElementById('countdown-modal').classList.remove('open');
 }
 
 function addCountdown() {
@@ -3588,17 +3620,14 @@ function renderCountdowns() {
   });
 }
 
-// Live tick for countdowns
+// Live tick for countdowns — started/stopped by switchWorkspaceTab, not a modal open/close event
 let cdInterval = null;
-document.getElementById('countdown-modal').addEventListener('shown', () => {
-  cdInterval = setInterval(renderCountdowns, 1000);
-});
-// Use MutationObserver to detect modal open/close
-new MutationObserver(() => {
-  const isOpen = document.getElementById('countdown-modal').classList.contains('open');
-  if(isOpen && !cdInterval) cdInterval = setInterval(renderCountdowns, 1000);
-  else if(!isOpen && cdInterval) { clearInterval(cdInterval); cdInterval = null; }
-}).observe(document.getElementById('countdown-modal'), { attributes: true, attributeFilter: ['class'] });
+function startCountdownTicker() {
+  if(!cdInterval) cdInterval = setInterval(renderCountdowns, 1000);
+}
+function stopCountdownTicker() {
+  if(cdInterval) { clearInterval(cdInterval); cdInterval = null; }
+}
 
 document.getElementById('cd-title-input')?.addEventListener('keydown', (e) => {
   if(e.key === 'Enter') addCountdown();
@@ -3664,13 +3693,7 @@ function openTomorrow() {
   } catch(e) {}
   document.getElementById('tomorrow-suggested-block').style.display = 'none';
   document.getElementById('tomorrow-export-status').textContent = '';
-  document.getElementById('tomorrow-modal').classList.add('open');
-  setTimeout(() => document.getElementById('tomorrow-area').focus(), 100);
   checkForSuggestedPlan();
-}
-
-function closeTomorrow() {
-  document.getElementById('tomorrow-modal').classList.remove('open');
 }
 
 document.getElementById('tomorrow-area').addEventListener('input', () => {
@@ -4022,7 +4045,6 @@ function svgBarChart(containerEl, { dates, values, color, yMax = 100, height = 1
 }
 
 async function openTrends() {
-  document.getElementById('trends-modal').classList.add('open');
   const body = document.getElementById('trends-body');
   body.innerHTML = `<div style="color:var(--text3);font-size:12px">Loading history...</div>`;
   try {
@@ -4058,9 +4080,6 @@ async function openTrends() {
     errEl.textContent = e.message;
     body.appendChild(errEl);
   }
-}
-function closeTrends() {
-  document.getElementById('trends-modal').classList.remove('open');
 }
 
 // ── Vitamins & Minerals ──
@@ -4110,10 +4129,6 @@ function renderNutrients() {
 
 function openNutrients() {
   renderNutrients();
-  document.getElementById('nutrients-modal').classList.add('open');
-}
-function closeNutrients() {
-  document.getElementById('nutrients-modal').classList.remove('open');
 }
 
 // ── Password ──
@@ -4275,7 +4290,6 @@ function newQuote() {
 }
 
 function openQuote() {
-  document.getElementById('quote-modal').classList.add('open');
   newQuote();
 }
 
@@ -4356,8 +4370,6 @@ function renderReviewStats() {
 }
 
 function openReview() {
-  const modal = document.getElementById('review-modal');
-  modal.classList.add('open');
   renderReviewStats();
   const today = todayDateStr();
   document.getElementById('review-date-sub').textContent = new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
@@ -4419,15 +4431,10 @@ function saveReview() {
   } catch(e) {}
 }
 
-function closeReviewModal(e) {
-  if(e.target.id === 'review-modal') document.getElementById('review-modal').classList.remove('open');
-}
-
 const MOOD_LABELS = { 1:'😞 Rough', 2:'😕 Meh', 3:'😐 OK', 4:'😊 Good', 5:'🔥 Crushed it' };
 const MOOD_EMOJIS = { 1:'😞', 2:'😕', 3:'😐', 4:'😊', 5:'🔥' };
 
 function viewPastReviews() {
-  document.getElementById('review-modal').classList.remove('open');
   document.getElementById('past-modal').classList.add('open');
   const list = document.getElementById('past-list');
   list.innerHTML = '';
