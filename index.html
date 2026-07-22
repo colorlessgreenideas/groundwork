@@ -2493,6 +2493,11 @@ function updateProgress() {
   document.getElementById('fiber-val').textContent = Math.round(fiber) + 'g';
   document.getElementById('fiber-bar').style.width = Math.min(100, (fiber/30)*100) + '%';
 
+  // Vitamins & Minerals tab can stay visible while food gets toggled elsewhere —
+  // keep it live instead of only computing on tab-switch.
+  const nutrientsTab = document.getElementById('tab-nutrients');
+  if(nutrientsTab && nutrientsTab.style.display !== 'none') renderNutrients();
+
   // ── Weighted grade ──
   // Points reflect time commitment and difficulty
   // Tasks
