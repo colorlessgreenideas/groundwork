@@ -556,9 +556,8 @@ body {
 
 /* ── Food log panel ── */
 .food-panel {
-  width: 280px;
-  flex-shrink: 0;
-  overflow-y: auto;
+  flex: 0 0 460px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -569,12 +568,39 @@ body {
   justify-content: space-between;
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   background: var(--bg);
   z-index: 10;
 }
 .food-title { font-size: 13px; font-weight: 600; }
+
+.food-quadrants {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+}
+.food-quadrant {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.food-quadrant:nth-child(2n) { border-right: none; }
+.food-quadrant:nth-child(3), .food-quadrant:nth-child(4) { border-bottom: none; }
+.food-quadrant-list { flex: 1; overflow-y: auto; }
+.food-quadrant-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'DM Mono', monospace;
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+}
 .reset-btn {
   font-size: 11px;
   color: var(--text3);
@@ -1743,17 +1769,8 @@ body {
       <div id="task-list"></div>
     </div>
 
-    <!-- Notes -->
-    <div id="notes-panel" style="flex:0 0 220px;border-right:1px solid var(--border);display:flex;flex-direction:column;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">Notes</div>
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="notes-saved"></span>
-      </div>
-      <textarea id="notes-area" placeholder="Type anything..." style="flex:1;background:transparent;border:none;outline:none;padding:12px 16px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;resize:none;line-height:1.6;min-height:300px"></textarea>
-    </div>
-
     <!-- Food log -->
-    <div class="food-panel">
+    <div class="food-panel" id="food-panel">
       <div class="food-header">
         <div class="food-title">Food Log</div>
         <div style="display:flex;gap:6px">
@@ -1761,7 +1778,24 @@ body {
           <button class="reset-btn" onclick="resetDay()">Reset</button>
         </div>
       </div>
-      <div id="food-list"></div>
+      <div class="food-quadrants">
+        <div class="food-quadrant">
+          <div class="food-quadrant-label">Morning Stack</div>
+          <div id="food-list-morning" class="food-quadrant-list"></div>
+        </div>
+        <div class="food-quadrant">
+          <div class="food-quadrant-label">Midday Stack</div>
+          <div id="food-list-midday" class="food-quadrant-list"></div>
+        </div>
+        <div class="food-quadrant">
+          <div class="food-quadrant-label">Dinner Stack</div>
+          <div id="food-list-dinner" class="food-quadrant-list"></div>
+        </div>
+        <div class="food-quadrant">
+          <div class="food-quadrant-label">Anytime</div>
+          <div id="food-list-anytime" class="food-quadrant-list"></div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -2611,8 +2645,8 @@ function applyCalendarCollapsed(collapsed) {
   document.getElementById('cal-panel').classList.toggle('collapsed', collapsed);
   document.getElementById('cal-collapse-icon').textContent = collapsed ? '›' : '‹';
   document.getElementById('cal-collapse-handle').title = collapsed ? 'Expand calendar' : 'Collapse calendar';
-  // With the calendar gone, let Notes absorb the freed space instead of leaving it empty.
-  document.getElementById('notes-panel').style.flex = collapsed ? '1' : '0 0 220px';
+  // With the calendar gone, let Food Log absorb the freed space instead of leaving it empty.
+  document.getElementById('food-panel').style.flex = collapsed ? '1' : '0 0 460px';
 }
 
 function toggleCalendarCollapse() {
@@ -3091,14 +3125,21 @@ function renderTasks() {
 }
 
 // ── Food log ──
+const FOOD_SECTION_CONTAINER_MAP = {
+  'Morning Stack': 'food-list-morning',
+  'Midday Stack': 'food-list-midday',
+  'Dinner Stack': 'food-list-dinner',
+  'Anytime': 'food-list-anytime',
+};
+
 function renderFood() {
-  const list = document.getElementById('food-list');
-  list.innerHTML = '';
+  Object.values(FOOD_SECTION_CONTAINER_MAP).forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
   FOOD_SECTIONS.forEach(sec => {
-    const label = document.createElement('div');
-    label.className = 'food-section-label';
-    label.textContent = sec.label;
-    list.appendChild(label);
+    const list = document.getElementById(FOOD_SECTION_CONTAINER_MAP[sec.label]);
+    if(!list) return;
     sec.items.forEach(item => {
       const isCounter = !!COUNTER_ITEMS[item.id];
       const count = isCounter ? (logged[item.id] || 0) : null;
@@ -3655,25 +3696,6 @@ document.getElementById('cd-title-input')?.addEventListener('keydown', (e) => {
   if(e.key === 'Enter') addCountdown();
 });
 
-// ── Notes ──
-function notesKey() { return 'gw-notes'; }
-
-function loadNotes() {
-  try {
-    const n = localStorage.getItem(notesKey());
-    if(n !== null) document.getElementById('notes-area').value = n;
-  } catch(e) {}
-}
-
-function saveNotes() {
-  try {
-    localStorage.setItem(notesKey(), document.getElementById('notes-area').value);
-    const el = document.getElementById('notes-saved');
-    el.textContent = 'saved';
-    setTimeout(() => el.textContent = '', 1500);
-  } catch(e) {}
-}
-
 // ── Tasks panel quick notes (auto-grows as lines are added) ──
 function tasksNotesKey() { return 'gw-tasks-notes'; }
 
@@ -3853,7 +3875,7 @@ function gatherExportData() {
         protein: document.getElementById('pro-val').textContent, proteinGoal: '170g',
         fiber: document.getElementById('fiber-val').textContent, fiberGoal: '30g',
       },
-      notes: document.getElementById('notes-area').value,
+      notes: document.getElementById('tasks-notes-area').value,
     },
     tomorrow: {
       date: tomorrow.toDateString(),
@@ -4224,7 +4246,6 @@ function initApp() {
   loadFoodSections();
   loadAdhoc();
   loadCountdowns();
-  loadNotes();
   loadTasksNotes();
   loadWheel();
   setDateLabel();
@@ -4242,12 +4263,6 @@ if(checkAuth()) {
   document.getElementById('pw-screen').style.display = 'none';
   initApp();
 }
-
-// Wire notes autosave
-document.getElementById('notes-area').addEventListener('input', () => {
-  clearTimeout(window._notesSaveTimer);
-  window._notesSaveTimer = setTimeout(saveNotes, 800);
-});
 
 // ── Wisdom Quotes ──
 const QUOTES = [
