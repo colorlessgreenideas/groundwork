@@ -2512,7 +2512,7 @@ function getGrade(pct) {
 }
 
 // Items that use a counter instead of checkbox
-const COUNTER_ITEMS = { arofum: 4, meatstick: 6 };
+const COUNTER_ITEMS = { arofum: 2, meatstick: 6 };
 const COUNTER_FLEXIBLE = new Set(['meatstick']); // can mark done at any count
 
 // Ad-hoc entries state
@@ -2573,7 +2573,7 @@ function updateProgress() {
     cottage:   4,
     meatstick: 3,
     peanuts:   2,
-    arofum:    4,   // health supplement (4 pills = 4 pts)
+    arofum:    2,   // health supplement (2 pills = 2 pts)
     banana:    2,
     carrots:   2,
     centrum:   2,
@@ -4388,7 +4388,7 @@ function renderReviewStats() {
 
   // Points
   const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-ally':4,'t-clean':3,'t-car':3 };
-  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:4,banana:2,carrots:2,centrum:2,coffee:1 };
+  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
   getTasksForDay(todayCalIdx).forEach(t => {
