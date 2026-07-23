@@ -925,6 +925,34 @@ body {
 .nutrient-bar-fill.red { background: #ef4444; }
 .nutrient-value { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
 
+.whatsnext-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'DM Mono', monospace;
+  padding: 14px 0 6px;
+}
+.whatsnext-section-label:first-child { padding-top: 0; }
+.whatsnext-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.whatsnext-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.whatsnext-item strong { color: var(--text); font-weight: 600; }
+
 .cd-card {
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -1512,6 +1540,7 @@ body {
         <button class="workspace-tab" data-tab="tomorrow" onclick="switchWorkspaceTab('tomorrow')">🌙 Tomorrow</button>
         <button class="workspace-tab" data-tab="trends" onclick="switchWorkspaceTab('trends')">📈 Trends</button>
         <button class="workspace-tab" data-tab="nutrients" onclick="switchWorkspaceTab('nutrients')">🧬 Vitamins</button>
+        <button class="workspace-tab" data-tab="whatsnext" onclick="switchWorkspaceTab('whatsnext')">🎯 What's Next</button>
       </div>
 
       <!-- Calendar tab -->
@@ -1750,6 +1779,17 @@ body {
           </div>
         </div>
         <div id="nutrients-body"></div>
+      </div>
+
+      <!-- What's Next tab -->
+      <div class="workspace-tab-content" id="tab-whatsnext" style="display:none;padding:16px 20px;overflow-y:auto">
+        <div class="workspace-tab-header">
+          <div>
+            <div class="workspace-tab-title">🎯 What's Next</div>
+            <div class="workspace-tab-sub">Open tasks, nutrition gaps, and what closes them</div>
+          </div>
+        </div>
+        <div id="whatsnext-body"></div>
       </div>
     </div>
     <div class="cal-collapse-handle" id="cal-collapse-handle" onclick="toggleCalendarCollapse()" title="Collapse/expand calendar">
@@ -2549,6 +2589,11 @@ function updateProgress() {
   const nutrientsTab = document.getElementById('tab-nutrients');
   if(nutrientsTab && nutrientsTab.style.display !== 'none') renderNutrients();
 
+  // Same for What's Next — it depends on tasks/food/nutrients, all of which can
+  // change while this tab is sitting open.
+  const whatsNextTab = document.getElementById('tab-whatsnext');
+  if(whatsNextTab && whatsNextTab.style.display !== 'none') renderWhatsNext();
+
   // ── Weighted grade ──
   // Points reflect time commitment and difficulty
   // Tasks
@@ -2662,7 +2707,7 @@ function loadCalendarCollapsed() {
 }
 
 // ── Workspace tabs (calendar panel doubles as a tab host for Wisdom, Countdowns, etc.) ──
-const WORKSPACE_TABS = ['calendar','wisdom','countdown','map','wheel','review','tomorrow','trends','nutrients'];
+const WORKSPACE_TABS = ['calendar','wisdom','countdown','map','wheel','review','tomorrow','trends','nutrients','whatsnext'];
 
 function switchWorkspaceTab(tabId) {
   WORKSPACE_TABS.forEach(id => {
@@ -2684,6 +2729,7 @@ function switchWorkspaceTab(tabId) {
   else if(tabId === 'tomorrow') openTomorrow();
   else if(tabId === 'trends') openTrends();
   else if(tabId === 'nutrients') openNutrients();
+  else if(tabId === 'whatsnext') openWhatsNext();
 }
 
 // ── Day pills ──
@@ -3019,6 +3065,7 @@ function deleteTask(id) {
   saveCustomTasks();
   saveTasks();
   renderTasks();
+  updateProgress();
 }
 
 function addTask() {
@@ -3030,6 +3077,7 @@ function addTask() {
   saveCustomTasks();
   input.value = '';
   renderTasks();
+  updateProgress();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -4221,6 +4269,133 @@ function renderNutrients() {
 
 function openNutrients() {
   renderNutrients();
+}
+
+// ── What's Next ──
+function isFoodAvailableToSuggest(item) {
+  if(skipped[item.id]) return false;
+  const isCounter = !!COUNTER_ITEMS[item.id];
+  if(isCounter) return (logged[item.id] || 0) < COUNTER_ITEMS[item.id];
+  return !logged[item.id];
+}
+
+function suggestFoodsForMacro(macroKey) {
+  const candidates = [];
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    if(!isFoodAvailableToSuggest(item)) return;
+    const amt = macroKey === 'cal' ? item.cal : (macroKey === 'protein' ? item.protein : (item.fiber || 0));
+    if(amt > 0) candidates.push({ name: item.name, amount: amt });
+  }));
+  candidates.sort((a, b) => b.amount - a.amount);
+  return candidates.slice(0, 2).map(c => c.name);
+}
+
+function suggestFoodsForNutrient(key) {
+  const candidates = [];
+  FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
+    if(!isFoodAvailableToSuggest(item)) return;
+    const nutrients = FOOD_NUTRIENTS[item.id];
+    if(!nutrients || !nutrients[key]) return;
+    candidates.push({ name: item.name, amount: nutrients[key] });
+  }));
+  candidates.sort((a, b) => b.amount - a.amount);
+  return candidates.slice(0, 2).map(c => c.name);
+}
+
+function computeWhatsNext() {
+  const result = { tasks: [], macros: [], nutrients: [], nutrientsOverflow: 0 };
+
+  const todayCalIdx = jsToCalIdx(new Date().getDay());
+  const dayTasks = getTasksForDay(todayCalIdx).concat(customTasks);
+  dayTasks.forEach(t => {
+    if(!skipped['task-' + t.id] && !taskDone[t.id]) {
+      result.tasks.push(t.sub ? `${t.name} — ${t.sub}` : t.name);
+    }
+  });
+
+  const cal = parseFloat(document.getElementById('cal-val').textContent) || 0;
+  const pro = parseFloat(document.getElementById('pro-val').textContent) || 0;
+  const fiber = parseFloat(document.getElementById('fiber-val').textContent) || 0;
+  [
+    { key: 'cal', label: 'Calories', val: cal, goal: 1835, unit: '' },
+    { key: 'protein', label: 'Protein', val: pro, goal: 170, unit: 'g' },
+    { key: 'fiber', label: 'Fiber', val: fiber, goal: 30, unit: 'g' },
+  ].forEach(m => {
+    if(m.val < m.goal) {
+      result.macros.push({
+        label: m.label,
+        missing: Math.round(m.goal - m.val),
+        unit: m.unit,
+        pct: Math.round((m.val / m.goal) * 100),
+        suggestions: suggestFoodsForMacro(m.key),
+      });
+    }
+  });
+
+  const totals = computeNutrientTotals();
+  const gaps = NUTRIENT_DEFS
+    .filter(n => !n.isLimit)
+    .map(n => {
+      const val = totals[n.key] || 0;
+      const pct = (val / n.dv) * 100;
+      return { key: n.key, label: n.label, unit: n.unit, pct, missing: Math.max(0, n.dv - val) };
+    })
+    .filter(g => g.pct < 100)
+    .sort((a, b) => a.pct - b.pct);
+
+  gaps.slice(0, 6).forEach(g => {
+    result.nutrients.push({
+      label: g.label,
+      pct: Math.round(g.pct),
+      missing: g.missing >= 10 ? Math.round(g.missing) : Math.round(g.missing * 10) / 10,
+      unit: g.unit,
+      suggestions: suggestFoodsForNutrient(g.key),
+    });
+  });
+  result.nutrientsOverflow = Math.max(0, gaps.length - 6);
+
+  return result;
+}
+
+function renderWhatsNext() {
+  const data = computeWhatsNext();
+  const body = document.getElementById('whatsnext-body');
+  const nothingLeft = data.tasks.length === 0 && data.macros.length === 0 && data.nutrients.length === 0;
+
+  if(nothingLeft) {
+    body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:12px">Nothing left — everything's on track for today.</div>`;
+    return;
+  }
+
+  let html = '';
+  if(data.tasks.length) {
+    html += `<div class="whatsnext-section-label">Tasks (${data.tasks.length} left)</div>`;
+    data.tasks.forEach(t => {
+      html += `<div class="whatsnext-item"><span class="whatsnext-dot" style="background:#3b82f6"></span><span>${t}</span></div>`;
+    });
+  }
+  if(data.macros.length) {
+    html += `<div class="whatsnext-section-label">Nutrition targets</div>`;
+    data.macros.forEach(m => {
+      const sugg = m.suggestions.length ? ` — try <strong>${m.suggestions.join('</strong> or <strong>')}</strong>` : '';
+      html += `<div class="whatsnext-item"><span class="whatsnext-dot" style="background:#f59e0b"></span><span><strong>${m.label}</strong> is ${m.missing}${m.unit} short of goal (${m.pct}%)${sugg}</span></div>`;
+    });
+  }
+  if(data.nutrients.length) {
+    html += `<div class="whatsnext-section-label">Vitamin &amp; mineral gaps</div>`;
+    data.nutrients.forEach(n => {
+      const sugg = n.suggestions.length ? ` — try <strong>${n.suggestions.join('</strong> or <strong>')}</strong>` : ' — nothing unlogged in your stack covers this well';
+      html += `<div class="whatsnext-item"><span class="whatsnext-dot" style="background:#a855f7"></span><span><strong>${n.label}</strong> is short by ${n.missing}${n.unit} (at ${n.pct}% of target)${sugg}</span></div>`;
+    });
+    if(data.nutrientsOverflow) {
+      html += `<div class="whatsnext-item" style="color:var(--text3)"><span class="whatsnext-dot" style="background:var(--text3)"></span><span>+ ${data.nutrientsOverflow} more minor gap${data.nutrientsOverflow === 1 ? '' : 's'} — check the Vitamins tab for the full picture</span></div>`;
+    }
+  }
+  body.innerHTML = html;
+}
+
+function openWhatsNext() {
+  renderWhatsNext();
 }
 
 // ── Password ──
