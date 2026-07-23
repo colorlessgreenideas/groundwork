@@ -3911,20 +3911,40 @@ function exportDateStr(d) {
 async function exportTodayForPlanning(opts) {
   const silent = opts && opts.silent;
   const statusEl = document.getElementById('tomorrow-export-status');
-  const setStatus = (msg) => { if(statusEl && !silent) statusEl.textContent = msg; };
+  const btn = document.getElementById('tomorrow-export-btn');
+  const setStatus = (msg, color) => {
+    if(!statusEl || silent) return;
+    statusEl.textContent = msg;
+    statusEl.style.color = color || 'var(--text3)';
+  };
+  const setBtnState = (label, bg, border, color, disabled) => {
+    if(!btn || silent) return;
+    btn.textContent = label;
+    btn.style.background = bg;
+    btn.style.borderColor = border;
+    btn.style.color = color;
+    btn.disabled = !!disabled;
+  };
+  const resetBtn = () => setBtnState('📤 Export for AI plan', '', '', '', false);
+
   const pat = localStorage.getItem('gw-sync-pat');
   const passphrase = localStorage.getItem('gw-sync-passphrase');
-  if(!pat || !passphrase) { setStatus('Set up sync in ⚙ first'); return false; }
-  setStatus('Exporting...');
+  if(!pat || !passphrase) { setStatus('Set up sync in ⚙ first', '#ef4444'); return false; }
+
+  setStatus('Exporting…');
+  setBtnState('Exporting…', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.25)', 'var(--text3)', true);
   try {
     const data = gatherExportData();
     const encrypted = await syncEncrypt(JSON.stringify(data, null, 2), passphrase);
     await commitToGitHub(`data/exports/${exportDateStr(new Date())}.json`, encrypted, 'export today for AI planning');
-    setStatus('Exported ✓ — ask Claude to plan tomorrow');
-    setTimeout(() => { if(statusEl && statusEl.textContent.startsWith('Exported')) statusEl.textContent = ''; }, 5000);
+    setStatus('Exported ✓ — ask Claude to plan tomorrow', '#22c55e');
+    setBtnState('✓ Exported', 'rgba(34,197,94,0.15)', 'rgba(34,197,94,0.4)', '#22c55e', false);
+    setTimeout(() => { if(statusEl && statusEl.textContent.startsWith('Exported')) statusEl.textContent = ''; resetBtn(); }, 4000);
     return true;
   } catch(e) {
-    setStatus('Export failed: ' + e.message);
+    setStatus('Export failed: ' + e.message, '#ef4444');
+    setBtnState('✕ Export failed', 'rgba(239,68,68,0.15)', 'rgba(239,68,68,0.4)', '#ef4444', false);
+    setTimeout(resetBtn, 5000);
     return false;
   }
 }
