@@ -4281,6 +4281,39 @@ function isFoodAvailableToSuggest(item) {
   return !logged[item.id];
 }
 
+// General nutrition knowledge — not tied to what's in the food panel, so gaps
+// the current stack has no good answer for still get a real suggestion.
+const NUTRIENT_FOOD_SOURCES = {
+  vitA: ['sweet potato', 'carrots', 'spinach'],
+  vitC: ['citrus fruit', 'bell peppers', 'strawberries'],
+  vitD: ['salmon', 'fortified milk', 'sunlight exposure'],
+  vitE: ['almonds', 'sunflower seeds', 'spinach'],
+  vitK: ['leafy greens', 'broccoli', 'brussels sprouts'],
+  b1: ['pork', 'whole grains', 'legumes'],
+  b2: ['milk', 'eggs', 'almonds'],
+  b3: ['chicken', 'tuna', 'peanuts'],
+  b6: ['chickpeas', 'salmon', 'potatoes'],
+  folate: ['leafy greens', 'lentils', 'asparagus'],
+  b12: ['clams', 'beef', 'nutritional yeast'],
+  biotin: ['egg yolks', 'almonds', 'sweet potato'],
+  pantothenic: ['mushrooms', 'avocado', 'chicken'],
+  calcium: ['dairy', 'sardines (with bones)', 'leafy greens'],
+  iron: ['red meat', 'spinach', 'lentils'],
+  magnesium: ['pumpkin seeds', 'spinach', 'almonds'],
+  phosphorus: ['dairy', 'fish', 'poultry'],
+  potassium: ['potatoes', 'bananas', 'white beans'],
+  zinc: ['oysters', 'beef', 'pumpkin seeds'],
+  copper: ['shellfish', 'nuts', 'dark chocolate'],
+  manganese: ['nuts', 'whole grains', 'tea'],
+  selenium: ['brazil nuts', 'tuna', 'eggs'],
+  iodine: ['seaweed', 'iodized salt', 'cod'],
+};
+const MACRO_FOOD_SOURCES = {
+  cal: ['nuts', 'rice', 'olive oil'],
+  protein: ['chicken breast', 'greek yogurt', 'lentils'],
+  fiber: ['beans', 'raspberries', 'oats'],
+};
+
 function suggestFoodsForMacro(macroKey) {
   const candidates = [];
   FOOD_SECTIONS.forEach(sec => sec.items.forEach(item => {
@@ -4289,7 +4322,10 @@ function suggestFoodsForMacro(macroKey) {
     if(amt > 0) candidates.push({ name: item.name, amount: amt });
   }));
   candidates.sort((a, b) => b.amount - a.amount);
-  return candidates.slice(0, 2).map(c => c.name);
+  return {
+    stack: candidates.slice(0, 2).map(c => c.name),
+    general: (MACRO_FOOD_SOURCES[macroKey] || []).slice(0, 3),
+  };
 }
 
 function suggestFoodsForNutrient(key) {
@@ -4301,7 +4337,10 @@ function suggestFoodsForNutrient(key) {
     candidates.push({ name: item.name, amount: nutrients[key] });
   }));
   candidates.sort((a, b) => b.amount - a.amount);
-  return candidates.slice(0, 2).map(c => c.name);
+  return {
+    stack: candidates.slice(0, 2).map(c => c.name),
+    general: (NUTRIENT_FOOD_SOURCES[key] || []).slice(0, 3),
+  };
 }
 
 function computeWhatsNext() {
@@ -4359,6 +4398,17 @@ function computeWhatsNext() {
   return result;
 }
 
+function suggestionText(suggestions) {
+  const parts = [];
+  if(suggestions.stack.length) {
+    parts.push(`<strong>${suggestions.stack.join('</strong> or <strong>')}</strong> from your stack`);
+  }
+  if(suggestions.general.length) {
+    parts.push(`generally: ${suggestions.general.join(', ')}`);
+  }
+  return parts.length ? ` — try ${parts.join(', or ')}` : '';
+}
+
 function renderWhatsNext() {
   const data = computeWhatsNext();
   const body = document.getElementById('whatsnext-body');
@@ -4379,14 +4429,14 @@ function renderWhatsNext() {
   if(data.macros.length) {
     html += `<div class="whatsnext-section-label">Nutrition targets</div>`;
     data.macros.forEach(m => {
-      const sugg = m.suggestions.length ? ` — try <strong>${m.suggestions.join('</strong> or <strong>')}</strong>` : '';
+      const sugg = suggestionText(m.suggestions);
       html += `<div class="whatsnext-item"><span class="whatsnext-dot" style="background:#f59e0b"></span><span><strong>${m.label}</strong> is ${m.missing}${m.unit} short of goal (${m.pct}%)${sugg}</span></div>`;
     });
   }
   if(data.nutrients.length) {
     html += `<div class="whatsnext-section-label">Vitamin &amp; mineral gaps</div>`;
     data.nutrients.forEach(n => {
-      const sugg = n.suggestions.length ? ` — try <strong>${n.suggestions.join('</strong> or <strong>')}</strong>` : ' — nothing unlogged in your stack covers this well';
+      const sugg = suggestionText(n.suggestions);
       html += `<div class="whatsnext-item"><span class="whatsnext-dot" style="background:#a855f7"></span><span><strong>${n.label}</strong> is short by ${n.missing}${n.unit} (at ${n.pct}% of target)${sugg}</span></div>`;
     });
     if(data.nutrientsOverflow) {
