@@ -566,6 +566,7 @@ textarea.input-field { resize: vertical; min-height: 80px; }
                 Calm Pilot uses the Claude API to analyze conversation context and surface emotional regulation tips in real time. Audio is processed locally — only the transcript text is sent to the AI.<br><br>
                 <span style="color:var(--text3)">Version 1.0 · Built with Claude Sonnet</span>
               </div>
+              <button class="btn-xs" style="margin-top:8px" onclick="localStorage.removeItem('cp_api_key');alert('API key cleared. You will be prompted again on next analysis.')">Reset API key</button>
             </div>
           </div>
         </div>
@@ -1019,10 +1020,22 @@ Rules:
 Generate 1-3 tips. Only include a quote if it would genuinely help. Be specific to what just happened — not generic.
 Return ONLY the JSON. No explanation. No markdown.`;
 
+  let apiKey = localStorage.getItem('cp_api_key');
+  if (!apiKey) {
+    apiKey = window.prompt('Enter your Anthropic API key (sk-ant-...).\nGet one free at console.anthropic.com — it will be saved locally.');
+    if (!apiKey) { thinkingEl.remove(); state.analyzing = false; document.getElementById('analyzeBtn').disabled = false; document.getElementById('analyzeBtn').textContent = 'Analyze now'; return; }
+    localStorage.setItem('cp_api_key', apiKey);
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
