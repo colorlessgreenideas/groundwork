@@ -814,39 +814,54 @@ async function startListening() {
     state.recognition.lang = 'en-US';
 
     let interim = null;
+    let buffer = '';
+    let commitTimer = null;
+
+    function commitBuffer() {
+      const text = buffer.trim();
+      if (text.length > 4) {
+        addTranscriptLine(state.userName, text, 'self');
+        scheduleAutoAnalysis();
+      }
+      buffer = '';
+      if (interim) { interim.remove(); interim = null; }
+    }
 
     state.recognition.onresult = (event) => {
       let interimText = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
-          const text = event.results[i][0].transcript.trim();
-          if (text) addTranscriptLine(state.userName, text, 'self');
-          if (interim) { interim.remove(); interim = null; }
+          buffer += (buffer ? ' ' : '') + event.results[i][0].transcript.trim();
+          clearTimeout(commitTimer);
+          commitTimer = setTimeout(commitBuffer, 3500);
         } else {
           interimText += event.results[i][0].transcript;
         }
       }
-      if (interimText) {
+      const preview = (buffer ? buffer + ' ' : '') + interimText;
+      if (preview.trim()) {
         if (!interim) {
           interim = document.createElement('div');
           interim.className = 't-msg self';
-          interim.innerHTML = `<div class="t-speaker">${state.userName.slice(0,3).toUpperCase()}</div><div class="t-text" style="color:var(--text3);font-style:italic">${interimText}</div>`;
+          interim.innerHTML = '<div class="t-speaker">' + state.userName.slice(0,3).toUpperCase() + '</div><div class="t-text" style="color:var(--text3);font-style:italic">' + preview + '</div>';
           document.getElementById('transcriptArea').appendChild(interim);
         } else {
-          interim.querySelector('.t-text').textContent = interimText;
+          interim.querySelector('.t-text').textContent = preview;
         }
         scrollTranscript();
       }
     };
 
     state.recognition.onerror = (e) => {
-      if (e.error !== 'no-speech') {
-        document.getElementById('micStatus').textContent = 'Speech recognition error: ' + e.error;
-      }
+      if (e.error === 'no-speech') return;
+      if (buffer) { clearTimeout(commitTimer); commitBuffer(); }
     };
 
     state.recognition.onend = () => {
-      if (state.recording) state.recognition.start();
+      if (state.recording) {
+        if (buffer) { clearTimeout(commitTimer); commitBuffer(); }
+        try { state.recognition.start(); } catch(e) {}
+      }
     };
 
     state.recognition.start();
