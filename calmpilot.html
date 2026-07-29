@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calm Pilot — Emotional Co-Pilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0b;
+  --surface: #161614;
+  --surface2: #1e1e1b;
+  --surface3: #252521;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --border3: rgba(255,255,255,0.18);
+  --text: #f2ede4;
+  --text2: rgba(242,237,228,0.6);
+  --text3: rgba(242,237,228,0.35);
+  --green: #7daa80;
+  --green-dim: rgba(125,170,128,0.12);
+  --green-border: rgba(125,170,128,0.25);
+  --amber: #c9935a;
+  --amber-dim: rgba(201,147,90,0.1);
+  --amber-border: rgba(201,147,90,0.22);
+  --blue: #6a9cbf;
+  --blue-dim: rgba(106,156,191,0.1);
+  --blue-border: rgba(106,156,191,0.22);
+  --red: #bf6a6a;
+  --red-dim: rgba(191,106,106,0.1);
+  --red-border: rgba(191,106,106,0.22);
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* === LAYOUT === */
+.shell {
+  display: grid;
+  grid-template-rows: 52px 1fr 64px;
+  height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--surface);
+}
+
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 19px;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.logo em { color: var(--green); font-style: italic; }
+
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+
+.session-badge {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; color: var(--text2); letter-spacing: 0.3px;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.4s;
+}
+.dot.live { background: var(--green); animation: livepulse 2s infinite; }
+.dot.paused { background: var(--amber); }
+@keyframes livepulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(125,170,128,0.5); }
+  50% { box-shadow: 0 0 0 5px rgba(125,170,128,0); }
+}
+
+.timer { font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; }
+
+.btn-xs {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; padding: 5px 11px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border2);
+  background: transparent; color: var(--text2); cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-xs:hover { background: var(--surface3); color: var(--text); border-color: var(--border3); }
+
+/* === MAIN COLUMNS === */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  overflow: hidden;
+}
+
+/* LEFT */
+.left-col {
+  display: flex; flex-direction: column;
+  border-right: 0.5px solid var(--border);
+  overflow: hidden;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--border);
+  padding: 0 20px;
+  gap: 0;
+  background: var(--surface);
+}
+.tab {
+  font-size: 12px; color: var(--text3);
+  padding: 11px 14px 10px;
+  cursor: pointer;
+  border-bottom: 1.5px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 0.2px;
+}
+.tab:hover { color: var(--text2); }
+.tab.active { color: var(--text); border-bottom-color: var(--green); }
+
+.tab-content { display: none; flex: 1; overflow-y: auto; }
+.tab-content.active { display: flex; flex-direction: column; }
+
+/* TRANSCRIPT */
+.transcript-area {
+  flex: 1; padding: 20px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.t-msg {
+  display: flex; gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.3s;
+  animation: fadeup 0.35s ease;
+}
+@keyframes fadeup { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.t-msg:hover { background: var(--surface2); }
+.t-msg.flagged { background: var(--amber-dim); border-left: 2px solid var(--amber-border); }
+.t-speaker {
+  font-size: 11px; font-weight: 500;
+  min-width: 28px;
+  padding-top: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.t-msg.self .t-speaker { color: var(--green); }
+.t-msg.flagged .t-speaker { color: var(--amber); }
+.t-text { font-size: 13.5px; color: var(--text2); line-height: 1.55; }
+.t-msg.self .t-text { color: var(--text); }
+.t-tag {
+  font-size: 10px; padding: 1px 7px; border-radius: 20px;
+  margin-left: auto; align-self: center; white-space: nowrap;
+  background: var(--amber-dim); color: var(--amber); border: 0.5px solid var(--amber-border);
+}
+
+/* TONE METERS */
+.tone-panel { padding: 20px; }
+.tone-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+.meter-group { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.meter-card {
+  background: var(--surface2); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.m-label { font-size: 11px; color: var(--text3); margin-bottom: 10px; letter-spacing: 0.3px; }
+.m-val { font-size: 26px; font-weight: 300; color: var(--text); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.m-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.m-bar-fill { height: 100%; border-radius: 2px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+.m-bar-fill.green { background: var(--green); }
+.m-bar-fill.amber { background: var(--amber); }
+.m-bar-fill.blue { background: var(--blue); }
+.m-bar-fill.red { background: var(--red); }
+
+.emotion-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-top: 0.5px solid var(--border); }
+.emotion-name { font-size: 12px; color: var(--text2); }
+.emotion-bar-wrap { flex: 1; margin: 0 12px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.emotion-bar { height: 100%; border-radius: 2px; transition: width 1s ease; }
+.emotion-score { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }
+
+/* SETTINGS */
+.settings-panel { padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+.setting-section { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.setting-header { padding: 13px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.setting-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; }
+.setting-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.rule-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: 8px;
+  background: var(--surface3); border: 0.5px solid var(--border);
+  font-size: 13px; color: var(--text);
+}
+.rule-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.rule-del {
+  margin-left: auto; background: none; border: none; color: var(--text3); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 0 2px; transition: color 0.15s;
+}
+.rule-del:hover { color: var(--red); }
+
+.add-rule-row { display: flex; gap: 8px; }
+.input-field {
+  flex: 1; background: var(--surface3); border: 0.5px solid var(--border2);
+  border-radius: 7px; padding: 8px 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; outline: none; transition: border-color 0.15s;
+}
+.input-field:focus { border-color: var(--green); }
+.input-field::placeholder { color: var(--text3); }
+textarea.input-field { resize: vertical; min-height: 80px; }
+
+.btn-add {
+  background: var(--green-dim); border: 0.5px solid var(--green-border);
+  border-radius: 7px; padding: 8px 14px; color: var(--green); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; transition: all 0.15s; white-space: nowrap;
+}
+.btn-add:hover { background: rgba(125,170,128,0.2); }
+
+.select-field {
+  background: var(--surface3); border: 0.5px solid var(--border2);
+  border-radius: 7px; padding: 8px 12px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  width: 100%; cursor: pointer;
+}
+
+/* RIGHT SIDEBAR */
+.right-col {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.sidebar-header {
+  padding: 14px 16px 12px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+.clear-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; transition: color 0.15s; }
+.clear-btn:hover { color: var(--text2); }
+
+.tips-scroll { flex: 1; overflow-y: auto; padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+
+/* TIP CARDS */
+.tip-card {
+  border-radius: var(--radius); padding: 12px 13px;
+  border: 0.5px solid;
+  animation: tipin 0.4s cubic-bezier(0.2,0,0,1);
+  position: relative;
+}
+@keyframes tipin { from{opacity:0;transform:translateY(10px) scale(0.97)} to{opacity:1;transform:none} }
+.tip-card.insight { background: var(--green-dim); border-color: var(--green-border); }
+.tip-card.reminder { background: var(--amber-dim); border-color: var(--amber-border); }
+.tip-card.quote { background: var(--blue-dim); border-color: var(--blue-border); }
+.tip-card.alert { background: var(--red-dim); border-color: var(--red-border); }
+
+.tip-kind {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.7px;
+  text-transform: uppercase; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.tip-card.insight .tip-kind { color: var(--green); }
+.tip-card.reminder .tip-kind { color: var(--amber); }
+.tip-card.quote .tip-kind { color: var(--blue); }
+.tip-card.alert .tip-kind { color: var(--red); }
+
+.tip-body { font-size: 13px; line-height: 1.55; color: var(--text); }
+.tip-card.quote .tip-body {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic; font-size: 14.5px; line-height: 1.5;
+  color: rgba(242,237,228,0.88);
+}
+.tip-ts { font-size: 10px; color: var(--text3); margin-top: 6px; }
+
+.tip-thinking {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 13px; border-radius: var(--radius);
+  background: var(--surface2); border: 0.5px solid var(--border);
+  font-size: 12px; color: var(--text3);
+}
+.thinking-dots span {
+  display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--text3); margin: 0 1.5px;
+  animation: blink 1.4s infinite;
+}
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+/* ACTIVE RULES FOOTER */
+.rules-footer {
+  border-top: 0.5px solid var(--border);
+  padding: 12px 14px;
+  background: var(--surface);
+}
+.rules-footer-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.rule-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.rule-pill {
+  font-size: 11px; padding: 3px 9px; border-radius: 20px;
+  background: var(--green-dim); border: 0.5px solid var(--green-border);
+  color: rgba(125,170,128,0.9);
+}
+
+/* BOTTOM BAR */
+.bottombar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 24px;
+  border-top: 0.5px solid var(--border);
+  background: var(--surface);
+}
+
+.waveform {
+  display: flex; align-items: center; gap: 2.5px;
+  height: 28px;
+}
+.w-bar {
+  width: 3px; border-radius: 2px;
+  background: var(--green);
+  animation: wave 1.1s ease-in-out infinite;
+  transition: background 0.3s;
+}
+.w-bar:nth-child(1){height:6px;animation-delay:0s}
+.w-bar:nth-child(2){height:14px;animation-delay:0.1s}
+.w-bar:nth-child(3){height:22px;animation-delay:0.2s}
+.w-bar:nth-child(4){height:16px;animation-delay:0.3s}
+.w-bar:nth-child(5){height:10px;animation-delay:0.4s}
+.w-bar:nth-child(6){height:18px;animation-delay:0.5s}
+.w-bar:nth-child(7){height:8px;animation-delay:0.6s}
+.w-bar:nth-child(8){height:12px;animation-delay:0.7s}
+@keyframes wave { 0%,100%{transform:scaleY(0.3)} 50%{transform:scaleY(1)} }
+.waveform.idle .w-bar { animation: none; transform: scaleY(0.3); background: var(--text3); }
+.waveform.paused .w-bar { animation: none; transform: scaleY(0.3); background: var(--amber); }
+
+.btn-main {
+  padding: 10px 22px; border-radius: 8px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  background: var(--green); color: #0d1a0e;
+}
+.btn-main:hover { opacity: 0.88; }
+.btn-main.stop { background: var(--red-dim); color: var(--red); border: 0.5px solid var(--red-border); }
+.btn-main.stop:hover { background: rgba(191,106,106,0.18); }
+
+.btn-analyze {
+  padding: 10px 18px; border-radius: 8px;
+  background: var(--blue-dim); border: 0.5px solid var(--blue-border);
+  color: var(--blue); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-analyze:hover { background: rgba(106,156,191,0.18); }
+.btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.mic-status { font-size: 12px; color: var(--text3); flex: 1; }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 20px;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: var(--surface); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg); max-width: 480px; width: 100%; padding: 28px;
+}
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; color: var(--text); }
+.modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+.modal-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.modal-section { margin-bottom: 18px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.btn-start {
+  padding: 10px 24px; border-radius: 8px; border: none;
+  background: var(--green); color: #0d1a0e;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.btn-start:hover { opacity: 0.88; }
+.btn-cancel {
+  padding: 10px 18px; border-radius: 8px;
+  background: transparent; border: 0.5px solid var(--border2);
+  color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  cursor: pointer;
+}
+.btn-cancel:hover { background: var(--surface2); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* EMPTY STATE */
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 30px; text-align: center;
+}
+.empty-icon { font-size: 28px; opacity: 0.3; margin-bottom: 4px; }
+.empty-text { font-size: 13px; color: var(--text3); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING MODAL -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal">
+    <div class="modal-title">calm<em style="color:var(--green);font-style:italic">pilot</em></div>
+    <div class="modal-sub">Your AI co-pilot listens during meetings and conversations, then surfaces tips, reminders, and grounding quotes to keep you level-headed in real time.</div>
+
+    <div class="modal-section">
+      <div class="modal-label">Your name / how you'll appear</div>
+      <input class="input-field" type="text" id="userName" placeholder="e.g. Alex" value="You" style="width:100%">
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Context (optional — what kind of meeting or conversation?)</div>
+      <input class="input-field" type="text" id="contextField" placeholder="e.g. performance review with my manager" style="width:100%">
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Your behavioral rules (how you want to show up)</div>
+      <div id="setupRulesList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <div class="add-rule-row">
+        <input class="input-field" type="text" id="newRuleSetup" placeholder="e.g. Don't take criticism personally">
+        <button class="btn-add" onclick="addSetupRule()">Add</button>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="skipSetup()">Skip setup</button>
+      <button class="btn-start" onclick="startSession()">Start session →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">calm<em>pilot</em></div>
+    <div class="topbar-right">
+      <div class="session-badge">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusLabel">Ready to start</span>
+      </div>
+      <span class="timer" id="timerDisplay">00:00</span>
+      <button class="btn-xs" onclick="showSettings()">Rules & settings</button>
+      <button class="btn-xs" onclick="exportSession()">Export</button>
+    </div>
+  </div>
+
+  <!-- COLUMNS -->
+  <div class="columns">
+
+    <!-- LEFT -->
+    <div class="left-col">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('transcript')">Transcript</div>
+        <div class="tab" onclick="switchTab('tone')">Tone analysis</div>
+        <div class="tab" onclick="switchTab('settings')">Settings</div>
+      </div>
+
+      <!-- TRANSCRIPT TAB -->
+      <div class="tab-content active" id="tab-transcript">
+        <div class="transcript-area" id="transcriptArea">
+          <div class="empty-state" id="transcriptEmpty">
+            <div class="empty-icon">◎</div>
+            <div class="empty-text">Start a session to begin transcription.<br>Calm Pilot will listen and coach you in real time.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TONE TAB -->
+      <div class="tab-content" id="tab-tone">
+        <div class="tone-panel">
+          <div class="tone-title">Real-time indicators</div>
+          <div class="meter-group">
+            <div class="meter-card">
+              <div class="m-label">Your calm score</div>
+              <div class="m-val" id="mCalm">—</div>
+              <div class="m-bar-track"><div class="m-bar-fill green" id="mCalmBar" style="width:0%"></div></div>
+            </div>
+            <div class="meter-card">
+              <div class="m-label">Tension in room</div>
+              <div class="m-val" id="mTension">—</div>
+              <div class="m-bar-track"><div class="m-bar-fill amber" id="mTensionBar" style="width:0%"></div></div>
+            </div>
+            <div class="meter-card">
+              <div class="m-label">Your focus</div>
+              <div class="m-val" id="mFocus">—</div>
+              <div class="m-bar-track"><div class="m-bar-fill blue" id="mFocusBar" style="width:0%"></div></div>
+            </div>
+            <div class="meter-card">
+              <div class="m-label">Reactivity risk</div>
+              <div class="m-val" id="mReact">—</div>
+              <div class="m-bar-track"><div class="m-bar-fill red" id="mReactBar" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <div class="tone-title" style="margin-bottom:12px">Detected emotions</div>
+          <div id="emotionRows">
+            <div style="font-size:12px;color:var(--text3);padding:10px 0">No data yet — start a session first.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="tab-content" id="tab-settings">
+        <div class="settings-panel">
+          <div class="setting-section">
+            <div class="setting-header">
+              <div class="setting-title">Behavioral rules</div>
+              <button class="btn-xs" onclick="clearRules()">Clear all</button>
+            </div>
+            <div class="setting-body">
+              <div id="rulesList"></div>
+              <div class="add-rule-row" style="margin-top:4px">
+                <input class="input-field" type="text" id="newRuleInput" placeholder="Add a rule for how you want to behave…">
+                <button class="btn-add" onclick="addRule()">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-section">
+            <div class="setting-header">
+              <div class="setting-title">System context</div>
+            </div>
+            <div class="setting-body">
+              <div class="modal-label">Meeting / conversation context</div>
+              <textarea class="input-field" id="contextArea" placeholder="Describe what kind of meeting or conversation this is…"></textarea>
+              <div class="modal-label" style="margin-top:14px">Tip style</div>
+              <select class="select-field" id="tipStyle">
+                <option value="concise">Concise & direct</option>
+                <option value="gentle">Gentle & supportive</option>
+                <option value="stoic">Stoic & philosophical</option>
+                <option value="coach">Executive coach tone</option>
+              </select>
+              <div class="modal-label" style="margin-top:14px">Sensitivity level</div>
+              <select class="select-field" id="sensitivity">
+                <option value="low">Low — only flag serious moments</option>
+                <option value="medium" selected>Medium — balanced</option>
+                <option value="high">High — proactive coaching</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-section">
+            <div class="setting-header"><div class="setting-title">About</div></div>
+            <div class="setting-body">
+              <div style="font-size:12px;color:var(--text2);line-height:1.7">
+                Calm Pilot uses the Claude API to analyze conversation context and surface emotional regulation tips in real time. Audio is processed locally — only the transcript text is sent to the AI.<br><br>
+                <span style="color:var(--text3)">Version 1.0 · Built with Claude Sonnet</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right-col">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Coaching feed</span>
+        <button class="clear-btn" onclick="clearTips()">Clear</button>
+      </div>
+
+      <div class="tips-scroll" id="tipsScroll">
+        <div class="empty-state" id="tipsEmpty">
+          <div class="empty-icon">✦</div>
+          <div class="empty-text">Tips, reminders, and grounding quotes will appear here as the conversation unfolds.</div>
+        </div>
+      </div>
+
+      <div class="rules-footer">
+        <div class="rules-footer-title">Active rules</div>
+        <div class="rule-pills" id="activePills">
+          <span style="font-size:11px;color:var(--text3)">No rules set</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <div class="waveform idle" id="waveform">
+      <div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div>
+      <div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div>
+    </div>
+    <span class="mic-status" id="micStatus">Microphone not active</span>
+    <button class="btn-analyze" id="analyzeBtn" onclick="requestAnalysis()" disabled>Analyze now</button>
+    <button class="btn-main" id="mainBtn" onclick="toggleListening()">Start listening</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  recording: false,
+  sessionActive: false,
+  mediaRecorder: null,
+  recognition: null,
+  transcript: [],
+  tips: [],
+  rules: [
+    "Stay factual when challenged — let data speak",
+    "Pause 2 seconds before responding to anything heated",
+    "Don't take criticism of ideas as criticism of self",
+    "Acknowledge others' points before disagreeing"
+  ],
+  userName: "You",
+  context: "",
+  tipStyle: "concise",
+  sensitivity: "medium",
+  timerInterval: null,
+  sessionSeconds: 0,
+  analyzing: false,
+  lastAnalyzedIndex: 0,
+  toneData: { calm: 0, tension: 0, focus: 0, reactivity: 0 },
+  emotions: {}
+};
+
+// ============================================================
+// SETUP MODAL
+// ============================================================
+const setupRules = [...state.rules];
+
+function renderSetupRules() {
+  const el = document.getElementById('setupRulesList');
+  el.innerHTML = setupRules.map((r, i) => `
+    <div class="rule-item" style="font-size:12px;padding:7px 10px">
+      <div class="rule-dot"></div>
+      <span style="flex:1">${r}</span>
+      <button class="rule-del" onclick="removeSetupRule(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function addSetupRule() {
+  const inp = document.getElementById('newRuleSetup');
+  const val = inp.value.trim();
+  if (!val) return;
+  setupRules.push(val);
+  inp.value = '';
+  renderSetupRules();
+}
+
+function removeSetupRule(i) {
+  setupRules.splice(i, 1);
+  renderSetupRules();
+}
+
+document.getElementById('newRuleSetup').addEventListener('keydown', e => { if (e.key === 'Enter') addSetupRule(); });
+
+function startSession() {
+  const name = document.getElementById('userName').value.trim();
+  const ctx = document.getElementById('contextField').value.trim();
+  if (name) state.userName = name;
+  if (ctx) state.context = ctx;
+  state.rules = [...setupRules];
+  document.getElementById('setupModal').classList.add('hidden');
+  renderRules();
+  renderActivePills();
+  syncSettingsUI();
+}
+
+function skipSetup() {
+  document.getElementById('setupModal').classList.add('hidden');
+  renderRules();
+  renderActivePills();
+}
+
+renderSetupRules();
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['transcript','tone','settings'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'settings') syncSettingsUI();
+}
+
+function showSettings() { switchTab('settings'); }
+
+// ============================================================
+// RULES
+// ============================================================
+function renderRules() {
+  const el = document.getElementById('rulesList');
+  if (!state.rules.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px 0">No rules yet.</div>'; return; }
+  el.innerHTML = state.rules.map((r, i) => `
+    <div class="rule-item">
+      <div class="rule-dot"></div>
+      <span style="flex:1">${r}</span>
+      <button class="rule-del" onclick="deleteRule(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function addRule() {
+  const inp = document.getElementById('newRuleInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  state.rules.push(val);
+  inp.value = '';
+  renderRules();
+  renderActivePills();
+}
+
+function deleteRule(i) {
+  state.rules.splice(i, 1);
+  renderRules();
+  renderActivePills();
+}
+
+function clearRules() {
+  state.rules = [];
+  renderRules();
+  renderActivePills();
+}
+
+document.getElementById('newRuleInput').addEventListener('keydown', e => { if (e.key === 'Enter') addRule(); });
+
+function renderActivePills() {
+  const el = document.getElementById('activePills');
+  if (!state.rules.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text3)">No rules set</span>'; return; }
+  el.innerHTML = state.rules.map(r => `<span class="rule-pill">${r.length > 30 ? r.slice(0,28)+'…' : r}</span>`).join('');
+}
+
+renderRules();
+renderActivePills();
+
+// ============================================================
+// SETTINGS SYNC
+// ============================================================
+function syncSettingsUI() {
+  document.getElementById('contextArea').value = state.context;
+  document.getElementById('tipStyle').value = state.tipStyle;
+  document.getElementById('sensitivity').value = state.sensitivity;
+}
+
+document.getElementById('contextArea').addEventListener('input', e => state.context = e.target.value);
+document.getElementById('tipStyle').addEventListener('change', e => state.tipStyle = e.target.value);
+document.getElementById('sensitivity').addEventListener('change', e => state.sensitivity = e.target.value);
+
+// ============================================================
+// TIMER
+// ============================================================
+function startTimer() {
+  state.sessionSeconds = 0;
+  state.timerInterval = setInterval(() => {
+    state.sessionSeconds++;
+    const m = String(Math.floor(state.sessionSeconds / 60)).padStart(2, '0');
+    const s = String(state.sessionSeconds % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = m + ':' + s;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+}
+
+// ============================================================
+// MIC / RECORDING
+// ============================================================
+async function toggleListening() {
+  if (!state.recording) {
+    await startListening();
+  } else {
+    stopListening();
+  }
+}
+
+async function startListening() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    addTip('alert', 'Microphone access denied', 'Please allow microphone access in your browser, then try again.');
+    return;
+  }
+
+  state.recording = true;
+  state.sessionActive = true;
+
+  // Setup Web Speech API
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    state.recognition = new SpeechRecognition();
+    state.recognition.continuous = true;
+    state.recognition.interimResults = true;
+    state.recognition.lang = 'en-US';
+
+    let interim = null;
+
+    state.recognition.onresult = (event) => {
+      let interimText = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          const text = event.results[i][0].transcript.trim();
+          if (text) addTranscriptLine(state.userName, text, 'self');
+          if (interim) { interim.remove(); interim = null; }
+        } else {
+          interimText += event.results[i][0].transcript;
+        }
+      }
+      if (interimText) {
+        if (!interim) {
+          interim = document.createElement('div');
+          interim.className = 't-msg self';
+          interim.innerHTML = `<div class="t-speaker">${state.userName.slice(0,3).toUpperCase()}</div><div class="t-text" style="color:var(--text3);font-style:italic">${interimText}</div>`;
+          document.getElementById('transcriptArea').appendChild(interim);
+        } else {
+          interim.querySelector('.t-text').textContent = interimText;
+        }
+        scrollTranscript();
+      }
+    };
+
+    state.recognition.onerror = (e) => {
+      if (e.error !== 'no-speech') {
+        document.getElementById('micStatus').textContent = 'Speech recognition error: ' + e.error;
+      }
+    };
+
+    state.recognition.onend = () => {
+      if (state.recording) state.recognition.start();
+    };
+
+    state.recognition.start();
+    document.getElementById('micStatus').textContent = 'Listening… speak now';
+  } else {
+    // Fallback: simulate for demo
+    document.getElementById('micStatus').textContent = 'Speech API not supported — running demo mode';
+    runDemoMode();
+  }
+
+  // UI
+  document.getElementById('mainBtn').textContent = 'Stop listening';
+  document.getElementById('mainBtn').classList.add('stop');
+  document.getElementById('statusDot').className = 'dot live';
+  document.getElementById('statusLabel').textContent = 'Live · listening';
+  document.getElementById('waveform').className = 'waveform';
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('transcriptEmpty').style.display = 'none';
+
+  startTimer();
+
+  // Auto-analyze every 45 seconds
+  state.autoAnalyze = setInterval(() => {
+    if (state.transcript.length > state.lastAnalyzedIndex + 2) {
+      requestAnalysis();
+    }
+  }, 45000);
+}
+
+function stopListening() {
+  state.recording = false;
+  if (state.recognition) { state.recognition.stop(); state.recognition = null; }
+  clearInterval(state.autoAnalyze);
+  stopTimer();
+
+  document.getElementById('mainBtn').textContent = 'Start listening';
+  document.getElementById('mainBtn').classList.remove('stop');
+  document.getElementById('statusDot').className = 'dot paused';
+  document.getElementById('statusLabel').textContent = 'Session paused';
+  document.getElementById('waveform').className = 'waveform paused';
+  document.getElementById('micStatus').textContent = 'Session paused';
+}
+
+// ============================================================
+// DEMO MODE (fallback if speech API unavailable)
+// ============================================================
+const demoLines = [
+  { speaker: "Manager", text: "I've reviewed your report. I have some serious concerns about the methodology.", type: "other" },
+  { speaker: state.userName, text: "I'm happy to walk you through the approach I used.", type: "self" },
+  { speaker: "Manager", text: "Frankly, this isn't the quality I'd expect at your level.", type: "other", flag: "dismissive" },
+  { speaker: "Colleague", text: "I actually think the direction makes sense given the constraints.", type: "other" },
+  { speaker: "Manager", text: "Let's be realistic — this project has been behind from the start.", type: "other", flag: "blame" },
+  { speaker: state.userName, text: "The delays were due to scope changes in week two. I have documentation.", type: "self" },
+];
+
+function runDemoMode() {
+  let i = 0;
+  const interval = setInterval(() => {
+    if (!state.recording || i >= demoLines.length) { clearInterval(interval); return; }
+    const line = demoLines[i++];
+    addTranscriptLine(line.speaker, line.text, line.type, line.flag);
+    if (i % 2 === 0) requestAnalysis();
+  }, 5000);
+}
+
+// ============================================================
+// TRANSCRIPT
+// ============================================================
+function addTranscriptLine(speaker, text, type, flag) {
+  const entry = { speaker, text, type, flag, time: new Date() };
+  state.transcript.push(entry);
+
+  const area = document.getElementById('transcriptArea');
+  const isFlagged = !!flag;
+
+  const div = document.createElement('div');
+  div.className = 't-msg' + (type === 'self' ? ' self' : '') + (isFlagged ? ' flagged' : '');
+  div.innerHTML = `
+    <div class="t-speaker">${speaker.slice(0,3).toUpperCase()}</div>
+    <div class="t-text">${text}</div>
+    ${isFlagged ? `<div class="t-tag">${flag}</div>` : ''}
+  `;
+  area.appendChild(div);
+  scrollTranscript();
+}
+
+function scrollTranscript() {
+  const area = document.getElementById('transcriptArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+// ============================================================
+// CLAUDE API ANALYSIS
+// ============================================================
+async function requestAnalysis() {
+  if (state.analyzing || state.transcript.length === 0) return;
+  if (state.transcript.length <= state.lastAnalyzedIndex) return;
+
+  state.analyzing = true;
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('analyzeBtn').textContent = 'Analyzing…';
+
+  const thinkingEl = addThinkingIndicator();
+
+  const newLines = state.transcript.slice(state.lastAnalyzedIndex);
+  const transcriptText = newLines.map(l => `${l.speaker}: ${l.text}`).join('\n');
+  const allLines = state.transcript.map(l => `${l.speaker}: ${l.text}`).join('\n');
+
+  const rulesText = state.rules.length ? state.rules.map((r,i) => `${i+1}. ${r}`).join('\n') : 'No specific rules set.';
+  const contextText = state.context || 'General work conversation or meeting.';
+  const styleMap = {
+    concise: 'Be concise and direct. Get to the point fast.',
+    gentle: 'Be warm, empathetic, and supportive in tone.',
+    stoic: 'Draw on Stoic philosophy. Be grounded and philosophical.',
+    coach: 'Speak like a trusted executive coach. Be pragmatic and empowering.'
+  };
+  const sensitivityMap = {
+    low: 'Only flag serious emotional risks or rule violations.',
+    medium: 'Balance coaching with not over-interrupting.',
+    high: 'Be proactive — offer coaching generously and frequently.'
+  };
+
+  const prompt = `You are Calm Pilot, an AI emotional co-pilot that helps someone stay regulated, focused, and effective during difficult conversations or meetings.
+
+CONTEXT: ${contextText}
+
+THE USER'S NAME: ${state.userName}
+
+THE USER'S BEHAVIORAL RULES:
+${rulesText}
+
+COACHING STYLE: ${styleMap[state.tipStyle]}
+SENSITIVITY LEVEL: ${sensitivityMap[state.sensitivity]}
+
+FULL CONVERSATION SO FAR:
+${allLines}
+
+MOST RECENT EXCHANGE TO FOCUS ON:
+${transcriptText}
+
+Analyze the conversation and respond ONLY with a JSON object in this exact format:
+{
+  "tips": [
+    {
+      "type": "alert|reminder|quote|insight",
+      "title": "short label (5 words max)",
+      "body": "the coaching message"
+    }
+  ],
+  "tone": {
+    "calm": 0-100,
+    "tension": 0-100,
+    "focus": 0-100,
+    "reactivity": 0-100,
+    "emotions": {
+      "defensive": 0-100,
+      "frustrated": 0-100,
+      "confident": 0-100,
+      "composed": 0-100,
+      "pressured": 0-100
+    }
+  }
+}
+
+Rules:
+- "alert": something emotionally risky just happened (insult, dismissal, blame, unfair attack) — give specific de-escalation advice
+- "reminder": a relevant behavioral rule the user should remember RIGHT NOW  
+- "quote": a well-chosen short inspirational or philosophical quote appropriate for this moment (use sparingly, only when powerful)
+- "insight": a coaching observation — what's going well, a pattern to notice, a strategic suggestion
+
+Generate 1-3 tips. Only include a quote if it would genuinely help. Be specific to what just happened — not generic.
+Return ONLY the JSON. No explanation. No markdown.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.map(b => b.text || '').join('').trim();
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    thinkingEl.remove();
+
+    // Add tips
+    if (parsed.tips && parsed.tips.length) {
+      document.getElementById('tipsEmpty').style.display = 'none';
+      parsed.tips.forEach(tip => addTip(tip.type, tip.title, tip.body));
+    }
+
+    // Update tone
+    if (parsed.tone) {
+      updateToneMeters(parsed.tone);
+    }
+
+    state.lastAnalyzedIndex = state.transcript.length;
+
+  } catch (err) {
+    thinkingEl.remove();
+    addTip('insight', 'Analysis error', 'Could not reach the AI. Check your connection and try again.');
+    console.error('API error:', err);
+  }
+
+  state.analyzing = false;
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('analyzeBtn').textContent = 'Analyze now';
+}
+
+function addThinkingIndicator() {
+  const el = document.createElement('div');
+  el.className = 'tip-thinking';
+  el.innerHTML = `<span>Analyzing conversation</span><span class="thinking-dots"><span></span><span></span><span></span></span>`;
+  const scroll = document.getElementById('tipsScroll');
+  scroll.insertBefore(el, scroll.firstChild);
+  return el;
+}
+
+// ============================================================
+// TIPS
+// ============================================================
+function addTip(type, title, body) {
+  const now = new Date();
+  const ts = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('tipsEmpty').style.display = 'none';
+
+  const card = document.createElement('div');
+  card.className = `tip-card ${type}`;
+  card.innerHTML = `
+    <div class="tip-kind">${title}</div>
+    <div class="tip-body">${body}</div>
+    <div class="tip-ts">${ts}</div>
+  `;
+
+  const scroll = document.getElementById('tipsScroll');
+  scroll.insertBefore(card, scroll.children[0]);
+
+  // Keep max 12 tips
+  while (scroll.querySelectorAll('.tip-card').length > 12) {
+    const cards = scroll.querySelectorAll('.tip-card');
+    cards[cards.length - 1].remove();
+  }
+}
+
+function clearTips() {
+  const scroll = document.getElementById('tipsScroll');
+  scroll.querySelectorAll('.tip-card, .tip-thinking').forEach(el => el.remove());
+  document.getElementById('tipsEmpty').style.display = 'flex';
+}
+
+// ============================================================
+// TONE METERS
+// ============================================================
+function updateToneMeters(tone) {
+  const set = (id, barId, val) => {
+    if (val === undefined) return;
+    document.getElementById(id).textContent = Math.round(val) + '%';
+    document.getElementById(barId).style.width = Math.round(val) + '%';
+  };
+  set('mCalm', 'mCalmBar', tone.calm);
+  set('mTension', 'mTensionBar', tone.tension);
+  set('mFocus', 'mFocusBar', tone.focus);
+  set('mReact', 'mReactBar', tone.reactivity);
+
+  state.toneData = tone;
+
+  if (tone.emotions) {
+    state.emotions = tone.emotions;
+    renderEmotions(tone.emotions);
+  }
+}
+
+const emotionColors = {
+  defensive: 'amber', frustrated: 'red', confident: 'green',
+  composed: 'green', pressured: 'amber'
+};
+
+function renderEmotions(emotions) {
+  const el = document.getElementById('emotionRows');
+  el.innerHTML = Object.entries(emotions).map(([name, val]) => {
+    const color = emotionColors[name] || 'blue';
+    const colorMap = { green: '#7daa80', amber: '#c9935a', red: '#bf6a6a', blue: '#6a9cbf' };
+    return `
+      <div class="emotion-row">
+        <span class="emotion-name">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+        <div class="emotion-bar-wrap">
+          <div class="emotion-bar" style="width:${Math.round(val)}%;background:${colorMap[color]}"></div>
+        </div>
+        <span class="emotion-score">${Math.round(val)}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportSession() {
+  if (!state.transcript.length) { alert('No transcript to export yet.'); return; }
+
+  const lines = state.transcript.map(l => `[${l.time ? l.time.toLocaleTimeString() : ''}] ${l.speaker}: ${l.text}`).join('\n');
+  const tipsList = state.tips.map(t => `[${t.type}] ${t.title}: ${t.body}`).join('\n');
+
+  const content = `CALM PILOT SESSION EXPORT
+Generated: ${new Date().toLocaleString()}
+Duration: ${document.getElementById('timerDisplay').textContent}
+Context: ${state.context || 'Not specified'}
+
+=== YOUR RULES ===
+${state.rules.join('\n') || 'None'}
+
+=== TRANSCRIPT ===
+${lines}
+
+=== COACHING TIPS ===
+${tipsList || 'No tips recorded'}
+`;
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'calmpilot-session.txt';
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
