@@ -304,6 +304,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
       <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
     </div>
     <span class="mst" id="mst">Microphone not active</span>
+    <button class="bana" id="autobtn" onclick="toggleAuto()" style="background:var(--gr1);border-color:var(--gr2);color:var(--gr)">Auto ✓</button>
     <button class="bana" id="abtn" onclick="analyze()" disabled>Analyze now</button>
     <button class="bpri" id="mbtn" onclick="toggleListen()">Start listening</button>
   </div>
@@ -317,7 +318,7 @@ const S = {
   transcript:[], tips:[],
   rules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"],
   userName:"You", context:"", tipStyle:"concise", sensitivity:"medium",
-  lastIdx:0, secs:0, timerID:null, recognition:null,
+  lastIdx:0, secs:0, timerID:null, recognition:null, autoAnalyze:true,
   setupRules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"]
 };
 
@@ -448,7 +449,7 @@ async function startListen(){
   };
 
   try{S.recognition.start();}catch(e){runDemo();}
-  S.autoID=setInterval(()=>{if(S.transcript.length>S.lastIdx+1)analyze();},40000);
+  S.autoID=setInterval(()=>{if(S.autoAnalyze&&S.transcript.length>S.lastIdx+1)analyze();},40000);
 }
 
 function stopListen(){
@@ -494,7 +495,7 @@ function addLine(spk,txt,self,flag){
 function scrollTx(){const a=document.getElementById('txa');a.scrollTop=a.scrollHeight;}
 
 let autoTimer=null;
-function scheduleAuto(){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(S.transcript.length>S.lastIdx)analyze();},8000);}
+function scheduleAuto(){if(!S.autoAnalyze)return;clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(S.transcript.length>S.lastIdx)analyze();},8000);}
 
 // ANALYZE
 async function analyze(){
@@ -557,6 +558,19 @@ function updateTone(tone){
     document.getElementById('erows').innerHTML=Object.entries(tone.emotions).map(([n,v])=>
       '<div class="er"><span class="en">'+n[0].toUpperCase()+n.slice(1)+'</span><div class="ebw"><div class="eb" style="width:'+Math.round(v)+'%;background:'+(cols[n]||'#6a9cbf')+'"></div></div><span class="esc">'+Math.round(v)+'%</span></div>'
     ).join('');
+  }
+}
+
+// AUTO ANALYZE TOGGLE
+function toggleAuto(){
+  S.autoAnalyze=!S.autoAnalyze;
+  const btn=document.getElementById('autobtn');
+  if(S.autoAnalyze){
+    btn.textContent='Auto ✓';
+    btn.style.background='var(--gr1)';btn.style.borderColor='var(--gr2)';btn.style.color='var(--gr)';
+  } else {
+    btn.textContent='Auto off';
+    btn.style.background='var(--s3)';btn.style.borderColor='var(--b2)';btn.style.color='var(--tx3)';
   }
 }
 
