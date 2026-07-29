@@ -1020,22 +1020,11 @@ Rules:
 Generate 1-3 tips. Only include a quote if it would genuinely help. Be specific to what just happened — not generic.
 Return ONLY the JSON. No explanation. No markdown.`;
 
-  let apiKey = localStorage.getItem('cp_api_key');
-  if (!apiKey) {
-    apiKey = window.prompt('Enter your Anthropic API key (sk-ant-...).\nGet one free at console.anthropic.com — it will be saved locally.');
-    if (!apiKey) { thinkingEl.remove(); state.analyzing = false; document.getElementById('analyzeBtn').disabled = false; document.getElementById('analyzeBtn').textContent = 'Analyze now'; return; }
-    localStorage.setItem('cp_api_key', apiKey);
-  }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://calmpilot-proxy.calmpilot.workers.dev', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
