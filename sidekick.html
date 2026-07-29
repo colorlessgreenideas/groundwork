@@ -481,15 +481,20 @@ const S = {
 
 // SETUP
 function selectMode(mode){
-  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
-  document.getElementById('mc-'+mode).classList.add('selected');
+  // Clear all cards first
+  document.querySelectorAll('.mode-card').forEach(c=>{
+    c.classList.remove('selected');
+    c.style.borderColor='';c.style.background='';
+    c.querySelector('.mc-name').style.color='';
+  });
+  // Select the chosen one
   S.mode=mode;
   const m=MODES[mode];
-  // update accent color on cards
-  document.querySelectorAll('.mode-card.selected').forEach(c=>{
-    c.style.borderColor=m.color;c.style.background=m.c1;
-  });
-  document.querySelector('#mc-'+mode+' .mc-name').style.color=m.color;
+  const card=document.getElementById('mc-'+mode);
+  card.classList.add('selected');
+  card.style.borderColor=m.color;
+  card.style.background=m.c1;
+  card.querySelector('.mc-name').style.color=m.color;
   document.getElementById('rulesSection').style.display=m.showRules?'block':'none';
 }
 
