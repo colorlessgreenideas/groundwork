@@ -575,7 +575,7 @@ textarea.input-field { resize: vertical; min-height: 80px; }
     </div>
 
       <!-- ASK TAB -->
-      <div class="tab-content" id="tab-ask" style="display:none;flex-direction:column;height:100%">
+      <div class="tab-content" id="tab-ask" style="flex-direction:column;height:100%">
         <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px" id="qaMessages">
           <div id="qaEmpty" style="text-align:center;padding:40px 20px">
             <div style="font-size:24px;opacity:.15;margin-bottom:8px">?</div>
@@ -715,8 +715,10 @@ function switchTab(name) {
     const names = ['transcript','tone','settings','ask'];
     t.classList.toggle('active', names[i] === name);
   });
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(tc => { tc.classList.remove('active'); tc.style.display='none'; });
+  const active = document.getElementById('tab-' + name);
+  active.classList.add('active');
+  active.style.display = name === 'ask' ? 'flex' : '';
   if (name === 'settings') syncSettingsUI();
 }
 
