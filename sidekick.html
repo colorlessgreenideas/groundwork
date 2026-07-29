@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sidekick</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0b;--s1:#161614;--s2:#1e1e1b;--s3:#252521;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);
+  --tx:#f2ede4;--tx2:rgba(242,237,228,0.6);--tx3:rgba(242,237,228,0.35);
+  --ac:#7daa80;--ac1:rgba(125,170,128,0.12);--ac2:rgba(125,170,128,0.25);
+  --gr:#7daa80;--gr1:rgba(125,170,128,0.12);--gr2:rgba(125,170,128,0.25);
+  --am:#c9935a;--am1:rgba(201,147,90,0.1);--am2:rgba(201,147,90,0.22);
+  --bl:#6a9cbf;--bl1:rgba(106,156,191,0.1);--bl2:rgba(106,156,191,0.22);
+  --rd:#bf6a6a;--rd1:rgba(191,106,106,0.1);--rd2:rgba(191,106,106,0.22);
+  --pu:#9b7fc7;--pu1:rgba(155,127,199,0.1);--pu2:rgba(155,127,199,0.22);
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;overflow:hidden}
+.shell{display:grid;grid-template-rows:48px 1fr 58px;height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--s1);border-bottom:0.5px solid var(--b1)}
+.logo{font-family:'DM Serif Display',serif;font-size:17px;color:var(--tx)}
+.logo em{color:var(--ac);font-style:italic;transition:color .4s}
+.mode-badge{font-size:10px;padding:2px 8px;border-radius:20px;border:0.5px solid;margin-left:8px;transition:all .4s;vertical-align:middle}
+.tbr{display:flex;align-items:center;gap:12px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--tx3);transition:background .4s;flex-shrink:0}
+.live-dot.on{background:var(--ac);animation:lp 2s infinite}
+.live-dot.pause{background:var(--am)}
+@keyframes lp{0%,100%{box-shadow:0 0 0 0 rgba(125,170,128,.4)}50%{box-shadow:0 0 0 5px rgba(125,170,128,0)}}
+.timer{font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.bxs{font-size:11px;padding:4px 10px;border-radius:6px;border:0.5px solid var(--b2);background:transparent;color:var(--tx2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.bxs:hover{background:var(--s3);color:var(--tx)}
+.cols{display:grid;grid-template-columns:1fr 270px;overflow:hidden}
+.lcol{display:flex;flex-direction:column;border-right:0.5px solid var(--b1);overflow:hidden}
+.tabs{display:flex;background:var(--s1);border-bottom:0.5px solid var(--b1);padding:0 16px;flex-shrink:0}
+.tab{font-size:11px;color:var(--tx3);padding:10px 12px 9px;cursor:pointer;border-bottom:1.5px solid transparent;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--tx2)}.tab.on{color:var(--tx);border-bottom-color:var(--ac)}
+.panels{flex:1;overflow:hidden;position:relative}
+.panel{display:none;flex-direction:column;height:100%;overflow:hidden}
+.panel.on{display:flex}
+.txa{flex:1;padding:14px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.tmsg{display:flex;gap:8px;padding:7px 10px;border-radius:7px;animation:fu .3s ease}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.tmsg:hover{background:var(--s2)}
+.tmsg.flag{background:var(--am1);border-left:2px solid var(--am2)}
+.tspk{font-size:10px;font-weight:500;min-width:26px;padding-top:2px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;flex-shrink:0}
+.tmsg.self .tspk{color:var(--ac)}.tmsg.flag .tspk{color:var(--am)}
+.ttxt{font-size:13px;color:var(--tx2);line-height:1.55}.tmsg.self .ttxt{color:var(--tx)}
+.ttag{font-size:9px;padding:1px 6px;border-radius:20px;margin-left:auto;align-self:center;white-space:nowrap;background:var(--am1);color:var(--am);border:0.5px solid var(--am2)}
+.tone-panel{padding:16px;overflow-y:auto}
+.tp-title{font-size:10px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{background:var(--s2);border:0.5px solid var(--b1);border-radius:10px;padding:12px}
+.ml{font-size:10px;color:var(--tx3);margin-bottom:8px}
+.mv{font-size:22px;font-weight:300;color:var(--tx);margin-bottom:6px;font-variant-numeric:tabular-nums}
+.mbt{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.mbf{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.mbf.g{background:var(--gr)}.mbf.a{background:var(--am)}.mbf.b{background:var(--bl)}.mbf.r{background:var(--rd)}
+.er{display:flex;align-items:center;padding:8px 0;border-top:0.5px solid var(--b1);gap:10px}
+.en{font-size:11px;color:var(--tx2);min-width:80px}
+.ebw{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.eb{height:100%;border-radius:2px;transition:width 1s ease}
+.esc{font-size:10px;color:var(--tx3);min-width:26px;text-align:right}
+.stp{padding:14px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.ss{background:var(--s2);border:0.5px solid var(--b1);border-radius:12px;overflow:hidden}
+.sh{padding:11px 14px;border-bottom:0.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.st{font-size:10px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px}
+.sb{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ri{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:var(--s3);border:0.5px solid var(--b1);font-size:12px;color:var(--tx)}
+.rdot{width:5px;height:5px;border-radius:50%;background:var(--ac);flex-shrink:0}
+.rdel{margin-left:auto;background:none;border:none;color:var(--tx3);cursor:pointer;font-size:15px;line-height:1;transition:color .15s}
+.rdel:hover{color:var(--rd)}
+.arr{display:flex;gap:7px}
+.inf{flex:1;background:var(--s3);border:0.5px solid var(--b2);border-radius:7px;padding:7px 10px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .15s}
+.inf:focus{border-color:var(--ac)}.inf::placeholder{color:var(--tx3)}
+.badd{background:var(--ac1);border:0.5px solid var(--ac2);border-radius:7px;padding:7px 12px;color:var(--ac);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;white-space:nowrap;transition:all .4s}
+.badd:hover{opacity:.8}
+.sel{background:var(--s3);border:0.5px solid var(--b2);border-radius:7px;padding:7px 10px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;width:100%;cursor:pointer}
+.qa-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qa-bar{border-top:0.5px solid var(--b1);padding:12px 14px;display:flex;gap:8px;background:var(--s1);flex-shrink:0}
+.rcol{display:flex;flex-direction:column;overflow:hidden;background:var(--s1)}
+.sh2{padding:12px 14px 10px;border-bottom:0.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.st2{font-size:10px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.clr{font-size:11px;color:var(--tx3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.clr:hover{color:var(--tx2)}
+.tscroll{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.tcard{border-radius:9px;padding:11px 12px;border:0.5px solid;animation:ti .35s ease}
+@keyframes ti{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tcard.a{background:var(--rd1);border-color:var(--rd2)}
+.tcard.b{background:var(--am1);border-color:var(--am2)}
+.tcard.c{background:var(--bl1);border-color:var(--bl2)}
+.tcard.d{background:var(--ac1);border-color:var(--ac2)}
+.tcard.e{background:var(--pu1);border-color:var(--pu2)}
+.tkind{font-size:9px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px}
+.tcard.a .tkind{color:var(--rd)}.tcard.b .tkind{color:var(--am)}
+.tcard.c .tkind{color:var(--bl)}.tcard.d .tkind{color:var(--ac)}.tcard.e .tkind{color:var(--pu)}
+.tbody{font-size:12px;line-height:1.55;color:var(--tx)}
+.tcard.c.quote .tbody{font-family:'DM Serif Display',serif;font-style:italic;font-size:13px}
+.tts{font-size:9px;color:var(--tx3);margin-top:5px}
+.tthink{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:9px;background:var(--s2);border:0.5px solid var(--b1);font-size:11px;color:var(--tx3)}
+.tdot span{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--tx3);margin:0 1px;animation:bk 1.4s infinite}
+.tdot span:nth-child(2){animation-delay:.2s}.tdot span:nth-child(3){animation-delay:.4s}
+@keyframes bk{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.rfoot{border-top:0.5px solid var(--b1);padding:10px 12px;background:var(--s1);flex-shrink:0}
+.rft{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--ac1);border:0.5px solid var(--ac2);color:var(--ac);transition:all .4s}
+.bbar{display:flex;align-items:center;gap:10px;padding:0 18px;background:var(--s1);border-top:0.5px solid var(--b1)}
+.wf{display:flex;align-items:center;gap:2px;height:28px}
+.wb{width:3px;border-radius:2px;background:var(--ac);animation:wv 1.1s ease-in-out infinite;transition:background .4s}
+.wb:nth-child(1){height:5px;animation-delay:0s}.wb:nth-child(2){height:13px;animation-delay:.1s}
+.wb:nth-child(3){height:20px;animation-delay:.2s}.wb:nth-child(4){height:14px;animation-delay:.3s}
+.wb:nth-child(5){height:9px;animation-delay:.4s}.wb:nth-child(6){height:16px;animation-delay:.5s}
+.wb:nth-child(7){height:7px;animation-delay:.6s}
+@keyframes wv{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.wf.idle .wb{animation:none;transform:scaleY(.3);background:var(--tx3)}
+.wf.paused .wb{animation:none;transform:scaleY(.3);background:var(--am)}
+.mst{font-size:11px;color:var(--tx3);flex:1}
+.bpri{padding:9px 18px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;background:var(--ac);color:#0d1a0e;white-space:nowrap;transition:background .4s,color .4s}
+.bpri:hover{opacity:.88}
+.bpri.stop{background:var(--rd1);color:var(--rd);border:0.5px solid var(--rd2)}
+.bana{padding:9px 14px;border-radius:8px;background:var(--bl1);border:0.5px solid var(--bl2);color:var(--bl);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap}
+.bana:disabled{opacity:.35;cursor:not-allowed}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;overflow-y:auto}
+.modal-bg.hidden{display:none}
+.modal{background:var(--s1);border:0.5px solid var(--b2);border-radius:16px;max-width:520px;width:100%;padding:28px}
+.mtitle{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px;color:var(--tx)}
+.msub{font-size:12px;color:var(--tx2);margin-bottom:24px;line-height:1.6}
+.mlabel{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.msec{margin-bottom:18px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.mode-card{padding:13px;border-radius:10px;border:0.5px solid var(--b2);cursor:pointer;transition:all .2s;background:var(--s2)}
+.mode-card:hover{border-color:var(--b2);background:var(--s3)}
+.mode-card.selected{border-color:var(--ac);background:var(--ac1)}
+.mode-card.selected .mc-name{color:var(--ac)}
+.mc-icon{font-size:18px;margin-bottom:6px}
+.mc-name{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.mc-desc{font-size:11px;color:var(--tx3);line-height:1.5}
+.mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.bstart{padding:9px 22px;border-radius:8px;border:none;background:var(--ac);color:#0d1a0e;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .4s}
+.bcancel{padding:9px 16px;border-radius:8px;background:transparent;border:0.5px solid var(--b2);color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:40px 20px;text-align:center;flex:1}
+.ei{font-size:24px;opacity:.15;margin-bottom:2px}
+.et{font-size:12px;color:var(--tx3);line-height:1.6}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- SETUP MODAL -->
+<div class="modal-bg" id="setupModal">
+  <div class="modal">
+    <div class="mtitle">sidekick</div>
+    <div class="msub">Your AI listening companion. Choose a mode to get started.</div>
+
+    <div class="msec">
+      <div class="mlabel">Mode</div>
+      <div class="mode-grid" id="modeGrid">
+        <div class="mode-card selected" onclick="selectMode('calm')" id="mc-calm">
+          <div class="mc-icon">🧘</div>
+          <div class="mc-name">Calm</div>
+          <div class="mc-desc">Emotional coaching during high-stakes meetings. Keeps you regulated.</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('thinker')" id="mc-thinker">
+          <div class="mc-icon">🧠</div>
+          <div class="mc-name">Thinker</div>
+          <div class="mc-desc">Intellectual sidekick. Questions to ask, gaps to probe, alternative views.</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('listener')" id="mc-listener">
+          <div class="mc-icon">🎧</div>
+          <div class="mc-name">Listener</div>
+          <div class="mc-desc">Passive observer. Captures lectures, podcasts, YouTube. Ask questions after.</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('interview')" id="mc-interview">
+          <div class="mc-icon">🎯</div>
+          <div class="mc-name">Interview</div>
+          <div class="mc-desc">Coaches your answers in real time. Flags weak spots, suggests pivots.</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('brainstorm')" id="mc-brainstorm">
+          <div class="mc-icon">⚡</div>
+          <div class="mc-name">Brainstorm</div>
+          <div class="mc-desc">Think out loud. Captures ideas, groups themes, surfaces connections.</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('debate')" id="mc-debate">
+          <div class="mc-icon">⚔️</div>
+          <div class="mc-name">Debate</div>
+          <div class="mc-desc">Devil's advocate. Challenges every claim, steelmans the other side.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="msec">
+      <div class="mlabel">Your name <span style="color:var(--tx3)">(how you appear in transcript)</span></div>
+      <input class="inf" type="text" id="sname" placeholder="e.g. Josh" value="You" style="width:100%">
+    </div>
+
+    <div class="msec">
+      <div class="mlabel">Context <span style="color:var(--tx3)">(optional — helps the AI give better advice)</span></div>
+      <input class="inf" type="text" id="sctx" placeholder="e.g. Q3 budget review, ML lecture, job interview at Google" style="width:100%">
+    </div>
+
+    <div id="rulesSection" class="msec">
+      <div class="mlabel">Your rules <span style="color:var(--tx3)">(Calm mode — how you want to behave)</span></div>
+      <div id="srules" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"></div>
+      <div class="arr">
+        <input class="inf" type="text" id="srule" placeholder="e.g. Don't take criticism personally">
+        <button class="badd" onclick="addSetupRule()">Add</button>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="bcancel" onclick="skipSetup()">Skip</button>
+      <button class="bstart" onclick="startSetup()">Start →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="shell">
+  <div class="topbar">
+    <div style="display:flex;align-items:center">
+      <div class="logo">sidekick</div>
+      <span class="mode-badge" id="modeBadge" style="display:none"></span>
+    </div>
+    <div class="tbr">
+      <div class="live-dot" id="ld"></div>
+      <span id="slabel" style="font-size:11px;color:var(--tx2)">Ready</span>
+      <span class="timer" id="timer">00:00</span>
+      <button class="bxs" onclick="doExport()">Export</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="lcol">
+      <div class="tabs">
+        <div class="tab on" onclick="showPanel('transcript')">Transcript</div>
+        <div class="tab" id="tab-tone" onclick="showPanel('tone')">Tone</div>
+        <div class="tab" onclick="showPanel('ask')">Ask</div>
+        <div class="tab" onclick="showPanel('settings')">Settings</div>
+      </div>
+      <div class="panels">
+
+        <div class="panel on" id="panel-transcript">
+          <div class="txa" id="txa">
+            <div class="empty" id="txempty">
+              <div class="ei">◎</div>
+              <div class="et" id="txhint">Start a session to begin.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-tone">
+          <div class="tone-panel">
+            <div class="tp-title">Real-time indicators</div>
+            <div class="mg">
+              <div class="mc"><div class="ml">Your calm</div><div class="mv" id="mcalm">—</div><div class="mbt"><div class="mbf g" id="bcalm" style="width:0%"></div></div></div>
+              <div class="mc"><div class="ml">Room tension</div><div class="mv" id="mtension">—</div><div class="mbt"><div class="mbf a" id="btension" style="width:0%"></div></div></div>
+              <div class="mc"><div class="ml">Your focus</div><div class="mv" id="mfocus">—</div><div class="mbt"><div class="mbf b" id="bfocus" style="width:0%"></div></div></div>
+              <div class="mc"><div class="ml">Reactivity risk</div><div class="mv" id="mreact">—</div><div class="mbt"><div class="mbf r" id="breact" style="width:0%"></div></div></div>
+            </div>
+            <div class="tp-title">Detected emotions</div>
+            <div id="erows"><div style="font-size:11px;color:var(--tx3);padding:8px 0">Start a session first.</div></div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-ask">
+          <div class="qa-msgs" id="qaMsgs">
+            <div class="empty" id="qaEmpty">
+              <div class="ei">?</div>
+              <div class="et" id="qaHint">Ask anything about what's been said.</div>
+            </div>
+          </div>
+          <div class="qa-bar">
+            <input class="inf" type="text" id="qaInput" placeholder="Ask a question…" onkeydown="if(event.key==='Enter')askQuestion()" style="flex:1">
+            <button class="badd" onclick="askQuestion()" id="qaBtn">Ask</button>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-settings">
+          <div class="stp">
+            <div class="ss">
+              <div class="sh"><span class="st">Mode</span></div>
+              <div class="sb">
+                <div style="font-size:12px;color:var(--tx2)" id="currentModeLabel">—</div>
+                <button class="bxs" style="width:fit-content" onclick="document.getElementById('setupModal').classList.remove('hidden')">Change mode</button>
+              </div>
+            </div>
+            <div class="ss" id="rulesSettingsSection">
+              <div class="sh"><span class="st">Behavioral rules</span><button class="bxs" onclick="clearRules()">Clear all</button></div>
+              <div class="sb">
+                <div id="rlist"></div>
+                <div class="arr" style="margin-top:4px">
+                  <input class="inf" type="text" id="newrule" placeholder="Add a rule…">
+                  <button class="badd" onclick="addRule()">Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="ss">
+              <div class="sh"><span class="st">Preferences</span></div>
+              <div class="sb">
+                <div class="mlabel">Your name</div>
+                <input class="inf" type="text" id="uname" value="You" oninput="S.userName=this.value" style="width:100%">
+                <div class="mlabel" style="margin-top:8px">AI response style</div>
+                <select class="sel" onchange="S.tipStyle=this.value">
+                  <option value="concise">Concise & direct</option>
+                  <option value="gentle">Gentle & supportive</option>
+                  <option value="stoic">Stoic & philosophical</option>
+                  <option value="coach">Executive coach</option>
+                  <option value="academic">Academic & rigorous</option>
+                </select>
+                <div class="mlabel" style="margin-top:8px">Auto-analyze frequency</div>
+                <select class="sel" onchange="S.sensitivity=this.value">
+                  <option value="low">Low — manual only</option>
+                  <option value="medium" selected>Medium — every few minutes</option>
+                  <option value="high">High — frequently</option>
+                </select>
+                <div class="mlabel" style="margin-top:8px">Lines sent to AI per call</div>
+                <select class="sel" onchange="S.txLimit=parseInt(this.value)">
+                  <option value="25">Last 25 lines (lowest cost)</option>
+                  <option value="50" selected>Last 50 lines (recommended)</option>
+                  <option value="100">Last 100 lines</option>
+                  <option value="0">Full transcript</option>
+                </select>
+                <div class="mlabel" style="margin-top:8px">Trim transcript</div>
+                <div style="display:flex;gap:7px">
+                  <select class="sel" id="trimSelect" style="flex:1">
+                    <option value="50">Keep last 50 lines</option>
+                    <option value="100">Keep last 100 lines</option>
+                    <option value="200">Keep last 200 lines</option>
+                  </select>
+                  <button class="badd" onclick="trimTranscript()">Trim</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="sh2">
+        <span class="st2" id="feedLabel">Feed</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="aind" style="display:none;align-items:center;gap:5px;font-size:10px;color:var(--tx3)">
+            Thinking<span class="tdot"><span></span><span></span><span></span></span>
+          </div>
+          <button class="clr" onclick="clearFeed()">Clear</button>
+        </div>
+      </div>
+      <div class="tscroll" id="tscroll">
+        <div class="empty" id="tpempty">
+          <div class="ei">✦</div>
+          <div class="et" id="feedHint">Insights will appear here.</div>
+        </div>
+      </div>
+      <div class="rfoot" id="rulesFooter">
+        <div class="rft">Active rules</div>
+        <div class="pills" id="apills"><span style="font-size:10px;color:var(--tx3)">No rules set</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bbar">
+    <div class="wf idle" id="wf">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
+    <span class="mst" id="mst">Microphone not active</span>
+    <button class="bana" id="autobtn" onclick="toggleAuto()" style="background:var(--gr1);border-color:var(--gr2);color:var(--gr)">Auto ✓</button>
+    <button class="bana" id="abtn" onclick="analyze()" disabled>Analyze now</button>
+    <button class="bpri" id="mbtn" onclick="toggleListen()">Start listening</button>
+  </div>
+</div>
+
+<script>
+const PROXY = 'https://calmpilot-proxy.calmpilot.workers.dev';
+
+// MODE DEFINITIONS
+const MODES = {
+  calm: {
+    name: 'Calm',
+    color: '#7daa80', c1: 'rgba(125,170,128,0.12)', c2: 'rgba(125,170,128,0.25)',
+    feedLabel: 'Coaching',
+    feedHint: 'Emotional coaching tips will appear here.',
+    txHint: 'Start session — Sidekick will coach you during the conversation.',
+    qaHint: 'Ask: "Am I being defensive?" or "How should I respond to that?"',
+    showTone: true, showRules: true, showRulesFooter: true,
+    speakerLabel: 'YOU',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Calm mode — an emotional co-pilot helping ${userName} stay regulated during a difficult conversation.\n\nCONTEXT: ${ctx||'Business meeting or conversation.'}\nUSER RULES:\n${rules}\nSTYLE: ${style}\n\nAnalyze the conversation and respond ONLY with JSON:\n{"tips":[{"type":"alert|reminder|quote|insight","title":"5 words max","body":"coaching message"}],"tone":{"calm":0-100,"tension":0-100,"focus":0-100,"reactivity":0-100,"emotions":{"defensive":0-100,"frustrated":0-100,"confident":0-100,"composed":0-100,"pressured":0-100}}}\n\nalert=emotionally risky moment, reminder=rule to surface now, quote=grounding quote (sparingly), insight=coaching observation. 1-3 tips. JSON only.`,
+    tipTypes: {alert:'a',reminder:'b',quote:'c',insight:'d'}
+  },
+  thinker: {
+    name: 'Thinker',
+    color: '#6a9cbf', c1: 'rgba(106,156,191,0.1)', c2: 'rgba(106,156,191,0.22)',
+    feedLabel: 'Ideas',
+    feedHint: 'Questions to ask, challenges, and alternative viewpoints will appear here.',
+    txHint: 'Start session — Sidekick will think alongside you during the meeting.',
+    qaHint: 'Ask: "What assumptions are being made?" or "What\'s the strongest counterargument?"',
+    showTone: false, showRules: false, showRulesFooter: false,
+    speakerLabel: 'YOU',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Thinker mode — an intellectual sparring partner helping ${userName} think more sharply during a meeting.\n\nCONTEXT: ${ctx||'Business meeting.'}\nSTYLE: ${style}\n\nAnalyze the recent conversation and respond ONLY with JSON:\n{"tips":[{"type":"question|challenge|viewpoint|insight","title":"5 words max","body":"your observation"}]}\n\nquestion=a sharp question ${userName} could ask right now, challenge=a logical gap or assumption worth probing, viewpoint=an alternative perspective not yet raised, insight=a strategic or conceptual observation. 1-3 tips. Be specific to what was just said. JSON only.`,
+    tipTypes: {question:'c',challenge:'a',viewpoint:'e',insight:'d'}
+  },
+  listener: {
+    name: 'Listener',
+    color: '#c9935a', c1: 'rgba(201,147,90,0.1)', c2: 'rgba(201,147,90,0.22)',
+    feedLabel: 'Notes',
+    feedHint: 'Key points, summaries, and highlights will appear here.',
+    txHint: 'Start session — Sidekick will capture what\'s being said. Ask questions in the Ask tab.',
+    qaHint: 'Ask: "Summarize the main argument" or "What were the three steps described?"',
+    showTone: false, showRules: false, showRulesFooter: false,
+    speakerLabel: 'AUDIO',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Listener mode — a knowledge capture assistant helping the user understand and retain content they are listening to.\n\nCONTEXT: ${ctx||'Lecture, podcast, or video.'}\nSTYLE: ${style}\n\nAnalyze the transcript and respond ONLY with JSON:\n{"tips":[{"type":"keypoint|summary|definition|example","title":"5 words max","body":"the captured insight"}]}\n\nkeypoint=an important claim or fact, summary=a synthesis of what was just covered, definition=a term or concept explained, example=a concrete example given. 1-3 notes per analysis. JSON only.`,
+    tipTypes: {keypoint:'d',summary:'b',definition:'c',example:'e'}
+  },
+  interview: {
+    name: 'Interview',
+    color: '#9b7fc7', c1: 'rgba(155,127,199,0.1)', c2: 'rgba(155,127,199,0.22)',
+    feedLabel: 'Coaching',
+    feedHint: 'Real-time coaching on your answers will appear here.',
+    txHint: 'Start session — Sidekick will coach your answers in real time.',
+    qaHint: 'Ask: "How could I have answered that better?" or "What should I say next?"',
+    showTone: false, showRules: false, showRulesFooter: false,
+    speakerLabel: 'YOU',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Interview mode — a real-time interview coach helping ${userName} perform at their best.\n\nCONTEXT: ${ctx||'Job or press interview.'}\nSTYLE: ${style}\n\nAnalyze the conversation and respond ONLY with JSON:\n{"tips":[{"type":"strength|weakness|pivot|suggestion","title":"5 words max","body":"coaching feedback"}]}\n\nstrength=something ${userName} did well just now, weakness=a gap, filler word, or missed opportunity, pivot=a better angle or framing they could use, suggestion=what to say or do next. 1-3 tips. Be specific. JSON only.`,
+    tipTypes: {strength:'d',weakness:'a',pivot:'b',suggestion:'c'}
+  },
+  brainstorm: {
+    name: 'Brainstorm',
+    color: '#c97faa', c1: 'rgba(201,127,170,0.1)', c2: 'rgba(201,127,170,0.22)',
+    feedLabel: 'Ideas',
+    feedHint: 'Captured ideas, themes, and connections will appear here.',
+    txHint: 'Start session — think out loud and Sidekick will capture and connect your ideas.',
+    qaHint: 'Ask: "What themes are emerging?" or "What haven\'t I considered?"',
+    showTone: false, showRules: false, showRulesFooter: false,
+    speakerLabel: 'YOU',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Brainstorm mode — a creative thinking partner helping ${userName} develop and connect ideas.\n\nCONTEXT: ${ctx||'Open brainstorm session.'}\nSTYLE: ${style}\n\nAnalyze the transcript and respond ONLY with JSON:\n{"tips":[{"type":"idea|theme|connection|gap","title":"5 words max","body":"the observation"}]}\n\nidea=a specific idea worth capturing, theme=a recurring pattern across multiple ideas, connection=a non-obvious link between two things said, gap=something important not yet considered. 1-3 items. JSON only.`,
+    tipTypes: {idea:'d',theme:'b',connection:'c',gap:'a'}
+  },
+  debate: {
+    name: 'Debate',
+    color: '#bf6a6a', c1: 'rgba(191,106,106,0.1)', c2: 'rgba(191,106,106,0.22)',
+    feedLabel: 'Challenges',
+    feedHint: 'Counterarguments and steelmanned opposing views will appear here.',
+    txHint: 'Start session — Sidekick will challenge every claim and steelman the other side.',
+    qaHint: 'Ask: "What\'s the strongest counterargument to this?" or "What am I missing?"',
+    showTone: false, showRules: false, showRulesFooter: false,
+    speakerLabel: 'YOU',
+    systemPrompt: (ctx, userName, rules, style) =>
+      `You are Sidekick in Debate mode — a rigorous devil's advocate helping ${userName} stress-test their thinking.\n\nCONTEXT: ${ctx||'Debate or critical thinking session.'}\nSTYLE: ${style}\n\nAnalyze the transcript and respond ONLY with JSON:\n{"tips":[{"type":"counter|steelman|fallacy|evidence","title":"5 words max","body":"the challenge"}]}\n\ncounter=a direct counterargument to what was just said, steelman=the strongest version of the opposing view, fallacy=a logical error or weak reasoning spotted, evidence=a fact or consideration that undermines the claim. 1-3 challenges. Be sharp and specific. JSON only.`,
+    tipTypes: {counter:'a',steelman:'e',fallacy:'b',evidence:'c'}
+  }
+};
+
+const STYLES = {
+  concise: 'Be concise and direct. Get to the point fast.',
+  gentle: 'Be warm, empathetic, and supportive.',
+  stoic: 'Draw on Stoic philosophy. Be grounded and philosophical.',
+  coach: 'Speak like a trusted executive coach. Be pragmatic and empowering.',
+  academic: 'Be rigorous and precise. Use clear logical structure.'
+};
+
+const S = {
+  recording:false, analyzing:false, autoAnalyze:true,
+  transcript:[], tips:[],
+  rules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"],
+  userName:"You", context:"", tipStyle:"concise", sensitivity:"medium",
+  mode:"calm", txLimit:50,
+  lastIdx:0, secs:0, timerID:null, recognition:null,
+  setupRules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"]
+};
+
+// SETUP
+function selectMode(mode){
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('mc-'+mode).classList.add('selected');
+  S.mode=mode;
+  const m=MODES[mode];
+  // update accent color on cards
+  document.querySelectorAll('.mode-card.selected').forEach(c=>{
+    c.style.borderColor=m.color;c.style.background=m.c1;
+  });
+  document.querySelector('#mc-'+mode+' .mc-name').style.color=m.color;
+  document.getElementById('rulesSection').style.display=m.showRules?'block':'none';
+}
+
+function renderSetupRules(){
+  document.getElementById('srules').innerHTML=S.setupRules.map((r,i)=>
+    `<div class="ri" style="font-size:11px;padding:6px 9px"><div class="rdot"></div><span style="flex:1">${r}</span><button class="rdel" onclick="S.setupRules.splice(${i},1);renderSetupRules()">×</button></div>`
+  ).join('');
+}
+function addSetupRule(){const i=document.getElementById('srule');const v=i.value.trim();if(!v)return;S.setupRules.push(v);i.value='';renderSetupRules();}
+document.getElementById('srule').addEventListener('keydown',e=>{if(e.key==='Enter')addSetupRule();});
+renderSetupRules();
+
+function startSetup(){
+  const n=document.getElementById('sname').value.trim();
+  const c=document.getElementById('sctx').value.trim();
+  if(n){S.userName=n;document.getElementById('uname').value=n;}
+  if(c)S.context=c;
+  if(MODES[S.mode].showRules)S.rules=[...S.setupRules];
+  document.getElementById('setupModal').classList.add('hidden');
+  applyMode();
+  renderRules();renderPills();
+}
+function skipSetup(){document.getElementById('setupModal').classList.add('hidden');applyMode();renderRules();renderPills();}
+
+function applyMode(){
+  const m=MODES[S.mode];
+  // Accent color CSS vars
+  document.documentElement.style.setProperty('--ac',m.color);
+  document.documentElement.style.setProperty('--ac1',m.c1);
+  document.documentElement.style.setProperty('--ac2',m.c2);
+  // Badge
+  const badge=document.getElementById('modeBadge');
+  badge.textContent=m.name;badge.style.display='inline';
+  badge.style.color=m.color;badge.style.borderColor=m.c2;badge.style.background=m.c1;
+  // Feed
+  document.getElementById('feedLabel').textContent=m.feedLabel;
+  document.getElementById('feedHint').textContent=m.feedHint;
+  document.getElementById('txhint').textContent=m.txHint;
+  document.getElementById('qaHint').textContent=m.qaHint;
+  // Tone tab visibility
+  document.getElementById('tab-tone').style.display=m.showTone?'':'none';
+  // Rules sections
+  document.getElementById('rulesSettingsSection').style.display=m.showRules?'':'none';
+  document.getElementById('rulesFooter').style.display=m.showRulesFooter?'':'none';
+  // Mode label in settings
+  document.getElementById('currentModeLabel').textContent=m.name+' — '+m.feedLabel;
+  // Waveform/button color follows accent
+  document.querySelectorAll('.wb').forEach(w=>w.style.background=m.color);
+  document.getElementById('mbtn').style.background=m.color;
+}
+
+// TABS
+function showPanel(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',['transcript','tone','ask','settings'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('panel-'+name).classList.add('on');
+}
+
+// RULES
+function renderRules(){
+  const el=document.getElementById('rlist');
+  if(!S.rules.length){el.innerHTML='<div style="font-size:11px;color:var(--tx3)">No rules yet.</div>';return;}
+  el.innerHTML=S.rules.map((r,i)=>`<div class="ri"><div class="rdot"></div><span style="flex:1">${r}</span><button class="rdel" onclick="delRule(${i})">×</button></div>`).join('');
+}
+function addRule(){const i=document.getElementById('newrule');const v=i.value.trim();if(!v)return;S.rules.push(v);i.value='';renderRules();renderPills();}
+function delRule(i){S.rules.splice(i,1);renderRules();renderPills();}
+function clearRules(){S.rules=[];renderRules();renderPills();}
+document.getElementById('newrule').addEventListener('keydown',e=>{if(e.key==='Enter')addRule();});
+renderRules();
+
+function renderPills(){
+  const el=document.getElementById('apills');
+  if(!S.rules.length){el.innerHTML='<span style="font-size:10px;color:var(--tx3)">No rules set</span>';return;}
+  el.innerHTML=S.rules.map(r=>`<span class="pill">${r.length>26?r.slice(0,24)+'…':r}</span>`).join('');
+}
+renderPills();
+
+// AUTO TOGGLE
+function toggleAuto(){
+  S.autoAnalyze=!S.autoAnalyze;
+  const btn=document.getElementById('autobtn');
+  if(S.autoAnalyze){btn.textContent='Auto ✓';btn.style.background='var(--gr1)';btn.style.borderColor='var(--gr2)';btn.style.color='var(--gr)';}
+  else{btn.textContent='Auto off';btn.style.background='var(--s3)';btn.style.borderColor='var(--b2)';btn.style.color='var(--tx3)';}
+}
+
+// TRANSCRIPT HELPERS
+function getContextLines(){return(!S.txLimit||S.txLimit<=0)?S.transcript:S.transcript.slice(-S.txLimit);}
+
+function trimTranscript(){
+  const keep=parseInt(document.getElementById('trimSelect').value);
+  if(S.transcript.length<=keep){alert('Transcript only has '+S.transcript.length+' lines.');return;}
+  const removed=S.transcript.length-keep;
+  S.transcript=S.transcript.slice(-keep);
+  S.lastIdx=Math.max(0,S.lastIdx-removed);
+  const area=document.getElementById('txa');
+  area.querySelectorAll('.tmsg').forEach(e=>e.remove());
+  S.transcript.forEach(l=>{
+    const div=document.createElement('div');
+    div.className='tmsg'+(l.self?' self':'')+(l.flag?' flag':'');
+    div.innerHTML='<div class="tspk">'+l.spk.slice(0,3).toUpperCase()+'</div><div class="ttxt">'+l.txt+'</div>'+(l.flag?'<div class="ttag">'+l.flag+'</div>':'');
+    area.appendChild(div);
+  });
+  alert('Trimmed to last '+keep+' lines (removed '+removed+').');
+}
+
+// LISTEN
+async function toggleListen(){if(!S.recording)await startListen();else stopListen();}
+
+async function startListen(){
+  S.recording=true;
+  const m=MODES[S.mode];
+  document.getElementById('mbtn').textContent='Stop listening';
+  document.getElementById('mbtn').classList.add('stop');
+  document.getElementById('ld').className='live-dot on';
+  document.getElementById('slabel').textContent='Live · '+m.name+' mode';
+  document.getElementById('wf').className='wf';
+  document.getElementById('abtn').disabled=false;
+  document.getElementById('mst').textContent='Listening…';
+  document.getElementById('txempty').style.display='none';
+  S.secs=0;
+  S.timerID=setInterval(()=>{S.secs++;const mm=String(Math.floor(S.secs/60)).padStart(2,'0');const ss=String(S.secs%60).padStart(2,'0');document.getElementById('timer').textContent=mm+':'+ss;},1000);
+
+  const isSelf = m.speakerLabel==='YOU';
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){runDemo();return;}
+
+  S.recognition=new SR();S.recognition.continuous=true;S.recognition.interimResults=true;S.recognition.lang='en-US';
+
+  let interim=null,buffer='',commitTimer=null;
+  const spkLabel=isSelf?S.userName:'Audio';
+
+  function commitBuffer(){
+    const text=buffer.trim();
+    if(text.length>4){addLine(spkLabel,text,isSelf);scheduleAuto();}
+    buffer='';if(interim){interim.remove();interim=null;}
+  }
+
+  S.recognition.onresult=ev=>{
+    let it='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      if(ev.results[i].isFinal){buffer+=(buffer?' ':'')+ev.results[i][0].transcript.trim();clearTimeout(commitTimer);commitTimer=setTimeout(commitBuffer,3500);}
+      else it+=ev.results[i][0].transcript;
+    }
+    const preview=(buffer?buffer+' ':'')+it;
+    if(preview.trim()){
+      if(!interim){interim=document.createElement('div');interim.className='tmsg'+(isSelf?' self':'');interim.innerHTML='<div class="tspk">'+spkLabel.slice(0,3).toUpperCase()+'</div><div class="ttxt" style="color:var(--tx3);font-style:italic">'+preview+'</div>';document.getElementById('txa').appendChild(interim);}
+      else interim.querySelector('.ttxt').textContent=preview;
+      scrollTx();
+    }
+  };
+  S.recognition.onerror=e=>{if(e.error==='no-speech')return;if(buffer){clearTimeout(commitTimer);commitBuffer();}};
+  S.recognition.onend=()=>{if(S.recording){if(buffer){clearTimeout(commitTimer);commitBuffer();}try{S.recognition.start();}catch(e){}}};
+  try{S.recognition.start();}catch(e){runDemo();}
+
+  const freq=S.sensitivity==='high'?20000:S.sensitivity==='low'?0:40000;
+  if(freq>0)S.autoID=setInterval(()=>{if(S.autoAnalyze&&S.transcript.length>S.lastIdx+1)analyze();},freq);
+}
+
+function stopListen(){
+  S.recording=false;
+  if(S.recognition){S.recognition.stop();S.recognition=null;}
+  clearInterval(S.timerID);clearInterval(S.autoID);
+  document.getElementById('mbtn').textContent='Start listening';
+  document.getElementById('mbtn').classList.remove('stop');
+  document.getElementById('ld').className='live-dot pause';
+  document.getElementById('slabel').textContent='Paused';
+  document.getElementById('wf').className='wf paused';
+  document.getElementById('mst').textContent='Session paused';
+}
+
+const demoLines=[
+  {sp:"Manager",txt:"I reviewed your report. I have serious concerns about the methodology.",self:false},
+  {sp:null,txt:"I'm happy to walk through the approach.",self:true},
+  {sp:"Manager",txt:"Frankly, this isn't the quality I'd expect at your level.",self:false,flag:"dismissive"},
+  {sp:"Colleague",txt:"The direction makes sense given the constraints.",self:false},
+  {sp:"Manager",txt:"This project has been behind from the start.",self:false,flag:"blame"},
+  {sp:null,txt:"The delays were due to scope changes in week two. I have documentation.",self:true},
+];
+let demoI=0;
+function runDemo(){
+  document.getElementById('mst').textContent='Demo mode';
+  const iv=setInterval(()=>{if(!S.recording||demoI>=demoLines.length){clearInterval(iv);return;}const l=demoLines[demoI++];addLine(l.self?S.userName:l.sp,l.txt,l.self,l.flag);if(demoI%2===0)analyze();},4500);
+}
+
+function addLine(spk,txt,self,flag){
+  S.transcript.push({spk,txt,self,flag,time:new Date()});
+  const div=document.createElement('div');
+  div.className='tmsg'+(self?' self':'')+(flag?' flag':'');
+  div.innerHTML='<div class="tspk">'+spk.slice(0,3).toUpperCase()+'</div><div class="ttxt">'+txt+'</div>'+(flag?'<div class="ttag">'+flag+'</div>':'');
+  document.getElementById('txa').appendChild(div);scrollTx();
+}
+function scrollTx(){const a=document.getElementById('txa');a.scrollTop=a.scrollHeight;}
+
+let autoTimer=null;
+function scheduleAuto(){if(!S.autoAnalyze)return;clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(S.transcript.length>S.lastIdx)analyze();},8000);}
+
+// ANALYZE
+async function analyze(){
+  if(S.analyzing||!S.transcript.length)return;
+  const newLines=S.transcript.slice(S.lastIdx);if(!newLines.length)return;
+  S.analyzing=true;
+  document.getElementById('abtn').disabled=true;document.getElementById('abtn').textContent='Thinking…';
+  document.getElementById('aind').style.display='flex';
+  const think=addThink();
+
+  const m=MODES[S.mode];
+  const ctx=S.context;
+  const rules=S.rules.length?S.rules.map((r,i)=>(i+1)+'. '+r).join('\n'):'None';
+  const style=STYLES[S.tipStyle]||STYLES.concise;
+  const allTx=getContextLines().map(l=>l.spk+': '+l.txt).join('\n');
+  const newTx=newLines.map(l=>l.spk+': '+l.txt).join('\n');
+  const prompt=m.systemPrompt(ctx,S.userName,rules,style)+'\n\nFULL CONTEXT:\n'+allTx+'\n\nMOST RECENT:\n'+newTx;
+
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content?.map(b=>b.text||'').join('').trim();
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    think.remove();
+    if(parsed.tips?.length){document.getElementById('tpempty').style.display='none';parsed.tips.forEach(t=>addFeedCard(t.type,t.title,t.body));}
+    if(parsed.tone)updateTone(parsed.tone);
+    S.lastIdx=S.transcript.length;
+  }catch(e){think.remove();addFeedCard('insight','Error','Could not reach the AI. Check your connection.');}
+
+  S.analyzing=false;document.getElementById('abtn').disabled=false;document.getElementById('abtn').textContent='Analyze now';
+  document.getElementById('aind').style.display='none';
+}
+
+function addThink(){
+  const el=document.createElement('div');el.className='tthink';
+  el.innerHTML='<span>Thinking</span><span class="tdot"><span></span><span></span><span></span></span>';
+  const sc=document.getElementById('tscroll');sc.insertBefore(el,sc.firstChild);return el;
+}
+
+function addFeedCard(type,title,body){
+  const m=MODES[S.mode];
+  const cls=m.tipTypes[type]||'d';
+  document.getElementById('tpempty').style.display='none';
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const card=document.createElement('div');
+  card.className='tcard '+cls+(type==='quote'?' quote':'');
+  card.innerHTML='<div class="tkind">'+title+'</div><div class="tbody">'+body+'</div><div class="tts">'+ts+'</div>';
+  const sc=document.getElementById('tscroll');sc.insertBefore(card,sc.firstChild);
+  while(sc.querySelectorAll('.tcard').length>15){sc.querySelectorAll('.tcard')[15].remove();}
+}
+
+function clearFeed(){document.getElementById('tscroll').querySelectorAll('.tcard,.tthink').forEach(e=>e.remove());document.getElementById('tpempty').style.display='flex';}
+
+function updateTone(tone){
+  if(!MODES[S.mode].showTone)return;
+  const set=(vi,bi,v)=>{if(v===undefined)return;document.getElementById(vi).textContent=Math.round(v)+'%';document.getElementById(bi).style.width=Math.round(v)+'%';};
+  set('mcalm','bcalm',tone.calm);set('mtension','btension',tone.tension);set('mfocus','bfocus',tone.focus);set('mreact','breact',tone.reactivity);
+  if(tone.emotions){
+    const cols={defensive:'#c9935a',frustrated:'#bf6a6a',confident:'#7daa80',composed:'#7daa80',pressured:'#c9935a'};
+    document.getElementById('erows').innerHTML=Object.entries(tone.emotions).map(([n,v])=>
+      '<div class="er"><span class="en">'+n[0].toUpperCase()+n.slice(1)+'</span><div class="ebw"><div class="eb" style="width:'+Math.round(v)+'%;background:'+(cols[n]||'#6a9cbf')+'"></div></div><span class="esc">'+Math.round(v)+'%</span></div>'
+    ).join('');
+  }
+}
+
+// ASK
+async function askQuestion(){
+  const inp=document.getElementById('qaInput');
+  const q=inp.value.trim();if(!q)return;
+  if(!S.transcript.length){addQAMsg('assistant','No transcript yet — start a session first.');return;}
+  inp.value='';addQAMsg('user',q);
+  const btn=document.getElementById('qaBtn');btn.textContent='…';btn.disabled=true;
+
+  const m=MODES[S.mode];
+  const tx=getContextLines().map(l=>l.spk+': '+l.txt).join('\n');
+  const prompt='You are Sidekick in '+m.name+' mode. Here is the transcript:\n\n'+tx+'\n\nContext: '+(S.context||'Not specified')+'\n\nAnswer this question specifically based on the transcript: "'+q+'"\n\nBe concise and specific. If the answer is not in the transcript, say so.';
+
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    addQAMsg('assistant',data.content?.map(b=>b.text||'').join('').trim()||'No response.');
+  }catch(e){addQAMsg('assistant','Could not reach the AI.');}
+  btn.textContent='Ask';btn.disabled=false;
+}
+
+function addQAMsg(role,text){
+  document.getElementById('qaEmpty').style.display='none';
+  const isUser=role==='user';const m=MODES[S.mode];
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;flex-direction:column;gap:4px;align-items:'+(isUser?'flex-end':'flex-start')+';animation:fu .3s ease';
+  div.innerHTML='<div style="font-size:10px;color:var(--tx3)">'+(isUser?S.userName:'Sidekick')+'</div><div style="max-width:88%;padding:9px 12px;border-radius:'+(isUser?'12px 12px 3px 12px':'12px 12px 12px 3px')+';background:'+(isUser?m.c1:'var(--s2)')+';border:0.5px solid '+(isUser?m.c2:'var(--b1)')+';font-size:12px;line-height:1.55;color:var(--tx)">'+text+'</div>';
+  const msgs=document.getElementById('qaMsgs');msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+// EXPORT
+function doExport(){
+  if(!S.transcript.length){alert('No transcript yet.');return;}
+  const lines=S.transcript.map(l=>'['+l.time.toLocaleTimeString()+'] '+l.spk+': '+l.txt).join('\n');
+  const content='SIDEKICK SESSION\nMode: '+MODES[S.mode].name+'\nDate: '+new Date().toLocaleString()+'\nDuration: '+document.getElementById('timer').textContent+'\nContext: '+(S.context||'Not specified')+'\n\nTRANSCRIPT\n'+lines;
+  const b=new Blob([content],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sidekick-session.txt';a.click();URL.revokeObjectURL(u);
+}
+
+// Init
+applyMode();
+</script>
+</body>
+</html>
