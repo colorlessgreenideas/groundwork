@@ -266,6 +266,22 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
                   <option value="medium" selected>Medium — balanced</option>
                   <option value="high">High — proactive coaching</option>
                 </select>
+                <div class="mlabel" style="margin-top:8px">Lines sent to AI per call</div>
+                <select class="sel" onchange="S.txLimit=parseInt(this.value)">
+                  <option value="25">Last 25 lines (lowest cost)</option>
+                  <option value="50" selected>Last 50 lines (recommended)</option>
+                  <option value="100">Last 100 lines (more context)</option>
+                  <option value="0">Full transcript (highest cost)</option>
+                </select>
+                <div class="mlabel" style="margin-top:8px">Trim transcript display</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                  <select class="sel" id="trimSelect" style="flex:1">
+                    <option value="50">Keep last 50 lines</option>
+                    <option value="100">Keep last 100 lines</option>
+                    <option value="200">Keep last 200 lines</option>
+                  </select>
+                  <button class="badd" onclick="trimTranscript()">Trim now</button>
+                </div>
               </div>
             </div>
           </div>
@@ -318,7 +334,7 @@ const S = {
   transcript:[], tips:[],
   rules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"],
   userName:"You", context:"", tipStyle:"concise", sensitivity:"medium",
-  lastIdx:0, secs:0, timerID:null, recognition:null, autoAnalyze:true,
+  lastIdx:0, secs:0, timerID:null, recognition:null, autoAnalyze:true, txLimit:50,
   setupRules:["Stay factual when challenged","Pause before reacting","Don't personalize criticism","Acknowledge others before disagreeing"]
 };
 
@@ -508,7 +524,8 @@ async function analyze(){
   document.getElementById('aind').style.display='flex';
   const think=addThink();
 
-  const allTx=S.transcript.map(l=>l.spk+': '+l.txt).join('\n');
+  const contextLines=getContextLines();
+  const allTx=contextLines.map(l=>l.spk+': '+l.txt).join('\n');
   const newTx=newLines.map(l=>l.spk+': '+l.txt).join('\n');
   const rules=S.rules.length?S.rules.map((r,i)=>(i+1)+'. '+r).join('\n'):'No specific rules set.';
   const styleMap={concise:'Be concise and direct.',gentle:'Be warm and empathetic.',stoic:'Draw on Stoic philosophy.',coach:'Speak like a trusted executive coach.'};
@@ -561,6 +578,30 @@ function updateTone(tone){
   }
 }
 
+// TRANSCRIPT HELPERS
+function getContextLines(){
+  if(!S.txLimit||S.txLimit<=0) return S.transcript;
+  return S.transcript.slice(-S.txLimit);
+}
+
+function trimTranscript(){
+  const keep=parseInt(document.getElementById('trimSelect').value);
+  if(S.transcript.length<=keep){alert('Transcript has '+S.transcript.length+' lines — nothing to trim.');return;}
+  const removed=S.transcript.length-keep;
+  S.transcript=S.transcript.slice(-keep);
+  S.lastIdx=Math.max(0,S.lastIdx-removed);
+  // Remove all lines from DOM and re-render
+  const area=document.getElementById('txa');
+  area.querySelectorAll('.tmsg').forEach(e=>e.remove());
+  S.transcript.forEach(l=>{
+    const div=document.createElement('div');
+    div.className='tmsg'+(l.self?' self':'')+(l.flag?' flag':'');
+    div.innerHTML='<div class="tspk">'+l.spk.slice(0,3).toUpperCase()+'</div><div class="ttxt">'+l.txt+'</div>'+(l.flag?'<div class="ttag">'+l.flag+'</div>':'');
+    area.appendChild(div);
+  });
+  alert('Trimmed to last '+keep+' lines (removed '+removed+').');
+}
+
 // AUTO ANALYZE TOGGLE
 function toggleAuto(){
   S.autoAnalyze=!S.autoAnalyze;
@@ -585,7 +626,7 @@ async function askQuestion(){
   const btn=document.getElementById('qaBtn');
   btn.textContent='…';btn.disabled=true;
 
-  const tx=S.transcript.map(l=>l.spk+': '+l.txt).join('\n');
+  const tx=getContextLines().map(l=>l.spk+': '+l.txt).join('\n');
   const prompt='You are Calm Pilot. Here is the conversation transcript:\n\n'+tx+'\n\nUser rules:\n'+(S.rules.join('\n')||'None')+'\n\nAnswer this question specifically based on the transcript: "'+q+'"\n\nBe concise (2-4 sentences). If the answer is not in the transcript, say so.';
 
   try{
