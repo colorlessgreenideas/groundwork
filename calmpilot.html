@@ -473,6 +473,7 @@ textarea.input-field { resize: vertical; min-height: 80px; }
         <div class="tab active" onclick="switchTab('transcript')">Transcript</div>
         <div class="tab" onclick="switchTab('tone')">Tone analysis</div>
         <div class="tab" onclick="switchTab('settings')">Settings</div>
+        <div class="tab" onclick="switchTab('ask')">Ask</div>
       </div>
 
       <!-- TRANSCRIPT TAB -->
@@ -695,7 +696,7 @@ renderSetupRules();
 // ============================================================
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => {
-    const names = ['transcript','tone','settings'];
+    const names = ['transcript','tone','settings','ask'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
@@ -1162,6 +1163,67 @@ function renderEmotions(emotions) {
       </div>
     `;
   }).join('');
+}
+
+// ============================================================
+// Q&A
+// ============================================================
+async function askQuestion() {
+  const inp = document.getElementById('qaInput');
+  const question = inp.value.trim();
+  if (!question) return;
+  if (!state.transcript.length) { addQAMessage('assistant', 'No transcript yet — start a session first.'); return; }
+
+  inp.value = '';
+  addQAMessage('user', question);
+  const btn = document.getElementById('qaBtn');
+  btn.textContent = '…'; btn.disabled = true;
+
+  const transcriptText = state.transcript.map(l => `${l.speaker}: ${l.text}`).join('\n');
+  const rulesText = state.rules.length ? state.rules.join('\n') : 'None';
+
+  const prompt = `You are Calm Pilot, an AI assistant helping someone analyze their conversation in real time.
+
+TRANSCRIPT SO FAR:
+${transcriptText}
+
+USER'S BEHAVIORAL RULES:
+${rulesText}
+
+The user is asking: "${question}"
+
+Answer directly and specifically based on the transcript. Be concise — 2-4 sentences max. If the answer isn't in the transcript, say so honestly. You can also give coaching advice if the question is about how they're doing emotionally or strategically.`;
+
+  try {
+    const res = await fetch('https://calmpilot-proxy.calmpilot.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('').trim();
+    addQAMessage('assistant', text || 'No response.');
+  } catch(e) {
+    addQAMessage('assistant', 'Could not reach the AI. Check your connection.');
+  }
+  btn.textContent = 'Ask'; btn.disabled = false;
+}
+
+function addQAMessage(role, text) {
+  const msgs = document.getElementById('qaMessages');
+  // Clear empty state
+  const empty = msgs.querySelector('div[style*="text-align:center"]');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  const isUser = role === 'user';
+  div.style.cssText = `display:flex;flex-direction:column;gap:4px;align-items:${isUser ? 'flex-end' : 'flex-start'};animation:fadeup .3s ease`;
+  div.innerHTML = `
+    <div style="font-size:10px;color:var(--text3);letter-spacing:.3px">${isUser ? 'You' : 'Calm Pilot'}</div>
+    <div style="max-width:85%;padding:10px 13px;border-radius:${isUser ? '12px 12px 3px 12px' : '12px 12px 12px 3px'};background:${isUser ? 'var(--green-dim)' : 'var(--surface2)'};border:0.5px solid ${isUser ? 'var(--green-border)' : 'var(--border)'};font-size:13px;line-height:1.55;color:var(--text)">${text}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 // ============================================================
