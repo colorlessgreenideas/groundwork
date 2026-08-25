@@ -1565,7 +1565,7 @@ body {
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
             <div class="review-stat-card">
               <div class="review-stat-label">Visited</div>
-              <div class="review-stat-value" style="color:#14b8a6">26</div>
+              <div class="review-stat-value" style="color:#14b8a6">27</div>
             </div>
             <div class="review-stat-card">
               <div class="review-stat-label">Bucket list</div>
@@ -1577,7 +1577,7 @@ body {
             </div>
             <div class="review-stat-card">
               <div class="review-stat-label">% Visited</div>
-              <div class="review-stat-value" style="color:#14b8a6">13.3%</div>
+              <div class="review-stat-value" style="color:#14b8a6">13.8%</div>
             </div>
           </div>
           <div id="map-container" style="width:100%;border-radius:var(--border-radius-md);overflow:hidden"></div>
@@ -1586,7 +1586,7 @@ body {
             <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Bucket list</span>
           </div>
           <div style="display:flex;gap:6px">
-            <button class="day-pill active" id="maptab-visited" onclick="showMapList('visited')">Visited (26)</button>
+            <button class="day-pill active" id="maptab-visited" onclick="showMapList('visited')">Visited (27)</button>
             <button class="day-pill" id="maptab-bucket" onclick="showMapList('bucket')">Bucket list</button>
           </div>
           <div id="map-country-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
@@ -3289,7 +3289,7 @@ document.getElementById('wheel-new-item') && document.getElementById('wheel-new-
 const VISITED_IDS = new Set([
   '250','056','124','392','410','408','484','643','826','682',
   '702','528','188','036','214','276','380','300','792','044',
-  '212','052','208','578','752','840'
+  '212','052','208','578','752','840','372'
 ]);
 
 const MAP_COUNTRY_NAMES = {
@@ -3298,13 +3298,13 @@ const MAP_COUNTRY_NAMES = {
   '702':'Singapore','528':'Netherlands','188':'Costa Rica','036':'Australia',
   '214':'Dominican Republic','276':'Germany','380':'Italy','300':'Greece','792':'Turkey',
   '044':'Bahamas','212':'Dominica','052':'Barbados','208':'Denmark','578':'Norway',
-  '752':'Sweden','840':'United States'
+  '752':'Sweden','840':'United States','372':'Ireland'
 };
 
 // Bucket list — ISO 3166-1 numeric codes
 const BUCKET_IDS = new Set([
   '008','020','040','100','191','196','203','233','246','352',
-  '372','428','440','442','470','492','499','807','616','620',
+  '428','440','442','470','492','499','807','616','620',
   '642','674','688','703','705','724','756','072','132','384',
   '818','748','266','404','480','504','516','686','690','710',
   '834','788','894','716','096','116','156','356','360','398',
@@ -3317,7 +3317,7 @@ const BUCKET_IDS = new Set([
 const BUCKET_NAMES = {
   '008':'Albania','020':'Andorra','040':'Austria','100':'Bulgaria','191':'Croatia',
   '196':'Cyprus','203':'Czech Republic','233':'Estonia','246':'Finland','352':'Iceland',
-  '372':'Ireland','428':'Latvia','440':'Lithuania','442':'Luxembourg','470':'Malta',
+  '428':'Latvia','440':'Lithuania','442':'Luxembourg','470':'Malta',
   '492':'Monaco','499':'Montenegro','807':'North Macedonia','616':'Poland','620':'Portugal',
   '642':'Romania','674':'San Marino','688':'Serbia','703':'Slovakia','705':'Slovenia',
   '724':'Spain','756':'Switzerland','072':'Botswana','132':'Cabo Verde','384':'Cote d Ivoire',
@@ -3351,7 +3351,7 @@ function openMapModal() {
 
 function updateMapSub() {
   document.getElementById('map-sub').textContent =
-    `Visited: 26 · Bucket list: ${Object.keys(BUCKET_NAMES).length + BUCKET_US.length} · 13.3% of world`;
+    `Visited: 27 · Bucket list: ${Object.keys(BUCKET_NAMES).length + BUCKET_US.length} · 13.8% of world`;
 }
 
 function toggleLayer(type) {
