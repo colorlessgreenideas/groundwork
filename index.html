@@ -2284,7 +2284,6 @@ let FOOD_SECTIONS = [
   { label: 'Morning Stack', items: [
     {id:'coffee',    name:'Coffee',                     protein:0,  cal:5,   fiber:0},
     {id:'premier1',  name:'On Protein + Creatine', protein:40, cal:220, fiber:5},
-    {id:'eggs',      name:'Hard Boiled Eggs (2)',        protein:12, cal:140, fiber:0},
     {id:'banana',    name:'Banana',                     protein:1,  cal:105, fiber:3},
     {id:'carrots',   name:'Carrots',                    protein:1,  cal:35,  fiber:3},
   ]},
@@ -2296,12 +2295,10 @@ let FOOD_SECTIONS = [
   ]},
   { label: 'Dinner Stack', items: [
     {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400, fiber:0},
-    {id:'cottage',   name:'Cottage Cheese (1 cup)',      protein:17, cal:120, fiber:0},
     {id:'centrum',   name:'Centrum Men',                 protein:0,  cal:0,   fiber:0},
     {id:'arofum',    name:'Fish Oil',  protein:0,  cal:0,  fiber:0},
   ]},
   { label: 'Anytime', items: [
-    {id:'chiaseeds', name:'Chia Seeds (2 tbsp)',         protein:5,  cal:138, fiber:10},
     {id:'avocado',   name:'Avocado (1/2)',               protein:2,  cal:120, fiber:5 },
     {id:'kbrownie',  name:'Kellogg Brownie Batter Bar',  protein:12, cal:180, fiber:7 },
     {id:'calciumd3', name:'Nature Made Calcium +D3 (2 gummies)', protein:0, cal:15, fiber:0 },
@@ -2342,17 +2339,14 @@ const NUTRIENT_DEFS = [
 const FOOD_NUTRIENTS = {
   coffee:    { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0, b2:0, b3:0.5, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:5, iron:0, magnesium:7, phosphorus:7, potassium:116, sodium:5, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
   premier1:  { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.2, b3:0.3, b6:0.05, folate:5, b12:0.3, biotin:0, pantothenic:0.3, calcium:180, iron:0.2, magnesium:20, phosphorus:200, potassium:200, sodium:200, zinc:0.5, copper:0, manganese:0, selenium:5, iodine:0 },
-  eggs:      { vitA:130, vitC:0, vitD:2, vitE:1, vitK:0.2, b1:0.05, b2:0.5, b3:0.06, b6:0.12, folate:44, b12:1.0, biotin:20, pantothenic:1.4, calcium:56, iron:1.8, magnesium:11, phosphorus:198, potassium:130, sodium:140, zinc:1.3, copper:0.02, manganese:0, selenium:30, iodine:24 },
   banana:    { vitA:4, vitC:10, vitD:0, vitE:0.1, vitK:0.6, b1:0.04, b2:0.09, b3:0.8, b6:0.4, folate:24, b12:0, biotin:0, pantothenic:0.4, calcium:6, iron:0.3, magnesium:32, phosphorus:26, potassium:422, sodium:1, zinc:0.2, copper:0.09, manganese:0.3, selenium:1, iodine:0 },
   carrots:   { vitA:1069, vitC:7, vitD:0, vitE:0.4, vitK:16, b1:0.08, b2:0.05, b3:0.9, b6:0.1, folate:15, b12:0, biotin:0, pantothenic:0.3, calcium:33, iron:0.4, magnesium:13, phosphorus:35, potassium:410, sodium:65, zinc:0.3, copper:0.04, manganese:0.1, selenium:0, iodine:0 },
   tuna:      { vitA:20, vitC:0, vitD:3, vitE:0.5, vitK:0, b1:0.03, b2:0.1, b3:22, b6:0.6, folate:5, b12:5, biotin:0, pantothenic:0.3, calcium:20, iron:1.4, magnesium:50, phosphorus:400, potassium:550, sodium:600, zinc:1, copper:0.1, manganese:0, selenium:160, iodine:0 },
   peanuts:   { vitA:0, vitC:0, vitD:0, vitE:2.4, vitK:0, b1:0.1, b2:0.02, b3:3.8, b6:0.1, folate:41, b12:0, biotin:0, pantothenic:0.4, calcium:15, iron:0.7, magnesium:50, phosphorus:107, potassium:200, sodium:5, zinc:1, copper:0.2, manganese:0.7, selenium:2, iodine:0 },
   meatstick: { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.05, b3:1.5, b6:0.1, folate:0, b12:0.6, biotin:0, pantothenic:0.3, calcium:5, iron:0.8, magnesium:8, phosphorus:70, potassium:120, sodium:450, zinc:1.5, copper:0, manganese:0, selenium:8, iodine:0 },
   chicken:   { vitA:20, vitC:0, vitD:0.2, vitE:0.3, vitK:0, b1:0.1, b2:0.2, b3:18, b6:1.1, folate:10, b12:0.5, biotin:0, pantothenic:1.5, calcium:25, iron:1.5, magnesium:45, phosphorus:350, potassium:450, sodium:300, zinc:3, copper:0.1, manganese:0, selenium:55, iodine:0 },
-  cottage:   { vitA:24, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.4, b3:0.3, b6:0.15, folate:27, b12:1.4, biotin:0, pantothenic:0.5, calcium:138, iron:0.3, magnesium:12, phosphorus:277, potassium:220, sodium:820, zinc:1, copper:0, manganese:0, selenium:20, iodine:0 },
   centrum:   { vitA:900, vitC:90, vitD:25, vitE:15, vitK:80, b1:1.2, b2:1.3, b3:16, b6:2, folate:400, b12:12, biotin:30, pantothenic:5, calcium:210, iron:0, magnesium:60, phosphorus:20, potassium:80, sodium:5, zinc:11, copper:900, manganese:2.3, selenium:55, iodine:150 },
   arofum:    { vitA:0, vitC:0, vitD:37.5, vitE:0, vitK:45, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:0, iron:0, magnesium:0, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
-  chiaseeds: { vitA:0, vitC:0, vitD:0, vitE:0.1, vitK:0, b1:0, b2:0, b3:0.5, b6:0, folate:8, b12:0, biotin:0, pantothenic:0, calcium:179, iron:2.2, magnesium:95, phosphorus:265, potassium:115, sodium:5, zinc:1, copper:0.1, manganese:0.6, selenium:6, iodine:0 },
   avocado:   { vitA:7, vitC:10, vitD:0, vitE:2, vitK:21, b1:0.07, b2:0.13, b3:1.7, b6:0.2, folate:60, b12:0, biotin:0, pantothenic:1.4, calcium:12, iron:0.5, magnesium:29, phosphorus:52, potassium:487, sodium:7, zinc:0.6, copper:0.2, manganese:0.1, selenium:0, iodine:0 },
   kbrownie:  { vitA:135, vitC:9, vitD:2, vitE:2.25, vitK:0, b1:0.12, b2:0.13, b3:1.6, b6:0.17, folate:40, b12:0.24, biotin:0, pantothenic:0.5, calcium:260, iron:4, magnesium:0, phosphorus:0, potassium:100, sodium:135, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
   calciumd3: { vitA:0, vitC:0, vitD:25, vitE:0, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:500, iron:0, magnesium:0, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
@@ -2514,8 +2508,6 @@ function updateProgress() {
     premier1:  6,   // primary protein + creatine
     tuna:      6,   // main protein hit
     chicken:   6,   // dinner protein
-    eggs:      4,
-    cottage:   4,
     meatstick: 3,
     peanuts:   2,
     arofum:    2,   // health supplement (2 pills = 2 pts)
@@ -4060,7 +4052,7 @@ function renderReviewStats() {
 
   // Points
   const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-clean':3 };
-  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,eggs:4,cottage:4,meatstick:3,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
+  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,meatstick:3,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
   getTasksForDay(todayCalIdx).forEach(t => {
