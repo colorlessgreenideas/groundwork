@@ -120,37 +120,6 @@ body {
   padding: 16px 24px;
   border-bottom: 1px solid var(--border);
 }
-.grade-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-.grade-letter {
-  font-size: 32px;
-  font-weight: 700;
-  font-family: 'DM Mono', monospace;
-  line-height: 1;
-  transition: color 0.3s;
-}
-.grade-pct {
-  font-size: 11px;
-  color: var(--text3);
-  font-family: 'DM Mono', monospace;
-}
-.grade-label {
-  font-size: 10px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-family: 'DM Mono', monospace;
-  margin-bottom: 4px;
-}
 .prog-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1112,17 +1081,6 @@ body {
   color: var(--text3);
   font-family: 'DM Mono', monospace;
 }
-.header-grade {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 6px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-}
 
 .adhoc-btn {
   width: 20px; height: 20px;
@@ -1444,11 +1402,6 @@ body {
       </div>
       <div class="prog-bar-bg" style="margin-top:4px"><div class="prog-bar fiber-fill" id="fiber-bar" style="width:0%"></div></div>
       <div id="fiber-adhoc-list" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px"></div>
-    </div>
-    <div class="header-stat" style="justify-content:center;align-items:center;display:flex;flex-direction:column">
-      <div class="header-stat-label">Grade</div>
-      <div class="grade-letter" id="grade-letter" style="font-size:22px;font-family:'DM Mono',monospace;font-weight:700;line-height:1">—</div>
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px" id="grade-pct-pct">0%</div>
     </div>
     <div class="header-stat" style="justify-content:center;align-items:center;display:flex;flex-direction:column">
       <div class="header-stat-label">Points</div>
@@ -2286,6 +2239,7 @@ let FOOD_SECTIONS = [
     {id:'premier1',  name:'On Protein + Creatine', protein:40, cal:220, fiber:5},
     {id:'banana',    name:'Banana',                     protein:1,  cal:105, fiber:3},
     {id:'carrots',   name:'Carrots',                    protein:1,  cal:35,  fiber:3},
+    {id:'gingko',    name:'Gingko Biloba (120mg)',       protein:0,  cal:0,   fiber:0},
   ]},
   { label: 'Midday Stack', items: [
     {id:'tuna',      name:'Tuna (2 cans)',               protein:50, cal:150, fiber:0},
@@ -2553,10 +2507,8 @@ function updateProgress() {
 
   const pct = totalPts === 0 ? 0 : Math.round((earnedPts / totalPts) * 100);
   const { letter, color } = getGrade(pct);
+  window._todayGrade = { letter: totalPts === 0 ? '—' : letter, pct };
 
-  document.getElementById('grade-letter').textContent = totalPts === 0 ? '—' : letter;
-  document.getElementById('grade-letter').style.color = totalPts === 0 ? 'var(--text3)' : color;
-  document.getElementById('grade-pct-pct').textContent = `${pct}%`;
   document.getElementById('pts-earned').textContent = Math.round(earnedPts);
   document.getElementById('pts-earned').style.color = totalPts === 0 ? 'var(--text3)' : color;
   document.getElementById('pts-total').textContent = `/ ${totalPts}`;
@@ -4147,8 +4099,8 @@ function saveReview() {
     learned: document.getElementById('review-learned').value,
     different: document.getElementById('review-different').value,
     notes: document.getElementById('review-notes').value,
-    grade: document.getElementById('grade-letter').textContent,
-    gradePct: document.getElementById('grade-pct-pct').textContent,
+    grade: (window._todayGrade || {}).letter || '—',
+    gradePct: `${(window._todayGrade || {}).pct || 0}%`,
     cal: document.getElementById('cal-val').textContent,
     protein: document.getElementById('pro-val').textContent,
     skippedCount: Object.values(skipped).filter(Boolean).length,
