@@ -2239,13 +2239,11 @@ let FOOD_SECTIONS = [
     {id:'premier1',  name:'On Protein + Creatine', protein:40, cal:220, fiber:5},
     {id:'banana',    name:'Banana',                     protein:1,  cal:105, fiber:3},
     {id:'carrots',   name:'Carrots',                    protein:1,  cal:35,  fiber:3},
-    {id:'gingko',    name:'Gingko Biloba (120mg)',       protein:0,  cal:0,   fiber:0},
   ]},
   { label: 'Midday Stack', items: [
     {id:'tuna',      name:'Tuna (2 cans)',               protein:50, cal:150, fiber:0},
     {id:'peanuts',   name:'Planters Peanuts',            protein:7,  cal:160, fiber:2},
-    {id:'meatstick', name:'Meat Stick',                  protein:9,  cal:75,  fiber:0},
-    {id:'coconutwater', name:'Vita Coco Coconut Water (11.1oz)', protein:0, cal:60, fiber:0},
+    {id:'avocado',   name:'Avocado (1/2)',               protein:2,  cal:120, fiber:5 },
   ]},
   { label: 'Dinner Stack', items: [
     {id:'chicken',   name:'Rotisserie/Air Fryer Protein',protein:55, cal:400, fiber:0},
@@ -2254,7 +2252,6 @@ let FOOD_SECTIONS = [
     {id:'naturemademag', name:'Nature Made Magnesium Citrate Gummies (2)', protein:0, cal:20, fiber:0 },
   ]},
   { label: 'Anytime', items: [
-    {id:'avocado',   name:'Avocado (1/2)',               protein:2,  cal:120, fiber:5 },
     {id:'kbrownie',  name:'Kellogg Brownie Batter Bar',  protein:12, cal:180, fiber:7 },
     {id:'metrxcookie', name:'MET-Rx Big 100 Super Cookie Crunch', protein:32, cal:410, fiber:2 },
     {id:'calciumd3', name:'Nature Made Calcium +D3 (2 gummies)', protein:0, cal:15, fiber:0 },
@@ -2300,7 +2297,6 @@ const FOOD_NUTRIENTS = {
   carrots:   { vitA:1069, vitC:7, vitD:0, vitE:0.4, vitK:16, b1:0.08, b2:0.05, b3:0.9, b6:0.1, folate:15, b12:0, biotin:0, pantothenic:0.3, calcium:33, iron:0.4, magnesium:13, phosphorus:35, potassium:410, sodium:65, zinc:0.3, copper:0.04, manganese:0.1, selenium:0, iodine:0 },
   tuna:      { vitA:20, vitC:0, vitD:3, vitE:0.5, vitK:0, b1:0.03, b2:0.1, b3:22, b6:0.6, folate:5, b12:5, biotin:0, pantothenic:0.3, calcium:20, iron:1.4, magnesium:50, phosphorus:400, potassium:550, sodium:600, zinc:1, copper:0.1, manganese:0, selenium:160, iodine:0 },
   peanuts:   { vitA:0, vitC:0, vitD:0, vitE:2.4, vitK:0, b1:0.1, b2:0.02, b3:3.8, b6:0.1, folate:41, b12:0, biotin:0, pantothenic:0.4, calcium:15, iron:0.7, magnesium:50, phosphorus:107, potassium:200, sodium:5, zinc:1, copper:0.2, manganese:0.7, selenium:2, iodine:0 },
-  meatstick: { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0.05, b2:0.05, b3:1.5, b6:0.1, folate:0, b12:0.6, biotin:0, pantothenic:0.3, calcium:5, iron:0.8, magnesium:8, phosphorus:70, potassium:120, sodium:450, zinc:1.5, copper:0, manganese:0, selenium:8, iodine:0 },
   chicken:   { vitA:20, vitC:0, vitD:0.2, vitE:0.3, vitK:0, b1:0.1, b2:0.2, b3:18, b6:1.1, folate:10, b12:0.5, biotin:0, pantothenic:1.5, calcium:25, iron:1.5, magnesium:45, phosphorus:350, potassium:450, sodium:300, zinc:3, copper:0.1, manganese:0, selenium:55, iodine:0 },
   centrum:   { vitA:900, vitC:90, vitD:25, vitE:15, vitK:80, b1:1.2, b2:1.3, b3:16, b6:2, folate:400, b12:12, biotin:30, pantothenic:5, calcium:210, iron:0, magnesium:60, phosphorus:20, potassium:80, sodium:5, zinc:11, copper:900, manganese:2.3, selenium:55, iodine:150 },
   arofum:    { vitA:0, vitC:0, vitD:37.5, vitE:0, vitK:45, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:0, iron:0, magnesium:0, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
@@ -2310,7 +2306,6 @@ const FOOD_NUTRIENTS = {
   calciumd3: { vitA:0, vitC:0, vitD:25, vitE:0, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:500, iron:0, magnesium:0, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
   naturemademag: { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:0, iron:0, magnesium:200, phosphorus:0, potassium:0, sodium:0, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
   metamucil: { vitA:0, vitC:0, vitD:0, vitE:0, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:0, iron:0, magnesium:0, phosphorus:0, potassium:60, sodium:10, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
-  coconutwater: { vitA:0, vitC:7, vitD:0, vitE:0, vitK:0, b1:0, b2:0, b3:0, b6:0, folate:0, b12:0, biotin:0, pantothenic:0, calcium:40, iron:0, magnesium:25, phosphorus:30, potassium:646, sodium:100, zinc:0, copper:0, manganese:0, selenium:0, iodine:0 },
 };
 
 // ── State ──
@@ -2407,8 +2402,8 @@ function getGrade(pct) {
 }
 
 // Items that use a counter instead of checkbox
-const COUNTER_ITEMS = { arofum: 2, meatstick: 6 };
-const COUNTER_FLEXIBLE = new Set(['meatstick']); // can mark done at any count
+const COUNTER_ITEMS = { arofum: 2 };
+const COUNTER_FLEXIBLE = new Set(); // can mark done at any count
 
 // Ad-hoc entries state
 let adhocEntries = { cal: [], pro: [], fiber: [] };
@@ -2468,7 +2463,6 @@ function updateProgress() {
     premier1:  6,   // primary protein + creatine
     tuna:      6,   // main protein hit
     chicken:   6,   // dinner protein
-    meatstick: 3,
     peanuts:   2,
     arofum:    2,   // health supplement (2 pills = 2 pts)
     banana:    2,
@@ -4010,7 +4004,7 @@ function renderReviewStats() {
 
   // Points
   const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-clean':3 };
-  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,meatstick:3,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
+  const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
   getTasksForDay(todayCalIdx).forEach(t => {
