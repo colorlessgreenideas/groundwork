@@ -328,6 +328,93 @@ body {
 .week-cols.view-week { grid-template-columns: repeat(7, minmax(0,1fr)); }
 .week-cols.view-day  { grid-template-columns: 1fr; }
 
+/* ── Month / Year picker ── */
+.cal-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+  flex-shrink: 0;
+}
+.cal-view-buttons { display: flex; gap: 4px; }
+.cal-view-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.cal-view-btn:hover { background: var(--surface2); }
+.cal-view-btn.active { background: var(--surface2); color: var(--text); border-color: #444; }
+.cal-nav { display: flex; align-items: center; gap: 10px; }
+.cal-nav-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-nav-btn:hover { background: var(--surface2); }
+.cal-nav-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-width: 110px;
+  text-align: center;
+}
+
+.month-grid { padding: 12px 16px 20px; overflow-y: auto; flex: 1; }
+.month-grid-dow, .month-grid-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.month-grid-dow { margin-bottom: 4px; }
+.month-grid-dow div { font-size: 10px; color: var(--text3); text-align: center; font-family: 'DM Mono', monospace; padding: 4px 0; }
+.month-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text2);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.month-day:hover { background: var(--surface2); }
+.month-day.today { color: var(--pro-color); border-color: var(--pro-color); font-weight: 600; }
+.month-day.other-month { color: var(--text3); opacity: 0.35; cursor: default; }
+.month-day.other-month:hover { background: transparent; }
+
+.year-grid { padding: 12px 16px 20px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.year-month-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+.year-month-title { font-size: 11px; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 6px; font-family: 'DM Mono', monospace; cursor: pointer; }
+.year-month-title:hover { color: var(--pro-color); }
+.year-month-dow, .year-month-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.year-month-dow div { font-size: 7px; color: var(--text3); text-align: center; }
+.year-day {
+  font-size: 8px;
+  text-align: center;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+  padding: 1.5px 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.year-day:hover { background: var(--surface2); }
+.year-day.today { color: var(--pro-color); font-weight: 700; }
+.year-day.other-month { visibility: hidden; cursor: default; }
+
 .col-wrap { position: relative; }
 .col-head {
   height: 32px;
@@ -1457,7 +1544,21 @@ body {
 
       <!-- Calendar tab -->
       <div class="workspace-tab-content" id="tab-calendar">
-        <div class="week-grid">
+        <div class="cal-view-toolbar">
+          <div class="cal-view-buttons">
+            <button class="cal-view-btn active" id="viewbtn-week" onclick="setView('week')">Week</button>
+            <button class="cal-view-btn" id="viewbtn-month" onclick="setView('month')">Month</button>
+            <button class="cal-view-btn" id="viewbtn-year" onclick="setView('year')">Year</button>
+          </div>
+          <div class="cal-nav" id="cal-nav" style="display:none">
+            <button class="cal-nav-btn" onclick="navCalendarPicker(-1)">‹</button>
+            <span class="cal-nav-label" id="cal-nav-label"></span>
+            <button class="cal-nav-btn" onclick="navCalendarPicker(1)">›</button>
+          </div>
+        </div>
+        <div class="month-grid" id="month-grid" style="display:none"></div>
+        <div class="year-grid" id="year-grid" style="display:none"></div>
+        <div class="week-grid" id="week-grid">
           <div class="week-gutter" id="gutter"></div>
           <div class="week-cols view-week" id="week-cols"></div>
         </div>
@@ -2385,9 +2486,81 @@ function setDateLabel() {
 }
 
 // ── View toggle ──
-function setView(v) {
+let pickerDate = new Date(); // which month/year the Month/Year picker is showing
+
+function setView(v, preserveDate) {
   currentView = v;
+  if((v === 'month' || v === 'year') && !preserveDate) pickerDate = new Date();
   renderCalendar();
+}
+
+function navCalendarPicker(delta) {
+  if(currentView === 'month') pickerDate = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + delta, 1);
+  else if(currentView === 'year') pickerDate = new Date(pickerDate.getFullYear() + delta, pickerDate.getMonth(), 1);
+  renderCalendar();
+}
+
+function jumpToDateFromPicker(d) {
+  selectedDay = d.getDay();
+  currentView = 'day';
+  renderCalendar();
+}
+
+function buildMonthGrid(container, year, month, mini) {
+  container.innerHTML = '';
+  const dowRow = document.createElement('div');
+  dowRow.className = mini ? 'year-month-dow' : 'month-grid-dow';
+  const dowLabels = mini ? ['S','M','T','W','T','F','S'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  dowLabels.forEach(l => { const d = document.createElement('div'); d.textContent = l; dowRow.appendChild(d); });
+  container.appendChild(dowRow);
+
+  const daysWrap = document.createElement('div');
+  daysWrap.className = mini ? 'year-month-days' : 'month-grid-days';
+
+  const startOffset = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+
+  for(let i = 0; i < startOffset; i++) {
+    const cell = document.createElement('div');
+    cell.className = (mini ? 'year-day' : 'month-day') + ' other-month';
+    daysWrap.appendChild(cell);
+  }
+  for(let day = 1; day <= daysInMonth; day++) {
+    const cellDate = new Date(year, month, day);
+    const isToday = cellDate.toDateString() === today.toDateString();
+    const cell = document.createElement('div');
+    cell.className = (mini ? 'year-day' : 'month-day') + (isToday ? ' today' : '');
+    cell.textContent = day;
+    cell.title = cellDate.toDateString();
+    cell.onclick = () => jumpToDateFromPicker(cellDate);
+    daysWrap.appendChild(cell);
+  }
+  container.appendChild(daysWrap);
+}
+
+function renderMonthView() {
+  document.getElementById('cal-nav-label').textContent = `${MONTHS[pickerDate.getMonth()]} ${pickerDate.getFullYear()}`;
+  buildMonthGrid(document.getElementById('month-grid'), pickerDate.getFullYear(), pickerDate.getMonth(), false);
+}
+
+function renderYearView() {
+  document.getElementById('cal-nav-label').textContent = `${pickerDate.getFullYear()}`;
+  const grid = document.getElementById('year-grid');
+  grid.innerHTML = '';
+  for(let m = 0; m < 12; m++) {
+    const card = document.createElement('div');
+    card.className = 'year-month-card';
+    const title = document.createElement('div');
+    title.className = 'year-month-title';
+    title.textContent = MONTHS[m];
+    title.onclick = () => { pickerDate = new Date(pickerDate.getFullYear(), m, 1); setView('month', true); };
+    card.appendChild(title);
+    const body = document.createElement('div');
+    buildMonthGrid(body, pickerDate.getFullYear(), m, true);
+    card.appendChild(body);
+    grid.appendChild(card);
+  }
 }
 
 // ── Calendar collapse ──
@@ -2486,6 +2659,18 @@ const typeColors = {
 
 // ── Build calendar ──
 function renderCalendar() {
+  const isPicker = currentView === 'month' || currentView === 'year';
+  document.getElementById('week-grid').style.display = isPicker ? 'none' : 'flex';
+  document.getElementById('month-grid').style.display = currentView === 'month' ? 'block' : 'none';
+  document.getElementById('year-grid').style.display = currentView === 'year' ? 'grid' : 'none';
+  document.getElementById('cal-nav').style.display = isPicker ? 'flex' : 'none';
+  document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.getElementById(currentView === 'day' ? 'viewbtn-week' : `viewbtn-${currentView}`);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  if(currentView === 'month') { renderMonthView(); return; }
+  if(currentView === 'year') { renderYearView(); return; }
+
   const cols = document.getElementById('week-cols');
   cols.className = `week-cols ${currentView === 'week' ? 'view-week' : 'view-day'}`;
   cols.innerHTML = '';
