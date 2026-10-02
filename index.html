@@ -1766,24 +1766,6 @@ body {
   </div>
 </div>
 
-<!-- Episode Modal -->
-<div class="modal-overlay" id="ep-modal" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="ep-modal-title">📺 The Great Tours: England, Scotland & Wales</div>
-        <div class="modal-sub" id="modal-sub">Today's episodes</div>
-      </div>
-      <button class="modal-close" onclick="document.getElementById('ep-modal').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body" id="ep-list"></div>
-    <div class="modal-footer">
-      <span id="ep-footer-txt">Click an episode to mark watched</span>
-      <button class="next-ep-btn" onclick="markTodayWatched()">Mark today's ✓</button>
-    </div>
-  </div>
-</div>
-
 <!-- AI Learning Modal -->
 <div class="modal-overlay" id="ai-modal" onclick="closeAiModal(event)">
   <div class="modal">
@@ -1821,120 +1803,6 @@ body {
 const START_H = 6, END_H = 23, SLOT = 36;
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-// ── Episode data ──
-const COURSE_TITLE = "Notorious London: A City Tour";
-const EPISODES = [
-  "Oscar Wilde's Decadent London",
-  "St. Paul's Cathedral in Faith, Fire, and Sin",
-  "Getting Blitzed at London's Café de Paris",
-  "On Carnaby Street during the Swinging '60s",
-  "A History of Infamy in the Tower of London",
-  "Underground Catholics of Protestant London",
-  "Wicked Fun at the Vauxhall Pleasure Gardens",
-  "Taking the Dead Man's Path to Tyburn Tree",
-  "The Great Stink of 1858",
-  "In the Footsteps of Jack the Ripper",
-  "Fading Empire and the 1897 Diamond Jubilee",
-  "The Prying Eyes of London CCTV",
-];
-
-// Starting episode — all 12 unwatched
-const EP_START = 1;
-const EPS_PER_DAY = 4;
-
-let epWatched = {}; // episodeNumber (1-indexed) -> bool
-
-function epKey() { return 'jg-episodes-v2'; }
-function loadEpisodes() {
-  try {
-    const e = localStorage.getItem(epKey());
-    if(e) epWatched = JSON.parse(e);
-  } catch(e) {}
-}
-function saveEpisodes() {
-  try { localStorage.setItem(epKey(), JSON.stringify(epWatched)); } catch(e) {}
-}
-
-function getTodaysEpisodes() {
-  // Find first unwatched block of EPS_PER_DAY
-  const firstUnwatched = Object.keys(epWatched).filter(k => !epWatched[k]).map(Number).sort((a,b) => a-b)[0]
-    || Object.keys(epWatched).length + 1;
-  // Return next 4 starting from first unwatched
-  let start = EP_START;
-  // Count how many full days have been watched since EP_START
-  let cursor = EP_START;
-  while(cursor <= EPISODES.length) {
-    const allWatched = [cursor, cursor+1, cursor+2, cursor+3].every(n => epWatched[n]);
-    if(!allWatched) break;
-    cursor += EPS_PER_DAY;
-  }
-  return [cursor, cursor+1, cursor+2, cursor+3].filter(n => n <= EPISODES.length);
-}
-
-function openEpisodeModal() {
-  const modal = document.getElementById('ep-modal');
-  modal.classList.add('open');
-  renderEpisodeList();
-}
-
-function closeModal(e) {
-  if(e.target.id === 'ep-modal') document.getElementById('ep-modal').classList.remove('open');
-}
-
-function renderEpisodeList() {
-  const list = document.getElementById('ep-list');
-  const todayEps = getTodaysEpisodes();
-  list.innerHTML = '';
-
-  const watchedCount = Object.values(epWatched).filter(Boolean).length;
-  const remaining = EPISODES.length - watchedCount;
-  const hoursLeft = (remaining * 30) / 60;
-  const hrsDisplay = hoursLeft % 1 === 0 ? hoursLeft + 'h' : hoursLeft.toFixed(1) + 'h';
-
-  document.getElementById('ep-modal-title').textContent = '📺 ' + COURSE_TITLE;
-  document.getElementById('modal-sub').textContent =
-    `Today: Ep ${todayEps[0]}–${todayEps[todayEps.length-1]} · ${watchedCount}/${EPISODES.length} watched`;
-  document.getElementById('ep-footer-txt').textContent =
-    `${remaining} episodes · ${hrsDisplay} remaining`;
-
-  EPISODES.forEach((title, idx) => {
-    const num = idx + 1;
-    const isToday = todayEps.includes(num);
-    const watched = epWatched[num];
-
-    const row = document.createElement('div');
-    row.className = 'ep-item' + (watched ? ' watched' : '') + (isToday ? ' today-ep' : '');
-    row.innerHTML = `
-      <div class="ep-num">${num}</div>
-      <div class="ep-info">
-        <div class="ep-title">${title}</div>
-        ${isToday ? '<span class="ep-badge">Today</span>' : ''}
-      </div>
-      <div class="ep-check">${watched ? '✓' : ''}</div>
-    `;
-    row.onclick = () => toggleEpisode(num);
-    list.appendChild(row);
-
-    // Scroll today's first ep into view
-    if(isToday && num === todayEps[0]) {
-      setTimeout(() => row.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
-    }
-  });
-}
-
-function toggleEpisode(num) {
-  epWatched[num] = !epWatched[num];
-  saveEpisodes();
-  renderEpisodeList();
-}
-
-function markTodayWatched() {
-  const todayEps = getTodaysEpisodes();
-  todayEps.forEach(n => { epWatched[n] = true; });
-  saveEpisodes();
-  renderEpisodeList();
-}
 
 // ── AI Learning data ──
 const AI_LESSONS = [
@@ -2160,7 +2028,6 @@ const ALL_DAYS = [
     {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Tue', blocks:[
     {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
@@ -2169,7 +2036,6 @@ const ALL_DAYS = [
     {id:'exer',s:16,e:18,t:'exer',l:'Exercise'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Wed', blocks:[
     {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
@@ -2177,7 +2043,6 @@ const ALL_DAYS = [
     {id:'food2',s:14,e:15,t:'food2',l:'Midday'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Thu', blocks:[
     {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
@@ -2186,7 +2051,6 @@ const ALL_DAYS = [
     {id:'exer',s:16,e:18,t:'exer',l:'Exercise'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Fri', blocks:[
     {id:'food1',s:7,e:8,t:'food1',l:'Morning'},
@@ -2196,7 +2060,6 @@ const ALL_DAYS = [
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'hw',s:19,e:21,t:'hw',l:'HW'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Sat', blocks:[
     {id:'food1',s:8,e:9,t:'food1',l:'Morning'},
@@ -2206,7 +2069,6 @@ const ALL_DAYS = [
     {id:'exer',s:15,e:18,t:'exer',l:'Exercise'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
   { name:'Sun', blocks:[
     {id:'food1',s:8,e:9,t:'food1',l:'Morning'},
@@ -2215,7 +2077,6 @@ const ALL_DAYS = [
     {id:'food2',s:13,e:14,t:'food2',l:'Midday'},
     {id:'food3',s:18,e:19,t:'food3',l:'Dinner'},
     {id:'ai',s:20,e:21,t:'ai',l:'AI Learn'},
-    {id:'hist',s:21,e:23,t:'hist',l:'History'},
   ]},
 ];
 
@@ -2227,7 +2088,6 @@ let schedule = JSON.parse(JSON.stringify(ALL_DAYS));
 const TASK_BLOCK_MAP = {
   't-work':    ['work'],
   't-hw':      ['hw'],
-  't-hist':    ['hist'],
   't-exer':    ['exer'],
   't-yard':    ['yard'],
 };
@@ -2452,7 +2312,6 @@ function updateProgress() {
     't-exer':  12,
     't-yard':  10,
     't-hw':    10,
-    't-hist':   6,
     't-psu':    8,
     't-clean':3,
   };
@@ -2613,7 +2472,6 @@ function buildGutter() {
 const typeColors = {
   work:  {bg:'var(--work-bg)',  border:'var(--work)',  text:'var(--work)'},
   hw:    {bg:'var(--hw-bg)',    border:'var(--hw)',    text:'var(--hw)'},
-  hist:  {bg:'var(--hist-bg)', border:'var(--hist)',  text:'var(--hist)'},
   exer:  {bg:'var(--exer-bg)', border:'var(--exer)',  text:'var(--exer)'},
   yard:  {bg:'var(--yard-bg)', border:'var(--yard)',  text:'var(--yard)'},
   food1: {bg:'var(--food1-bg)',border:'var(--food1)', text:'var(--food1)'},
@@ -2723,15 +2581,8 @@ function renderCalendar() {
         <div class="ev-time" style="color:${c.text}">${sl}–${el}</div>
       `;
 
-      // History and AI blocks: draggable + dblclick opens modal
-      if(block.t === 'hist') {
-        ev.title = 'Double-click to see today\'s episodes';
-        ev.style.cursor = 'grab';
-        ev.addEventListener('dblclick', (e) => {
-          e.stopPropagation();
-          openEpisodeModal();
-        });
-      } else if(block.t === 'ai') {
+      // AI block: draggable + dblclick opens modal
+      if(block.t === 'ai') {
         ev.title = 'Double-click to see today\'s AI lesson';
         ev.style.cursor = 'grab';
         ev.addEventListener('dblclick', (e) => {
@@ -2815,7 +2666,6 @@ function renderCalendar() {
 const TASK_COLORS = {
   work:  '#3b82f6',
   hw:    '#22c55e',
-  hist:  '#f59e0b',
   exer:  '#ec4899',
   yard:  '#14b8a6',
   supp:  '#a78bfa',
@@ -2828,7 +2678,6 @@ const ALL_TASK_DEFS = [
   { id:'t-work', name:'Work (8 hrs)',       sub:'7a – 3:30p',           color:'work',  blockId:'work' },
   { id:'t-hw',   name:'JHU Homework',       sub:'2 hrs',                color:'hw',    blockId:null   },
   { id:'t-psu',  name:'PSU D.Eng',          sub:'research / coursework',color:'hw',    blockId:null   },
-  { id:'t-hist', name:'History',            sub:'9 – 11p',              color:'hist',  blockId:'hist' },
   { id:'t-exer', name:'Exercise',           sub:'2 hrs',                color:'exer',  blockId:'exer' },
   { id:'t-yard', name:'Yard Work',          sub:'4 hrs',                color:'yard',  blockId:'yard' },
   { id:'t-clean',   name:'Clean',           sub:'house',                color:'yard',  blockId:null   },
@@ -2840,7 +2689,7 @@ const STATIC_TASK_IDS = new Set(['t-hw','t-psu','t-clean']);
 // Group task defs by section label
 const TASK_SECTION_MAP = [
   { label:'Work',     ids:['t-work'] },
-  { label:'Learning', ids:['t-hw','t-psu','t-hist'] },
+  { label:'Learning', ids:['t-hw','t-psu'] },
   { label:'Fitness',  ids:['t-exer','t-yard'] },
   { label:'House',    ids:['t-clean'] },
 ];
@@ -3858,7 +3707,6 @@ function initApp() {
   // Migration: force-clear removed food items from logged
   ['bar','huel','splenda'].forEach(id => { delete logged[id]; delete skipped[id]; });
   saveLogged(); saveSkipped();
-  loadEpisodes();
   loadAiLessons();
   loadFoodSections();
   loadAdhoc();
@@ -4003,7 +3851,7 @@ function renderReviewStats() {
   }));
 
   // Points
-  const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-hist':6,'t-psu':8,'t-clean':3 };
+  const TASK_WEIGHTS = { 't-work':20,'t-exer':12,'t-yard':10,'t-hw':10,'t-psu':8,'t-clean':3 };
   const FOOD_WEIGHTS = { premier1:6,tuna:6,chicken:6,peanuts:2,arofum:2,banana:2,carrots:2,centrum:2,coffee:1 };
   let earnedPts = 0, totalPts = 0;
   const todayCalIdx = jsToCalIdx(new Date().getDay());
