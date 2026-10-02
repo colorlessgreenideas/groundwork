@@ -547,8 +547,10 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  overflow: hidden;
+  grid-template-rows: auto auto;
+  align-content: start;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .food-quadrant {
   display: flex;
