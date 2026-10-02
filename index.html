@@ -406,7 +406,7 @@ body {
   font-family: 'DM Mono', monospace;
   color: var(--text3);
 }
-#tasks-notes-area {
+#tasks-notes-area, #goals-notes-area {
   width: 100%;
   box-sizing: border-box;
   display: block;
@@ -1681,6 +1681,8 @@ body {
       </div>
       <textarea id="tasks-notes-area" placeholder="Quick notes..." rows="1"></textarea>
       <div id="task-list"></div>
+      <div class="food-quadrant-label" style="border-top:1px solid var(--border);margin-top:4px">Goals</div>
+      <textarea id="goals-notes-area" placeholder="Goals..." rows="1"></textarea>
     </div>
 
     <!-- Food log -->
@@ -3443,6 +3445,34 @@ document.getElementById('tasks-notes-area').addEventListener('input', () => {
   window._tasksNotesSaveTimer = setTimeout(saveTasksNotes, 800);
 });
 
+// ── Goals panel quick notes (auto-grows as lines are added) ──
+function goalsNotesKey() { return 'gw-goals-notes'; }
+
+function loadGoalsNotes() {
+  try {
+    const n = localStorage.getItem(goalsNotesKey());
+    const area = document.getElementById('goals-notes-area');
+    if(n !== null) area.value = n;
+    autoGrowGoalsNotes();
+  } catch(e) {}
+}
+
+function saveGoalsNotes() {
+  try { localStorage.setItem(goalsNotesKey(), document.getElementById('goals-notes-area').value); } catch(e) {}
+}
+
+function autoGrowGoalsNotes() {
+  const area = document.getElementById('goals-notes-area');
+  area.style.height = 'auto';
+  area.style.height = area.scrollHeight + 'px';
+}
+
+document.getElementById('goals-notes-area').addEventListener('input', () => {
+  autoGrowGoalsNotes();
+  clearTimeout(window._goalsNotesSaveTimer);
+  window._goalsNotesSaveTimer = setTimeout(saveGoalsNotes, 800);
+});
+
 // ── Vitamins & Minerals ──
 function nutrientColor(pct, isLimit) {
   if(isLimit) {
@@ -3712,6 +3742,7 @@ function initApp() {
   loadAdhoc();
   loadCountdowns();
   loadTasksNotes();
+  loadGoalsNotes();
   loadWheel();
   setDateLabel();
   loadCalendarCollapsed();
